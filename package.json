@@ -1,6 +1,6 @@
 {
-  "name": "canvas-cli-tool",
-  "version": "1.0.0",
+  "name": "canvas-cli",
+  "version": "1.0.1",
   "description": "A command line tool for interacting with Canvas LMS API",
   "keywords": [
     "canvas",
@@ -11,13 +11,13 @@
     "education",
     "canvas-lms"
   ],
-  "homepage": "https://github.com/your-username/canvas-cli-tool#readme",
+  "homepage": "https://github.com/caphefalumi/Canvas-CLI#readme",
   "bugs": {
-    "url": "https://github.com/your-username/canvas-cli-tool/issues"
+    "url": "https://github.com/caphefalumi/Canvas-CLI/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-username/canvas-cli-tool.git"
+    "url": "git+https://github.com/caphefalumi/Canvas-CLI.git"
   },
   "license": "MIT",
   "author": {
@@ -48,7 +48,6 @@
   "dependencies": {
     "axios": "^1.6.0",
     "commander": "^11.1.0",
-    "dotenv": "^17.0.1",
     "form-data": "^4.0.3"
   },
   "devDependencies": {
