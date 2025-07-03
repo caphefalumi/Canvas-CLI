@@ -1,38 +1,68 @@
 {
-  "name": "canvas-cli",
+  "name": "canvas-cli-tool",
   "version": "1.0.0",
-  "description": "A command line tool for interacting with Canvas API",
+  "description": "A command line tool for interacting with Canvas LMS API",
   "keywords": [
     "canvas",
     "cli",
     "api",
-    "instructure"
+    "instructure",
+    "lms",
+    "education",
+    "canvas-lms"
   ],
+  "homepage": "https://github.com/your-username/canvas-cli-tool#readme",
+  "bugs": {
+    "url": "https://github.com/your-username/canvas-cli-tool/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/canvas-cli-tool.git"
+  },
   "license": "MIT",
-  "author": "",
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com"
+  },
   "type": "commonjs",
   "main": "src/index.js",
   "bin": {
     "canvas": "src/index.js"
   },
+  "files": [
+    "src/",
+    "lib/",
+    "commands/",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "start": "node src/index.js",
-    "test": "node test-setup.js",
-    "test-setup": "node test-setup.js",
-    "setup": "powershell -ExecutionPolicy Bypass -File setup.ps1"
+    "dev": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "echo \"Add linting here\"",
+    "format": "echo \"Add formatting here\"",
+    "setup": "powershell -ExecutionPolicy Bypass -File setup.ps1",
+    "postinstall": "echo \"Canvas CLI installed successfully! Run 'canvas config' to get started.\""
   },
   "dependencies": {
-    "@iarna/toml": "^2.2.5",
     "axios": "^1.6.0",
     "commander": "^11.1.0",
     "dotenv": "^17.0.1",
-    "form-data": "^4.0.3",
-    "fs": "^0.0.1-security"
+    "form-data": "^4.0.3"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
   },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  }
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "preferGlobal": true,
+  "os": [
+    "win32",
+    "darwin",
+    "linux"
+  ]
 }
