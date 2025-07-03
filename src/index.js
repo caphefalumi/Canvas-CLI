@@ -26,7 +26,7 @@ const program = new Command();
 program
   .name('canvas')
   .description('Canvas API Command Line Tool')
-  .version('1.0.0');
+  .version('1.1.1');
 
 // Raw API commands
 function createQueryCommand(method) {
