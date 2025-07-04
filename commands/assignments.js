@@ -6,12 +6,15 @@ const { makeCanvasRequest } = require('../lib/api-client');
 
 async function listAssignments(courseId, options) {
   try {
+    // First get course information to display course name
+    const course = await makeCanvasRequest('get', `courses/${courseId}`);
+    
     const queryParams = ['include[]=submission', 'include[]=score_statistics', 'per_page=100'];
     
     const assignments = await makeCanvasRequest('get', `courses/${courseId}/assignments`, queryParams);
     
     if (!assignments || assignments.length === 0) {
-      console.log('No assignments found for this course.');
+      console.log(`No assignments found for course: ${course.name}`);
       return;
     }
     
@@ -23,7 +26,9 @@ async function listAssignments(courseId, options) {
       filteredAssignments = assignments.filter(a => !a.submission || !a.submission.submitted_at);
     }
     
-    console.log(`Found ${filteredAssignments.length} assignment(s):\n`);
+    // Display course information prominently
+    console.log(`📚 Course: ${course.name}`);
+    console.log(`📝 Found ${filteredAssignments.length} assignment(s):\n`);
     
     filteredAssignments.forEach((assignment, index) => {
       const submission = assignment.submission;
@@ -67,9 +72,8 @@ async function listAssignments(courseId, options) {
       if (submission && submission.grade && isNaN(submission.grade)) {
         gradeDisplay = submission.grade + (assignment.points_possible ? ` (${gradeDisplay})` : '');
       }
-      
-      console.log(`${index + 1}. ${submissionStatus} ${assignment.name}`);
-      console.log(`   ID: ${assignment.id}`);
+        console.log(`${index + 1}. ${submissionStatus} ${assignment.name}`);
+      console.log(`   Assignment ID: ${assignment.id}`);
       console.log(`   Grade: ${gradeColor}${gradeDisplay} pts\x1b[0m`);
       console.log(`   Due: ${assignment.due_at ? new Date(assignment.due_at).toLocaleString() : 'No due date'}`);
       

@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-07-05
+
+### Added
+
+- **Enhanced File Selection UX**: Implemented continuous file selection until empty input
+  - Browse current directory with file size display
+  - Add multiple files one by one
+  - Remove files from selection
+  - Show currently selected files
+  - Smart file filtering (excludes hidden files, package files)
+
+- **Improved Grade Viewing**:
+  - Interactive course selection for grade viewing
+  - Assignment-level grade details with color coding
+  - Overall course grade summary
+  - Better grade formatting and status indicators
+  - Support for letter grades, excused, and missing assignments
+
+- **Enhanced Display Names**:
+  - Show course names instead of IDs in all commands
+  - Display assignment names prominently
+  - Better labeling of IDs vs names throughout interface
+
+- **Interactive Utilities**:
+  - Added validation and retry logic for user input
+  - Confirmation helpers with default values
+  - List selection utilities with cancel option
+
+### Improved
+
+- **Submit Command**: Complete redesign with better file selection workflow
+- **Grades Command**: Interactive course selection and detailed assignment grades
+- **Assignments Command**: Display course names prominently
+- **Announcements Command**: Show course names instead of IDs
+- **User Experience**: More consistent and intuitive interfaces across all commands
+
+### Technical
+
+- Enhanced interactive utilities in `lib/interactive.js`
+- Better error handling and user guidance
+- Improved code organization and modularity
+
 ## [1.1.1] - 2025-07-03
 
 ### Fixed

@@ -15,6 +15,8 @@ async function submitAssignment(options) {
     let courseId = options.course;
     let assignmentId = options.assignment;
     let filePath = options.file;
+    let selectedCourse = null;
+    let selectedAssignment = null;
     
     // Step 1: Select Course (if not provided)
     if (!courseId) {
@@ -42,7 +44,7 @@ async function submitAssignment(options) {
       console.log('Select a course:');
       starredCourses.forEach((course, index) => {
         const starIcon = course.is_favorite ? '⭐ ' : '';
-        console.log(`${index + 1}. ${starIcon}${course.name} (ID: ${course.id})`);
+        console.log(`${index + 1}. ${starIcon}${course.name}`);
       });
       
       const courseChoice = await askQuestion(rl, '\nEnter course number: ');
@@ -54,8 +56,17 @@ async function submitAssignment(options) {
         return;
       }
       
-      courseId = starredCourses[courseIndex].id;
-      console.log(`Selected: ${starredCourses[courseIndex].name}\n`);
+      selectedCourse = starredCourses[courseIndex];
+      courseId = selectedCourse.id;
+      console.log(`✅ Selected: ${selectedCourse.name}\n`);
+    } else {
+      // Fetch course details if ID was provided
+      try {
+        selectedCourse = await makeCanvasRequest('get', `courses/${courseId}`);
+      } catch (error) {
+        console.log(`⚠️  Could not fetch course details for ID ${courseId}`);
+        selectedCourse = { id: courseId, name: `Course ${courseId}` };
+      }
     }
     
     // Step 2: Select Assignment (if not provided)
@@ -129,7 +140,7 @@ async function submitAssignment(options) {
         return;
       }
       
-      const selectedAssignment = assignments[assignmentIndex];
+      const      selectedAssignment = assignments[assignmentIndex];
       
       // Check if assignment accepts file uploads
       if (!selectedAssignment.submission_types || 
@@ -141,7 +152,7 @@ async function submitAssignment(options) {
       }
       
       assignmentId = selectedAssignment.id;
-      console.log(`Selected: ${selectedAssignment.name}\n`);
+      console.log(`✅ Selected: ${selectedAssignment.name}\n`);
       
       // Check if already submitted
       if (selectedAssignment.submission && selectedAssignment.submission.submitted_at) {
@@ -152,14 +163,21 @@ async function submitAssignment(options) {
           return;
         }
       }
+    } else {
+      // Fetch assignment details if ID was provided
+      try {
+        selectedAssignment = await makeCanvasRequest('get', `courses/${courseId}/assignments/${assignmentId}`);
+      } catch (error) {
+        console.log(`⚠️  Could not fetch assignment details for ID ${assignmentId}`);
+        selectedAssignment = { id: assignmentId, name: `Assignment ${assignmentId}` };
+      }
     }
-    
-    // Step 3: Select Files (if not provided)
+      // Step 3: Select Files (if not provided)
     let filePaths = [];
     if (filePath) {
       filePaths = [filePath]; // Single file provided via option
     } else {
-      filePaths = await selectFiles(rl);
+      filePaths = await selectFilesImproved(rl);
     }
     
     // Validate all selected files exist
@@ -179,16 +197,15 @@ async function submitAssignment(options) {
     }
     
     filePaths = validFiles;
-    
-    // Step 4: Confirm and Submit
+      // Step 4: Confirm and Submit
     console.log('\n📋 Submission Summary:');
-    console.log(`Course ID: ${courseId}`);
-    console.log(`Assignment ID: ${assignmentId}`);
-    console.log(`Files (${filePaths.length}):`);
+    console.log(`📚 Course: ${selectedCourse?.name || 'Unknown Course'}`);
+    console.log(`📝 Assignment: ${selectedAssignment?.name || 'Unknown Assignment'}`);
+    console.log(`📁 Files (${filePaths.length}):`);
     filePaths.forEach((file, index) => {
       const stats = fs.statSync(file);
       const size = (stats.size / 1024).toFixed(1) + ' KB';
-      console.log(`  ${index + 1}. ${file} (${size})`);
+      console.log(`  ${index + 1}. ${path.basename(file)} (${size})`);
     });
     
     const confirm = await askQuestion(rl, '\nProceed with submission? (Y/n): ');
@@ -359,6 +376,127 @@ async function selectSingleFileFromList(rl, files) {
     const manualFile = await askQuestion(rl, 'Enter file path manually: ');
     return [manualFile];
   }
+}
+
+async function selectFilesImproved(rl) {
+  console.log('📁 Enhanced File Selection');
+  console.log('Choose files by entering their paths or browse current directory');
+  console.log('Press Enter with no input when done selecting files.\n');
+  
+  const allFiles = [];
+  let fileIndex = 1;
+  
+  while (true) {
+    console.log(`\n📎 File ${fileIndex} selection:`);
+    console.log('1. Enter file path directly');
+    console.log('2. Browse current directory');
+    console.log('3. Show currently selected files');
+    console.log('(Press Enter with no input to finish selection)');
+    
+    const choice = await askQuestion(rl, '\nChoose option (1-3 or Enter to finish): ');
+    
+    // Empty input means we're done selecting files
+    if (choice.trim() === '') {
+      if (allFiles.length === 0) {
+        console.log('⚠️  No files selected. Please select at least one file.');
+        continue;
+      }
+      break;
+    }
+    
+    if (choice === '1') {
+      // Direct file path entry
+      const filePath = await askQuestion(rl, 'Enter file path: ');
+      if (filePath.trim() !== '') {
+        if (fs.existsSync(filePath.trim())) {
+          if (!allFiles.includes(filePath.trim())) {
+            allFiles.push(filePath.trim());
+            const stats = fs.statSync(filePath.trim());
+            const size = (stats.size / 1024).toFixed(1) + ' KB';
+            console.log(`✅ Added: ${path.basename(filePath.trim())} (${size})`);
+            fileIndex++;
+          } else {
+            console.log('⚠️  File already selected.');
+          }
+        } else {
+          console.log('❌ File not found. Please check the path.');
+        }
+      }
+    } else if (choice === '2') {
+      // Browse current directory
+      try {
+        const files = fs.readdirSync('.').filter(file => {
+          const stats = fs.statSync(file);
+          return stats.isFile() && 
+                 !file.startsWith('.') &&
+                 !['package.json', 'package-lock.json', 'node_modules'].includes(file);
+        });
+        
+        if (files.length === 0) {
+          console.log('No suitable files found in current directory.');
+          continue;
+        }
+        
+        console.log('\n📂 Files in current directory:');
+        files.forEach((file, index) => {
+          const stats = fs.statSync(file);
+          const size = (stats.size / 1024).toFixed(1) + ' KB';
+          const alreadySelected = allFiles.includes(file) ? ' ✅' : '';
+          console.log(`${index + 1}. ${file} (${size})${alreadySelected}`);
+        });
+        
+        const fileChoice = await askQuestion(rl, '\nEnter file number (or Enter to go back): ');
+        if (fileChoice.trim() !== '') {
+          const fileIdx = parseInt(fileChoice) - 1;
+          if (fileIdx >= 0 && fileIdx < files.length) {
+            const selectedFile = files[fileIdx];
+            if (!allFiles.includes(selectedFile)) {
+              allFiles.push(selectedFile);
+              const stats = fs.statSync(selectedFile);
+              const size = (stats.size / 1024).toFixed(1) + ' KB';
+              console.log(`✅ Added: ${selectedFile} (${size})`);
+              fileIndex++;
+            } else {
+              console.log('⚠️  File already selected.');
+            }
+          } else {
+            console.log('❌ Invalid file number.');
+          }
+        }
+      } catch (error) {
+        console.log('❌ Error reading directory:', error.message);
+      }
+    } else if (choice === '3') {
+      // Show currently selected files
+      if (allFiles.length === 0) {
+        console.log('📋 No files selected yet.');
+      } else {
+        console.log(`\n📋 Currently selected files (${allFiles.length}):`);
+        allFiles.forEach((file, index) => {
+          const stats = fs.existsSync(file) ? fs.statSync(file) : null;
+          const size = stats ? (stats.size / 1024).toFixed(1) + ' KB' : 'File not found';
+          console.log(`  ${index + 1}. ${path.basename(file)} (${size})`);
+        });
+        
+        const removeFile = await askQuestion(rl, '\nRemove a file? Enter number or press Enter to continue: ');
+        if (removeFile.trim() !== '') {
+          const removeIdx = parseInt(removeFile) - 1;
+          if (removeIdx >= 0 && removeIdx < allFiles.length) {
+            const removedFile = allFiles.splice(removeIdx, 1)[0];
+            console.log(`🗑️  Removed: ${path.basename(removedFile)}`);
+            fileIndex--;
+          } else {
+            console.log('❌ Invalid file number.');
+          }
+        }
+      }
+    } else {
+      console.log('❌ Invalid option. Please choose 1, 2, 3, or press Enter to finish.');
+    }
+  }
+  
+  console.log(`\n✅ File selection complete! Selected ${allFiles.length} file(s).`);
+  return allFiles;
 }
 
 module.exports = {

@@ -7,6 +7,9 @@ const { makeCanvasRequest } = require('../lib/api-client');
 async function showAnnouncements(courseId, options) {
   try {
     if (courseId) {
+      // Get course information first
+      const course = await makeCanvasRequest('get', `courses/${courseId}`);
+      
       // Get announcements for specific course
       const announcements = await makeCanvasRequest('get', `courses/${courseId}/discussion_topics`, [
         'only_announcements=true',
@@ -14,11 +17,11 @@ async function showAnnouncements(courseId, options) {
       ]);
       
       if (!announcements || announcements.length === 0) {
-        console.log('No announcements found for this course.');
+        console.log(`No announcements found for course: ${course.name}`);
         return;
       }
       
-      console.log(`Recent ${announcements.length} announcement(s) for course ${courseId}:\n`);
+      console.log(`📢 Recent ${announcements.length} announcement(s) for: ${course.name}\n`);
       
       announcements.forEach((announcement, index) => {
         console.log(`${index + 1}. ${announcement.title}`);
