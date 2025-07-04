@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Remove files from selection
   - Show currently selected files
   - Smart file filtering (excludes hidden files, package files)
+  - **Wildcard support**: Use patterns like *.html, *.js, *.pdf to select multiple files
+  - File type icons for better visual identification
 
 - **Improved Grade Viewing**:
   - Interactive course selection for grade viewing
@@ -40,6 +42,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Assignments Command**: Display course names prominently
 - **Announcements Command**: Show course names instead of IDs
 - **User Experience**: More consistent and intuitive interfaces across all commands
+
+### Fixed
+
+- **Assignment Name Display**: Fixed "Unknown Assignment" issue in submission summary
+- **File Selection Flow**: Better error handling and user guidance during file selection
+- **Variable Scope**: Proper assignment variable handling throughout submission process
 
 ### Technical
 

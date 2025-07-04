@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const { makeCanvasRequest } = require('../lib/api-client');
-const { createReadlineInterface, askQuestion } = require('../lib/interactive');
+const { createReadlineInterface, askQuestion, askConfirmation, selectFilesImproved } = require('../lib/interactive');
 const { uploadSingleFileToCanvas, submitAssignmentWithFiles } = require('../lib/file-upload');
 
 async function submitAssignment(options) {
@@ -130,9 +130,7 @@ async function submitAssignment(options) {
           console.log(`   📋 Note: This assignment doesn't accept file uploads`);
         }
       });
-      
-      const assignmentChoice = await askQuestion(rl, '\nEnter assignment number: ');
-      const assignmentIndex = parseInt(assignmentChoice) - 1;
+        const assignmentIndex = parseInt(assignmentChoice) - 1;
       
       if (assignmentIndex < 0 || assignmentIndex >= assignments.length) {
         console.log('Invalid assignment selection.');
@@ -140,7 +138,7 @@ async function submitAssignment(options) {
         return;
       }
       
-      const      selectedAssignment = assignments[assignmentIndex];
+      selectedAssignment = assignments[assignmentIndex];
       
       // Check if assignment accepts file uploads
       if (!selectedAssignment.submission_types || 
@@ -156,8 +154,8 @@ async function submitAssignment(options) {
       
       // Check if already submitted
       if (selectedAssignment.submission && selectedAssignment.submission.submitted_at) {
-        const resubmit = await askQuestion(rl, 'This assignment has already been submitted. Do you want to resubmit? (y/N): ');
-        if (resubmit.toLowerCase() !== 'y' && resubmit.toLowerCase() !== 'yes') {
+        const resubmit = await askConfirmation(rl, 'This assignment has already been submitted. Do you want to resubmit?', false);
+        if (!resubmit) {
           console.log('Submission cancelled.');
           rl.close();
           return;
@@ -167,16 +165,20 @@ async function submitAssignment(options) {
       // Fetch assignment details if ID was provided
       try {
         selectedAssignment = await makeCanvasRequest('get', `courses/${courseId}/assignments/${assignmentId}`);
+        console.log(`✅ Using assignment: ${selectedAssignment.name}\n`);
       } catch (error) {
         console.log(`⚠️  Could not fetch assignment details for ID ${assignmentId}`);
         selectedAssignment = { id: assignmentId, name: `Assignment ${assignmentId}` };
       }
-    }
-      // Step 3: Select Files (if not provided)
+    }    // Step 3: Select Files (if not provided)
     let filePaths = [];
     if (filePath) {
       filePaths = [filePath]; // Single file provided via option
     } else {
+      console.log('\n📁 File Selection');
+      console.log(`📚 Course: ${selectedCourse.name}`);
+      console.log(`📝 Assignment: ${selectedAssignment.name}\n`);
+      
       filePaths = await selectFilesImproved(rl);
     }
     
@@ -197,7 +199,8 @@ async function submitAssignment(options) {
     }
     
     filePaths = validFiles;
-      // Step 4: Confirm and Submit
+
+    // Step 4: Confirm and Submit
     console.log('\n📋 Submission Summary:');
     console.log(`📚 Course: ${selectedCourse?.name || 'Unknown Course'}`);
     console.log(`📝 Assignment: ${selectedAssignment?.name || 'Unknown Assignment'}`);
@@ -208,8 +211,8 @@ async function submitAssignment(options) {
       console.log(`  ${index + 1}. ${path.basename(file)} (${size})`);
     });
     
-    const confirm = await askQuestion(rl, '\nProceed with submission? (Y/n): ');
-    if (confirm.toLowerCase() === 'n' || confirm.toLowerCase() === 'no') {
+    const confirm = await askConfirmation(rl, '\nProceed with submission?', true);
+    if (!confirm) {
       console.log('Submission cancelled.');
       rl.close();
       return;
@@ -226,11 +229,10 @@ async function submitAssignment(options) {
       try {
         const fileId = await uploadSingleFileToCanvas(courseId, assignmentId, currentFile);
         uploadedFileIds.push(fileId);
-        console.log(`✅ ${path.basename(currentFile)} uploaded successfully`);
-      } catch (error) {
+        console.log(`✅ ${path.basename(currentFile)} uploaded successfully`);      } catch (error) {
         console.error(`❌ Failed to upload ${currentFile}: ${error.message}`);
-        const continueUpload = await askQuestion(rl, 'Continue with remaining files? (Y/n): ');
-        if (continueUpload.toLowerCase() === 'n' || continueUpload.toLowerCase() === 'no') {
+        const continueUpload = await askConfirmation(rl, 'Continue with remaining files?', true);
+        if (!continueUpload) {
           break;
         }
       }
@@ -376,127 +378,6 @@ async function selectSingleFileFromList(rl, files) {
     const manualFile = await askQuestion(rl, 'Enter file path manually: ');
     return [manualFile];
   }
-}
-
-async function selectFilesImproved(rl) {
-  console.log('📁 Enhanced File Selection');
-  console.log('Choose files by entering their paths or browse current directory');
-  console.log('Press Enter with no input when done selecting files.\n');
-  
-  const allFiles = [];
-  let fileIndex = 1;
-  
-  while (true) {
-    console.log(`\n📎 File ${fileIndex} selection:`);
-    console.log('1. Enter file path directly');
-    console.log('2. Browse current directory');
-    console.log('3. Show currently selected files');
-    console.log('(Press Enter with no input to finish selection)');
-    
-    const choice = await askQuestion(rl, '\nChoose option (1-3 or Enter to finish): ');
-    
-    // Empty input means we're done selecting files
-    if (choice.trim() === '') {
-      if (allFiles.length === 0) {
-        console.log('⚠️  No files selected. Please select at least one file.');
-        continue;
-      }
-      break;
-    }
-    
-    if (choice === '1') {
-      // Direct file path entry
-      const filePath = await askQuestion(rl, 'Enter file path: ');
-      if (filePath.trim() !== '') {
-        if (fs.existsSync(filePath.trim())) {
-          if (!allFiles.includes(filePath.trim())) {
-            allFiles.push(filePath.trim());
-            const stats = fs.statSync(filePath.trim());
-            const size = (stats.size / 1024).toFixed(1) + ' KB';
-            console.log(`✅ Added: ${path.basename(filePath.trim())} (${size})`);
-            fileIndex++;
-          } else {
-            console.log('⚠️  File already selected.');
-          }
-        } else {
-          console.log('❌ File not found. Please check the path.');
-        }
-      }
-    } else if (choice === '2') {
-      // Browse current directory
-      try {
-        const files = fs.readdirSync('.').filter(file => {
-          const stats = fs.statSync(file);
-          return stats.isFile() && 
-                 !file.startsWith('.') &&
-                 !['package.json', 'package-lock.json', 'node_modules'].includes(file);
-        });
-        
-        if (files.length === 0) {
-          console.log('No suitable files found in current directory.');
-          continue;
-        }
-        
-        console.log('\n📂 Files in current directory:');
-        files.forEach((file, index) => {
-          const stats = fs.statSync(file);
-          const size = (stats.size / 1024).toFixed(1) + ' KB';
-          const alreadySelected = allFiles.includes(file) ? ' ✅' : '';
-          console.log(`${index + 1}. ${file} (${size})${alreadySelected}`);
-        });
-        
-        const fileChoice = await askQuestion(rl, '\nEnter file number (or Enter to go back): ');
-        if (fileChoice.trim() !== '') {
-          const fileIdx = parseInt(fileChoice) - 1;
-          if (fileIdx >= 0 && fileIdx < files.length) {
-            const selectedFile = files[fileIdx];
-            if (!allFiles.includes(selectedFile)) {
-              allFiles.push(selectedFile);
-              const stats = fs.statSync(selectedFile);
-              const size = (stats.size / 1024).toFixed(1) + ' KB';
-              console.log(`✅ Added: ${selectedFile} (${size})`);
-              fileIndex++;
-            } else {
-              console.log('⚠️  File already selected.');
-            }
-          } else {
-            console.log('❌ Invalid file number.');
-          }
-        }
-      } catch (error) {
-        console.log('❌ Error reading directory:', error.message);
-      }
-    } else if (choice === '3') {
-      // Show currently selected files
-      if (allFiles.length === 0) {
-        console.log('📋 No files selected yet.');
-      } else {
-        console.log(`\n📋 Currently selected files (${allFiles.length}):`);
-        allFiles.forEach((file, index) => {
-          const stats = fs.existsSync(file) ? fs.statSync(file) : null;
-          const size = stats ? (stats.size / 1024).toFixed(1) + ' KB' : 'File not found';
-          console.log(`  ${index + 1}. ${path.basename(file)} (${size})`);
-        });
-        
-        const removeFile = await askQuestion(rl, '\nRemove a file? Enter number or press Enter to continue: ');
-        if (removeFile.trim() !== '') {
-          const removeIdx = parseInt(removeFile) - 1;
-          if (removeIdx >= 0 && removeIdx < allFiles.length) {
-            const removedFile = allFiles.splice(removeIdx, 1)[0];
-            console.log(`🗑️  Removed: ${path.basename(removedFile)}`);
-            fileIndex--;
-          } else {
-            console.log('❌ Invalid file number.');
-          }
-        }
-      }
-    } else {
-      console.log('❌ Invalid option. Please choose 1, 2, 3, or press Enter to finish.');
-    }
-  }
-  
-  console.log(`\n✅ File selection complete! Selected ${allFiles.length} file(s).`);
-  return allFiles;
 }
 
 module.exports = {
