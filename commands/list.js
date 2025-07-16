@@ -2,69 +2,67 @@
  * List courses command
  */
 
-const { makeCanvasRequest } = require('../lib/api-client');
+import { makeCanvasRequest } from '../lib/api-client.js';
+import chalk from 'chalk';
 
-async function listCourses(options) {
+function pad(str, len) {
+  return str + ' '.repeat(Math.max(0, len - str.length));
+}
+
+export async function listCourses(options) {
   try {
     const queryParams = [];
-    
-    // Always show only active courses
     queryParams.push('enrollment_state=active');
-    
-    // Include additional course information
     queryParams.push('include[]=term');
     queryParams.push('include[]=course_progress');
     queryParams.push('include[]=total_students');
-    queryParams.push('include[]=favorites'); // Include favorite status
-    
+    queryParams.push('include[]=favorites');
+
+    console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
+    console.log(chalk.cyan.bold('Loading courses, please wait...'));
     const courses = await makeCanvasRequest('get', 'courses', queryParams);
-    
     if (!courses || courses.length === 0) {
-      console.log('No courses found.');
+      console.log(chalk.red('Error: No courses found.'));
       return;
     }
-    
-    // By default, show only starred courses unless -a flag is used
     let filteredCourses = courses;
     if (!options.all) {
       filteredCourses = courses.filter(course => course.is_favorite);
-      
       if (filteredCourses.length === 0) {
-        console.log('No starred courses found. Use -a to see all courses.');
+        console.log(chalk.red('Error: No starred courses found. Use -a to see all courses.'));
         return;
       }
     }
-    
     const courseLabel = options.all ? 'enrolled course(s)' : 'starred course(s)';
-    console.log(`Found ${filteredCourses.length} ${courseLabel}:\n`);
-    
+    console.log(chalk.green(`Success: Found ${filteredCourses.length} ${courseLabel}.`));
+    console.log(chalk.cyan('-'.repeat(60)));
+    // Column headers
+    console.log(
+      pad(chalk.bold('No.'), 5) +
+      pad(chalk.bold('Course Name'), 35) +
+      pad(chalk.bold('ID'), 10) +
+      pad(chalk.bold('Code'), 12) +
+      (options.verbose ? pad(chalk.bold('Term'), 15) + pad(chalk.bold('Students'), 10) + pad(chalk.bold('Start'), 12) + pad(chalk.bold('End'), 12) + pad(chalk.bold('State'), 12) + pad(chalk.bold('Progress'), 18) : '')
+    );
+    console.log(chalk.cyan('-'.repeat(60)));
     filteredCourses.forEach((course, index) => {
-      const starIcon = course.is_favorite ? '⭐ ' : '';
-      console.log(`${index + 1}. ${starIcon}${course.name}`);
-      console.log(`   ID: ${course.id}`);
-      console.log(`   Code: ${course.course_code || 'N/A'}`);
-      
+      let line = pad(chalk.white((index + 1) + '.'), 5) +
+        pad(course.name, 35) +
+        pad(String(course.id), 10) +
+        pad(course.course_code || 'N/A', 12);
       if (options.verbose) {
-        console.log(`   Term: ${course.term?.name || 'N/A'}`);
-        console.log(`   Students: ${course.total_students || 'N/A'}`);
-        console.log(`   Start Date: ${course.start_at ? new Date(course.start_at).toLocaleDateString() : 'N/A'}`);
-        console.log(`   End Date: ${course.end_at ? new Date(course.end_at).toLocaleDateString() : 'N/A'}`);
-        console.log(`   Workflow State: ${course.workflow_state}`);
-        
-        if (course.course_progress) {
-          console.log(`   Progress: ${course.course_progress.requirement_completed_count || 0}/${course.course_progress.requirement_count || 0} requirements`);
-        }
+        line += pad(course.term?.name || 'N/A', 15) +
+          pad(String(course.total_students || 'N/A'), 10) +
+          pad(course.start_at ? new Date(course.start_at).toLocaleDateString() : 'N/A', 12) +
+          pad(course.end_at ? new Date(course.end_at).toLocaleDateString() : 'N/A', 12) +
+          pad(course.workflow_state, 12) +
+          pad(course.course_progress ? `${course.course_progress.requirement_completed_count || 0}/${course.course_progress.requirement_count || 0}` : 'N/A', 18);
       }
-      
-      console.log(''); // Empty line between courses
+      console.log(line);
     });
-    
+    console.log(chalk.cyan('-'.repeat(60)));
   } catch (error) {
-    console.error('Error fetching courses:', error.message);
+    console.error(chalk.red('Error fetching courses:'), error.message);
     process.exit(1);
   }
 }
-
-module.exports = {
-  listCourses
-};

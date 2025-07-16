@@ -2,129 +2,99 @@
  * Assignments command
  */
 
-const { makeCanvasRequest } = require('../lib/api-client');
+import { makeCanvasRequest } from '../lib/api-client.js';
+import chalk from 'chalk';
 
-async function listAssignments(courseId, options) {
+function pad(str, len) {
+  return str + ' '.repeat(Math.max(0, len - str.length));
+}
+
+export async function listAssignments(courseId, options) {
   try {
-    // First get course information to display course name
     const course = await makeCanvasRequest('get', `courses/${courseId}`);
-    
     const queryParams = ['include[]=submission', 'include[]=score_statistics', 'per_page=100'];
-    
+    console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
+    console.log(chalk.cyan.bold('Loading assignments, please wait...'));
     const assignments = await makeCanvasRequest('get', `courses/${courseId}/assignments`, queryParams);
-    
     if (!assignments || assignments.length === 0) {
-      console.log(`No assignments found for course: ${course.name}`);
+      console.log(chalk.red(`Error: No assignments found for course: ${course.name}`));
       return;
     }
-    
-    // Filter assignments based on options
     let filteredAssignments = assignments;
     if (options.submitted) {
       filteredAssignments = assignments.filter(a => a.submission && a.submission.submitted_at);
     } else if (options.pending) {
       filteredAssignments = assignments.filter(a => !a.submission || !a.submission.submitted_at);
     }
-    
-    // Display course information prominently
-    console.log(`📚 Course: ${course.name}`);
-    console.log(`📝 Found ${filteredAssignments.length} assignment(s):\n`);
-    
+    console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
+    console.log(chalk.cyan.bold(`Assignments for: ${course.name}`));
+    console.log(chalk.cyan('-'.repeat(60)));
+    console.log(chalk.green(`Success: Found ${filteredAssignments.length} assignment(s).`));
+    console.log(chalk.cyan('-'.repeat(60)));
+    // Column headers
+    console.log(
+      pad(chalk.bold('No.'), 5) +
+      pad(chalk.bold('Assignment Name'), 35) +
+      pad(chalk.bold('ID'), 10) +
+      pad(chalk.bold('Grade'), 12) +
+      pad(chalk.bold('Due'), 22) +
+      (options.verbose ? pad(chalk.bold('Status'), 12) : '')
+    );
+    console.log(chalk.cyan('-'.repeat(60)));
     filteredAssignments.forEach((assignment, index) => {
       const submission = assignment.submission;
-      const isSubmitted = submission && submission.submitted_at;
-      const submissionStatus = isSubmitted ? '✅' : '❌';
-      
-      // Format grade like Canvas web interface with enhanced formatting
       let gradeDisplay = '';
-      let gradeColor = '';
-      
       if (submission && submission.score !== null && submission.score !== undefined) {
-        // Format score to remove unnecessary decimals (e.g., 3.0 becomes 3)
         const score = submission.score % 1 === 0 ? Math.round(submission.score) : submission.score;
         const total = assignment.points_possible || 0;
         gradeDisplay = `${score}/${total}`;
-        
-        // Add color coding based on score percentage
-        if (total > 0) {
-          const percentage = (submission.score / total) * 100;
-          if (percentage >= 90) gradeColor = '\x1b[32m'; // Green for A
-          else if (percentage >= 80) gradeColor = '\x1b[36m'; // Cyan for B  
-          else if (percentage >= 70) gradeColor = '\x1b[33m'; // Yellow for C
-          else if (percentage >= 60) gradeColor = '\x1b[35m'; // Magenta for D
-          else gradeColor = '\x1b[31m'; // Red for F
-        }
       } else if (submission && submission.excused) {
         gradeDisplay = 'Excused';
-        gradeColor = '\x1b[34m'; // Blue for excused
       } else if (submission && submission.missing) {
         gradeDisplay = 'Missing';
-        gradeColor = '\x1b[31m'; // Red for missing
       } else if (assignment.points_possible) {
         gradeDisplay = `–/${assignment.points_possible}`;
-        gradeColor = '\x1b[90m'; // Gray for not graded yet
       } else {
         gradeDisplay = 'N/A';
-        gradeColor = '\x1b[90m'; // Gray for N/A
       }
-      
-      // Handle letter grades if present
-      if (submission && submission.grade && isNaN(submission.grade)) {
-        gradeDisplay = submission.grade + (assignment.points_possible ? ` (${gradeDisplay})` : '');
-      }
-        console.log(`${index + 1}. ${submissionStatus} ${assignment.name}`);
-      console.log(`   Assignment ID: ${assignment.id}`);
-      console.log(`   Grade: ${gradeColor}${gradeDisplay} pts\x1b[0m`);
-      console.log(`   Due: ${assignment.due_at ? new Date(assignment.due_at).toLocaleString() : 'No due date'}`);
-      
-      if (isSubmitted) {
-        console.log(`   Submitted: ${new Date(submission.submitted_at).toLocaleString()}`);
-        if (submission.workflow_state) {
-          // Color code submission status
-          let statusColor = '';
-          switch(submission.workflow_state) {
-            case 'graded': statusColor = '\x1b[32m'; break; // Green
-            case 'submitted': statusColor = '\x1b[33m'; break; // Yellow
-            case 'pending_review': statusColor = '\x1b[36m'; break; // Cyan
-            default: statusColor = '\x1b[37m'; // White
-          }
-          console.log(`   Status: ${statusColor}${submission.workflow_state}\x1b[0m`);
+      let line = pad(chalk.white((index + 1) + '.'), 5) +
+        pad(assignment.name, 35) +
+        pad(String(assignment.id), 10) +
+        pad(gradeDisplay, 12) +
+        pad(assignment.due_at ? new Date(assignment.due_at).toLocaleString() : 'No due date', 22);
+      if (options.verbose) {
+        let status = 'Not submitted';
+        if (submission && submission.submitted_at) {
+          status = 'Submitted';
         }
-      } else {
-        console.log(`   Status: \x1b[31mNot submitted\x1b[0m`); // Red for not submitted
+        line += pad(status, 12);
       }
-      
+      console.log(line);
       if (options.verbose) {
         if (assignment.description) {
-          // Strip HTML tags and clean up description
           const cleanDescription = assignment.description
-            .replace(/<[^>]*>/g, '') // Remove HTML tags
-            .replace(/\s+/g, ' ')    // Replace multiple whitespace with single space
-            .trim()                  // Remove leading/trailing whitespace
-            .substring(0, 150);      // Limit to 150 characters
-          console.log(`   Description: ${cleanDescription}${cleanDescription.length === 150 ? '...' : ''}`);
+            .replace(/<[^>]*>/g, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .substring(0, 150);
+          console.log('   ' + chalk.gray('Description: ') + cleanDescription + (cleanDescription.length === 150 ? '...' : ''));
         } else {
-          console.log(`   Description: N/A`);
+          console.log('   ' + chalk.gray('Description: N/A'));
         }
-        console.log(`   Submission Types: ${assignment.submission_types?.join(', ') || 'N/A'}`);
-        console.log(`   Published: ${assignment.published ? 'Yes' : 'No'}`);
+        console.log('   ' + chalk.gray('Submission Types: ') + (assignment.submission_types?.join(', ') || 'N/A'));
+        console.log('   ' + chalk.gray('Published: ') + (assignment.published ? 'Yes' : 'No'));
         if (assignment.points_possible) {
-          console.log(`   Points Possible: ${assignment.points_possible}`);
+          console.log('   ' + chalk.gray('Points Possible: ') + assignment.points_possible);
         }
         if (submission && submission.attempt) {
-          console.log(`   Attempt: ${submission.attempt}`);
+          console.log('   ' + chalk.gray('Attempt: ') + submission.attempt);
         }
       }
-      
       console.log('');
     });
-    
+    console.log(chalk.cyan('-'.repeat(60)));
   } catch (error) {
-    console.error('Error fetching assignments:', error.message);
+    console.error(chalk.red('Error fetching assignments:'), error.message);
     process.exit(1);
   }
 }
-
-module.exports = {
-  listAssignments
-};

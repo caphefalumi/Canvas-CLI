@@ -2,10 +2,11 @@
  * Grades command
  */
 
-const { makeCanvasRequest } = require('../lib/api-client');
-const { createReadlineInterface, askQuestion } = require('../lib/interactive');
+import { makeCanvasRequest } from '../lib/api-client.js';
+import { createReadlineInterface, askQuestion } from '../lib/interactive.js';
+import chalk from 'chalk';
 
-async function showGrades(courseId, options) {
+export async function showGrades(courseId, options) {
   const rl = createReadlineInterface();
   
   try {
@@ -18,7 +19,7 @@ async function showGrades(courseId, options) {
     }
     
   } catch (error) {
-    console.error('Error fetching grades:', error.message);
+    console.error(chalk.red('Error fetching grades: ') + error.message);
     process.exit(1);
   } finally {
     rl.close();
@@ -36,21 +37,23 @@ async function showCourseGrades(courseId, options, rl) {
   ]);
   
   if (!enrollments || enrollments.length === 0) {
-    console.log('No enrollment found for this course.');
+    console.log(chalk.red('Error: No enrollment found for this course.'));
     return;
   }
   
   const enrollment = enrollments[0];
   
-  console.log(`\n📚 Grades for: ${course.name}`);
-  console.log(`📊 Course Overview:`);
-  console.log(`   Current Score: ${enrollment.grades?.current_score || 'N/A'}%`);
-  console.log(`   Final Score: ${enrollment.grades?.final_score || 'N/A'}%`);
-  console.log(`   Current Grade: ${enrollment.grades?.current_grade || 'N/A'}`);
-  console.log(`   Final Grade: ${enrollment.grades?.final_grade || 'N/A'}`);
+  console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
+  console.log(chalk.cyan.bold('Grades for: ') + course.name);
+  console.log(chalk.cyan('-'.repeat(60)));
+  console.log(chalk.white('Course Overview:'));
+  console.log(chalk.white('   Current Score: ') + (enrollment.grades?.current_score || 'N/A') + '%');
+  console.log(chalk.white('   Final Score: ') + (enrollment.grades?.final_score || 'N/A') + '%');
+  console.log(chalk.white('   Current Grade: ') + (enrollment.grades?.current_grade || 'N/A'));
+  console.log(chalk.white('   Final Grade: ') + (enrollment.grades?.final_grade || 'N/A'));
   
   // Get assignment grades
-  console.log('\n📝 Loading assignment grades...');
+  console.log(chalk.cyan('\nLoading assignment grades...'));
   const assignments = await makeCanvasRequest('get', `courses/${courseId}/assignments`, [
     'include[]=submission',
     'order_by=due_at',
@@ -58,7 +61,7 @@ async function showCourseGrades(courseId, options, rl) {
   ]);
   
   if (!assignments || assignments.length === 0) {
-    console.log('No assignments found for this course.');
+    console.log(chalk.yellow('No assignments found for this course.'));
     return;
   }
   
@@ -74,15 +77,18 @@ async function showCourseGrades(courseId, options, rl) {
   });
   
   if (gradedAssignments.length === 0) {
-    console.log('No graded assignments found.');
+    console.log(chalk.yellow('No graded assignments found.'));
     return;
   }
   
-  console.log(`\n📋 Assignment Grades (${gradedAssignments.length} graded):`);
+  console.log(chalk.green('Success: Grades loaded.'));
+  console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
+  console.log(chalk.cyan.bold(`Assignment Grades (${gradedAssignments.length} graded):`));
+  console.log(chalk.cyan('-'.repeat(60)));
   gradedAssignments.forEach((assignment, index) => {
     const submission = assignment.submission;
     let gradeDisplay = '';
-    let gradeColor = '';
+    let gradeColor = chalk.white;
     
     if (submission.score !== null && submission.score !== undefined) {
       const score = submission.score % 1 === 0 ? Math.round(submission.score) : submission.score;
@@ -92,11 +98,11 @@ async function showCourseGrades(courseId, options, rl) {
       // Color coding based on percentage
       if (total > 0) {
         const percentage = (submission.score / total) * 100;
-        if (percentage >= 90) gradeColor = '\x1b[32m'; // Green
-        else if (percentage >= 80) gradeColor = '\x1b[36m'; // Cyan
-        else if (percentage >= 70) gradeColor = '\x1b[33m'; // Yellow
-        else if (percentage >= 60) gradeColor = '\x1b[35m'; // Magenta
-        else gradeColor = '\x1b[31m'; // Red
+        if (percentage >= 90) gradeColor = chalk.green;
+        else if (percentage >= 80) gradeColor = chalk.cyan;
+        else if (percentage >= 70) gradeColor = chalk.yellow;
+        else if (percentage >= 60) gradeColor = chalk.magenta;
+        else gradeColor = chalk.red;
       }
       
       // Add letter grade if available
@@ -105,25 +111,25 @@ async function showCourseGrades(courseId, options, rl) {
       }
     } else if (submission.excused) {
       gradeDisplay = 'Excused';
-      gradeColor = '\x1b[34m'; // Blue
+      gradeColor = chalk.blue;
     } else if (submission.missing) {
       gradeDisplay = 'Missing';
-      gradeColor = '\x1b[31m'; // Red
+      gradeColor = chalk.red;
     }
     
-    console.log(`${index + 1}. ${assignment.name}`);
-    console.log(`   Grade: ${gradeColor}${gradeDisplay}\x1b[0m`);
+    console.log(chalk.white(`${index + 1}. ${assignment.name}`));
+    console.log('   Grade: ' + gradeColor(gradeDisplay));
     
     if (submission.submitted_at) {
-      console.log(`   Submitted: ${new Date(submission.submitted_at).toLocaleDateString()}`);
+      console.log('   Submitted: ' + new Date(submission.submitted_at).toLocaleDateString());
     }
     
     if (assignment.due_at) {
-      console.log(`   Due: ${new Date(assignment.due_at).toLocaleDateString()}`);
+      console.log('   Due: ' + new Date(assignment.due_at).toLocaleDateString());
     }
     
     if (options.verbose && submission.grader_comments) {
-      console.log(`   Comments: ${submission.grader_comments}`);
+      console.log('   Comments: ' + submission.grader_comments);
     }
     
     console.log('');
@@ -138,45 +144,39 @@ async function showInteractiveGrades(options, rl) {
     'include[]=favorites',
     'include[]=total_scores'
   ]);
-  
+
   if (!courses || courses.length === 0) {
-    console.log('No courses found.');
+    console.log(chalk.red('Error: No courses found.'));
     return;
   }
-  
-  // Show courses overview first
-  console.log('📊 Grades Overview:\n');
-  
+
+  // Move declaration above first use
   const coursesWithGrades = courses.filter(course => 
     course.enrollments && course.enrollments.length > 0
   );
-  
-  console.log(`Found ${coursesWithGrades.length} enrolled course(s):\n`);
+
+  // Show courses overview first
+  console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
+  console.log(chalk.cyan.bold('Grades Overview'));
+  console.log(chalk.cyan('-'.repeat(60)));
+  console.log(chalk.white(`Found ${coursesWithGrades.length} enrolled course(s):\n`));
   
   coursesWithGrades.forEach((course, index) => {
-    const starIcon = course.is_favorite ? '⭐ ' : '';
-    console.log(`${index + 1}. ${starIcon}${course.name}`);
-    
-    if (course.enrollments && course.enrollments.length > 0) {
-      const enrollment = course.enrollments[0];
-      if (enrollment.grades) {
-        const currentScore = enrollment.grades.current_score;
-        const currentGrade = enrollment.grades.current_grade;
-        
-        // Color code the grade
-        let gradeColor = '\x1b[90m'; // Gray default
-        if (currentScore !== null && currentScore !== undefined) {
-          if (currentScore >= 90) gradeColor = '\x1b[32m'; // Green
-          else if (currentScore >= 80) gradeColor = '\x1b[36m'; // Cyan
-          else if (currentScore >= 70) gradeColor = '\x1b[33m'; // Yellow
-          else if (currentScore >= 60) gradeColor = '\x1b[35m'; // Magenta
-          else gradeColor = '\x1b[31m'; // Red
-        }
-        
-        console.log(`   Current: ${gradeColor}${currentScore || 'N/A'}% (${currentGrade || 'N/A'})\x1b[0m`);
-      } else {
-        console.log(`   Current: \x1b[90mGrades not available\x1b[0m`);
-      }
+    let gradeColor = chalk.gray;
+    const enrollment = course.enrollments[0];
+    const currentScore = enrollment.grades?.current_score;
+    if (currentScore !== null && currentScore !== undefined) {
+      if (currentScore >= 90) gradeColor = chalk.green;
+      else if (currentScore >= 80) gradeColor = chalk.cyan;
+      else if (currentScore >= 70) gradeColor = chalk.yellow;
+      else if (currentScore >= 60) gradeColor = chalk.magenta;
+      else gradeColor = chalk.red;
+    }
+    console.log(chalk.white(`${index + 1}. ${course.name}`));
+    if (enrollment.grades) {
+      console.log('   Current: ' + gradeColor(`${currentScore || 'N/A'}% (${enrollment.grades.current_grade || 'N/A'})`));
+    } else {
+      console.log('   Current: ' + chalk.gray('Grades not available'));
     }
     console.log('');
   });
@@ -193,13 +193,9 @@ async function showInteractiveGrades(options, rl) {
   
   if (courseIndex >= 0 && courseIndex < coursesWithGrades.length) {
     const selectedCourse = coursesWithGrades[courseIndex];
-    console.log(`\n✅ Selected: ${selectedCourse.name}`);
+    console.log(chalk.green(`\nSelected: ${selectedCourse.name}`));
     await showCourseGrades(selectedCourse.id, options, rl);
   } else {
-    console.log('Invalid course selection.');
+    console.log(chalk.red('Invalid course selection.'));
   }
 }
-
-module.exports = {
-  showGrades
-};

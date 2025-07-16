@@ -2,91 +2,84 @@
  * Submit command for interactive assignment submission
  */
 
-const fs = require('fs');
-const path = require('path');
-const { makeCanvasRequest } = require('../lib/api-client');
-const { createReadlineInterface, askQuestion, askConfirmation, selectFilesImproved } = require('../lib/interactive');
-const { uploadSingleFileToCanvas, submitAssignmentWithFiles } = require('../lib/file-upload');
+import fs from 'fs';
+import path from 'path';
+import { makeCanvasRequest } from '../lib/api-client.js';
+import { createReadlineInterface, askQuestion, askConfirmation, selectFilesImproved, pad } from '../lib/interactive.js';
+import { uploadSingleFileToCanvas, submitAssignmentWithFiles } from '../lib/file-upload.js';
+import chalk from 'chalk';
 
-async function submitAssignment(options) {
+export async function submitAssignment(options) {
   const rl = createReadlineInterface();
   
   try {
     let courseId = options.course;
     let assignmentId = options.assignment;
-    let filePath = options.file;
     let selectedCourse = null;
     let selectedAssignment = null;
     
     // Step 1: Select Course (if not provided)
-    if (!courseId) {
-      console.log('📚 Loading your starred courses...\n');
-      
+    while (!courseId) {
+      console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
+      console.log(chalk.cyan.bold('Loading your courses, please wait...'));
       const courses = await makeCanvasRequest('get', 'courses', [
         'enrollment_state=active',
         'include[]=favorites'
       ]);
-      
       if (!courses || courses.length === 0) {
-        console.log('No courses found.');
+        console.log(chalk.red('Error: No courses found.'));
         rl.close();
         return;
       }
-      
-      // Filter for starred courses by default
-      let starredCourses = courses.filter(course => course.is_favorite);
-      
-      if (starredCourses.length === 0) {
-        console.log('No starred courses found. Showing all enrolled courses...\n');
-        starredCourses = courses;
+      let selectableCourses = courses;
+      if (!options.all) {
+        selectableCourses = courses.filter(course => course.is_favorite);
+        if (selectableCourses.length === 0) {
+          console.log(chalk.red('Error: No starred courses found. Showing all enrolled courses...'));
+          selectableCourses = courses;
+        }
       }
-      
-      console.log('Select a course:');
-      starredCourses.forEach((course, index) => {
-        const starIcon = course.is_favorite ? '⭐ ' : '';
-        console.log(`${index + 1}. ${starIcon}${course.name}`);
+      console.log(chalk.cyan('-'.repeat(60)));
+      console.log(chalk.cyan.bold('Select a course:'));
+      selectableCourses.forEach((course, index) => {
+        console.log(pad(chalk.white((index + 1) + '. '), 5) + chalk.white(course.name));
       });
-      
-      const courseChoice = await askQuestion(rl, '\nEnter course number: ');
-      const courseIndex = parseInt(courseChoice) - 1;
-      
-      if (courseIndex < 0 || courseIndex >= starredCourses.length) {
-        console.log('Invalid course selection.');
+      const courseChoice = await askQuestion(rl, chalk.bold.cyan('\nEnter course number (or ".."/"back" to cancel): '));
+      if (courseChoice === '..' || courseChoice.toLowerCase() === 'back') {
         rl.close();
         return;
       }
-      
-      selectedCourse = starredCourses[courseIndex];
-      courseId = selectedCourse.id;
-      console.log(`✅ Selected: ${selectedCourse.name}\n`);
-    } else {
-      // Fetch course details if ID was provided
-      try {
-        selectedCourse = await makeCanvasRequest('get', `courses/${courseId}`);
-      } catch (error) {
-        console.log(`⚠️  Could not fetch course details for ID ${courseId}`);
-        selectedCourse = { id: courseId, name: `Course ${courseId}` };
+      if (!courseChoice.trim()) {
+        console.log(chalk.red('Error: No course selected. Exiting...'));
+        rl.close();
+        return;
       }
+      const courseIndex = parseInt(courseChoice) - 1;
+      if (courseIndex < 0 || courseIndex >= selectableCourses.length) {
+        console.log(chalk.red('Error: Invalid course selection.'));
+        continue;
+      }
+      selectedCourse = selectableCourses[courseIndex];
+      courseId = selectedCourse.id;
+      console.log(chalk.green(`Success: Selected ${selectedCourse.name}\n`));
     }
     
     // Step 2: Select Assignment (if not provided)
-    if (!assignmentId) {
-      console.log('📝 Loading assignments...\n');
-      
+    while (!assignmentId) {
+      console.log(chalk.cyan.bold('-'.repeat(60)));
+      console.log(chalk.cyan.bold('Loading assignments, please wait...'));
       const assignments = await makeCanvasRequest('get', `courses/${courseId}/assignments`, [
         'include[]=submission',
         'order_by=due_at',
         'per_page=100'
       ]);
-      
       if (!assignments || assignments.length === 0) {
-        console.log('No assignments found for this course.');
+        console.log(chalk.red('Error: No assignments found for this course.'));
         rl.close();
         return;
       }
-      
-      console.log(`Found ${assignments.length} assignment(s):\n`);
-      
+      console.log(chalk.cyan('-'.repeat(60)));
+      console.log(chalk.cyan.bold(`Found ${assignments.length} assignment(s):`));
       // Show summary of assignment statuses
       const submittedCount = assignments.filter(a => a.submission && a.submission.submitted_at).length;
       const pendingCount = assignments.length - submittedCount;
@@ -95,23 +88,15 @@ async function submitAssignment(options) {
         a.submission_types.includes('online_upload') && 
         a.workflow_state === 'published'
       ).length;
-      
-      console.log(`📊 Summary: ${submittedCount} submitted, ${pendingCount} pending, ${uploadableCount} accept file uploads\n`);
-      console.log('Select an assignment:');
+      console.log(chalk.yellow(`Summary: ${submittedCount} submitted, ${pendingCount} pending, ${uploadableCount} accept file uploads`));
+      console.log(chalk.cyan('-'.repeat(60)));
+      // Numbered menu
       assignments.forEach((assignment, index) => {
         const dueDate = assignment.due_at ? new Date(assignment.due_at).toLocaleDateString() : 'No due date';
-        const submitted = assignment.submission && assignment.submission.submitted_at ? '✅' : '❌';
-        
-        // Check if assignment accepts file uploads
-        const canSubmitFiles = assignment.submission_types && 
-                              assignment.submission_types.includes('online_upload') &&
-                              assignment.workflow_state === 'published';
-        const submissionIcon = canSubmitFiles ? '📤' : '📋';
-        
-        // Format grade like Canvas web interface
+        const submitted = assignment.submission && assignment.submission.submitted_at ? chalk.green('Submitted') : chalk.yellow('Not submitted');
+        const canSubmitFiles = assignment.submission_types && assignment.submission_types.includes('online_upload') && assignment.workflow_state === 'published';
         let gradeDisplay = '';
         const submission = assignment.submission;
-        
         if (submission && submission.score !== null && submission.score !== undefined) {
           const score = submission.score % 1 === 0 ? Math.round(submission.score) : submission.score;
           const total = assignment.points_possible || 0;
@@ -123,137 +108,118 @@ async function submitAssignment(options) {
         } else if (assignment.points_possible) {
           gradeDisplay = ` | Grade: –/${assignment.points_possible}`;
         }
-        
-        console.log(`${index + 1}. ${submissionIcon} ${assignment.name} ${submitted}`);
-        console.log(`   Due: ${dueDate} | Points: ${assignment.points_possible || 'N/A'}${gradeDisplay}`);
+        let line = pad(chalk.white((index + 1) + '. '), 5) + chalk.white(assignment.name) + chalk.gray(` (${dueDate})`) + ' ' + submitted + gradeDisplay;
         if (!canSubmitFiles) {
-          console.log(`   📋 Note: This assignment doesn't accept file uploads`);
+          line += chalk.red(' [No file uploads]');
         }
+        console.log(line);
       });
-        const assignmentIndex = parseInt(assignmentChoice) - 1;
-      
+      const assignmentChoice = await askQuestion(rl, chalk.bold.cyan('\nEnter assignment number (or ".."/"back" to re-select course): '));
+      if (assignmentChoice === '..' || assignmentChoice.toLowerCase() === 'back') {
+        courseId = null;
+        selectedCourse = null;
+        break;
+      }
+      if (!assignmentChoice.trim()) {
+        console.log(chalk.red('Error: No assignment selected. Exiting...'));
+        rl.close();
+        return;
+      }
+      const assignmentIndex = parseInt(assignmentChoice) - 1;
       if (assignmentIndex < 0 || assignmentIndex >= assignments.length) {
-        console.log('Invalid assignment selection.');
-        rl.close();
-        return;
+        console.log(chalk.red('Error: Invalid assignment selection.'));
+        continue;
       }
-      
       selectedAssignment = assignments[assignmentIndex];
-      
-      // Check if assignment accepts file uploads
-      if (!selectedAssignment.submission_types || 
-          !selectedAssignment.submission_types.includes('online_upload') ||
-          selectedAssignment.workflow_state !== 'published') {
-        console.log('❌ This assignment does not accept file uploads or is not published.');
+      if (!selectedAssignment.submission_types || !selectedAssignment.submission_types.includes('online_upload') || selectedAssignment.workflow_state !== 'published') {
+        console.log(chalk.red('Error: This assignment does not accept file uploads or is not published.'));
         rl.close();
         return;
       }
-      
       assignmentId = selectedAssignment.id;
-      console.log(`✅ Selected: ${selectedAssignment.name}\n`);
-      
-      // Check if already submitted
+      console.log(chalk.green(`Success: Selected ${selectedAssignment.name}\n`));
       if (selectedAssignment.submission && selectedAssignment.submission.submitted_at) {
-        const resubmit = await askConfirmation(rl, 'This assignment has already been submitted. Do you want to resubmit?', false);
+        const resubmit = await askConfirmation(rl, chalk.yellow('This assignment has already been submitted. Do you want to resubmit?'), false);
         if (!resubmit) {
-          console.log('Submission cancelled.');
+          console.log(chalk.yellow('Submission cancelled.'));
           rl.close();
           return;
         }
       }
-    } else {
-      // Fetch assignment details if ID was provided
-      try {
-        selectedAssignment = await makeCanvasRequest('get', `courses/${courseId}/assignments/${assignmentId}`);
-        console.log(`✅ Using assignment: ${selectedAssignment.name}\n`);
-      } catch (error) {
-        console.log(`⚠️  Could not fetch assignment details for ID ${assignmentId}`);
-        selectedAssignment = { id: assignmentId, name: `Assignment ${assignmentId}` };
-      }
-    }    // Step 3: Select Files (if not provided)
-    let filePaths = [];
-    if (filePath) {
-      filePaths = [filePath]; // Single file provided via option
-    } else {
-      console.log('\n📁 File Selection');
-      console.log(`📚 Course: ${selectedCourse.name}`);
-      console.log(`📝 Assignment: ${selectedAssignment.name}\n`);
-      
-      filePaths = await selectFilesImproved(rl);
     }
-    
+    // Step 3: Always list files in current directory and prompt user to select
+    let filePaths = [];
+    console.log(chalk.cyan.bold('-'.repeat(60)));
+    console.log(chalk.cyan.bold('File Selection'));
+    console.log(chalk.cyan('-'.repeat(60)));
+    console.log(chalk.white('Course: ') + chalk.bold(selectedCourse.name));
+    console.log(chalk.white('Assignment: ') + chalk.bold(selectedAssignment.name) + '\n');
+    filePaths = await selectFilesImproved(rl);
     // Validate all selected files exist
     const validFiles = [];
     for (const file of filePaths) {
       if (fs.existsSync(file)) {
         validFiles.push(file);
       } else {
-        console.log(`⚠️  File not found: ${file}`);
+        console.log(chalk.red('Error: File not found: ' + file));
       }
     }
-    
     if (validFiles.length === 0) {
-      console.log('No valid files selected.');
+      console.log(chalk.red('Error: No valid files selected.'));
       rl.close();
       return;
     }
-    
     filePaths = validFiles;
-
     // Step 4: Confirm and Submit
-    console.log('\n📋 Submission Summary:');
-    console.log(`📚 Course: ${selectedCourse?.name || 'Unknown Course'}`);
-    console.log(`📝 Assignment: ${selectedAssignment?.name || 'Unknown Assignment'}`);
-    console.log(`📁 Files (${filePaths.length}):`);
+    console.log(chalk.cyan.bold('-'.repeat(60)));
+    console.log(chalk.cyan.bold('Submission Summary:'));
+    console.log(chalk.cyan('-'.repeat(60)));
+    console.log(chalk.white('Course: ') + chalk.bold(selectedCourse?.name || 'Unknown Course'));
+    console.log(chalk.white('Assignment: ') + chalk.bold(selectedAssignment?.name || 'Unknown Assignment'));
+    console.log(chalk.white(`Files (${filePaths.length}):`));
     filePaths.forEach((file, index) => {
       const stats = fs.statSync(file);
       const size = (stats.size / 1024).toFixed(1) + ' KB';
-      console.log(`  ${index + 1}. ${path.basename(file)} (${size})`);
+      console.log(pad(chalk.white((index + 1) + '.'), 5) + pad(path.basename(file), 35) + chalk.gray(size));
     });
-    
-    const confirm = await askConfirmation(rl, '\nProceed with submission?', true);
+    const confirm = await askConfirmation(rl, chalk.bold.cyan('\nProceed with submission?'), true);
     if (!confirm) {
-      console.log('Submission cancelled.');
+      console.log(chalk.yellow('Submission cancelled.'));
       rl.close();
       return;
     }
-    
-    console.log('\n🚀 Uploading files...');
-    
+    console.log(chalk.cyan.bold('\nUploading files, please wait...'));
     // Upload all files
     const uploadedFileIds = [];
     for (let i = 0; i < filePaths.length; i++) {
       const currentFile = filePaths[i];
-      console.log(`📤 Uploading ${i + 1}/${filePaths.length}: ${path.basename(currentFile)}`);
-      
+      process.stdout.write(chalk.yellow(`Uploading ${i + 1}/${filePaths.length}: ${path.basename(currentFile)} ... `));
       try {
         const fileId = await uploadSingleFileToCanvas(courseId, assignmentId, currentFile);
         uploadedFileIds.push(fileId);
-        console.log(`✅ ${path.basename(currentFile)} uploaded successfully`);      } catch (error) {
-        console.error(`❌ Failed to upload ${currentFile}: ${error.message}`);
-        const continueUpload = await askConfirmation(rl, 'Continue with remaining files?', true);
+        console.log(chalk.green('Success: Uploaded.'));
+      } catch (error) {
+        console.error(chalk.red(`Error: Failed to upload ${currentFile}: ${error.message}`));
+        const continueUpload = await askConfirmation(rl, chalk.yellow('Continue with remaining files?'), true);
         if (!continueUpload) {
           break;
         }
       }
     }
-    
-    if (uploadedFileIds.length === 0) {
-      console.log('❌ No files were uploaded successfully.');
-      rl.close();
-      return;
+    // Submit assignment with uploaded files
+    if (uploadedFileIds.length > 0) {
+      try {
+        console.log(chalk.cyan.bold('Submitting assignment, please wait...'));
+        await submitAssignmentWithFiles(courseId, assignmentId, uploadedFileIds);
+        console.log(chalk.green('Success: Assignment submitted successfully!'));
+      } catch (error) {
+        console.error(chalk.red('Error: Failed to submit assignment: ' + error.message));
+      }
+    } else {
+      console.log(chalk.red('Error: No files were uploaded. Submission not completed.'));
     }
-    
-    // Submit the assignment with all uploaded files
-    console.log('\n📝 Submitting assignment...');
-    const submission = await submitAssignmentWithFiles(courseId, assignmentId, uploadedFileIds);
-    
-    console.log(`✅ Assignment submitted successfully with ${uploadedFileIds.length} file(s)!`);
-    console.log(`Submission ID: ${submission.id}`);
-    console.log(`Submitted at: ${new Date(submission.submitted_at).toLocaleString()}`);
-    
   } catch (error) {
-    console.error('❌ Submission failed:', error.message);
+    console.error(chalk.red('Error: Submission failed: ' + error.message));
   } finally {
     rl.close();
   }
@@ -379,7 +345,3 @@ async function selectSingleFileFromList(rl, files) {
     return [manualFile];
   }
 }
-
-module.exports = {
-  submitAssignment
-};

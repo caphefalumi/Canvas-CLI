@@ -7,18 +7,15 @@
  * @version 1.0.0
  */
 
-const { Command } = require('commander');
-
-// Import command handlers
-const { listCourses } = require('../commands/list');
-const { showConfig, setupConfig, editConfig, showConfigPath, deleteConfigFile } = require('../commands/config');
-const { listAssignments } = require('../commands/assignments');
-const { showGrades } = require('../commands/grades');
-const { showAnnouncements } = require('../commands/announcements');
-const { showProfile } = require('../commands/profile');
-const { submitAssignment } = require('../commands/submit');
-const { createQueryHandler } = require('../commands/api');
-const { requireConfig } = require('../lib/config-validator');
+import { Command } from 'commander';
+import { listCourses } from '../commands/list.js';
+import { showConfig, setupConfig, editConfig, showConfigPath, deleteConfigFile } from '../commands/config.js';
+import { listAssignments } from '../commands/assignments.js';
+import { showGrades } from '../commands/grades.js';
+import { showAnnouncements } from '../commands/announcements.js';
+import { showProfile } from '../commands/profile.js';
+import { submitAssignment } from '../commands/submit.js';
+import { requireConfig } from '../lib/config-validator.js';
 
 const program = new Command();
 
@@ -26,26 +23,7 @@ const program = new Command();
 program
   .name('canvas')
   .description('Canvas API Command Line Tool')
-  .version('1.3.2');
-
-// Raw API commands
-function createQueryCommand(method) {
-  return program
-    .command(method)
-    .alias(method === 'query' ? 'q' : method.charAt(0))
-    .argument('<endpoint>', 'Canvas API endpoint to query')
-    .option('-q, --query <param>', 'Query parameter (can be used multiple times)', [])
-    .option('-d, --data <data>', 'Request body (JSON string or @filename)')
-    .description(`${method.toUpperCase()} request to Canvas API`)
-    .action(requireConfig(createQueryHandler(method)));
-}
-
-// Create raw API commands
-createQueryCommand('get');
-createQueryCommand('post');
-createQueryCommand('put');
-createQueryCommand('delete');
-createQueryCommand('query');
+  .version('1.3.3');
 
 // List command to show enrolled courses
 program
@@ -54,42 +32,42 @@ program
   .description('List starred courses (default) or all courses with -a')
   .option('-a, --all', 'Show all enrolled courses instead of just starred ones')
   .option('-v, --verbose', 'Show detailed course information')
-  .action(requireConfig(listCourses));
+  .action((...args) => requireConfig(listCourses)(...args));
 
 // Config command with subcommands
 const configCommand = program
   .command('config')
   .description('Manage Canvas CLI configuration')
-  .action(showConfig); // Default action when no subcommand is provided
+  .action((...args) => showConfig(...args)); // Default action when no subcommand is provided
 
 configCommand
   .command('show')
   .alias('status')
   .description('Show current configuration')
-  .action(showConfig);
+  .action((...args) => showConfig(...args));
 
 configCommand
   .command('setup')
   .alias('init')
   .description('Interactive configuration setup')
-  .action(setupConfig);
+  .action((...args) => setupConfig(...args));
 
 configCommand
   .command('edit')
   .alias('update')
   .description('Edit existing configuration')
-  .action(editConfig);
+  .action((...args) => editConfig(...args));
 
 configCommand
   .command('path')
   .description('Show configuration file path')
-  .action(showConfigPath);
+  .action((...args) => showConfigPath(...args));
 
 configCommand
   .command('delete')
   .alias('remove')
   .description('Delete configuration file')
-  .action(deleteConfigFile);
+  .action((...args) => deleteConfigFile(...args));
 
 // Assignments command to show assignments for a course
 program
@@ -100,7 +78,7 @@ program
   .option('-v, --verbose', 'Show detailed assignment information')
   .option('-s, --submitted', 'Only show submitted assignments')
   .option('-p, --pending', 'Only show pending assignments')
-  .action(requireConfig(listAssignments));
+  .action((...args) => requireConfig(listAssignments)(...args));
 
 // Grades command to show grades
 program
@@ -109,16 +87,16 @@ program
   .description('Show grades for all courses or a specific course')
   .argument('[course-id]', 'Optional course ID to get grades for specific course')
   .option('-v, --verbose', 'Show detailed grade information')
-  .action(requireConfig(showGrades));
+  .action((...args) => requireConfig(showGrades)(...args));
 
 // Announcements command
 program
   .command('announcements')
-  .alias('announce')
-  .description('Show recent announcements')
+  .alias('an')
+  .description('Show recent announcements (interactive if no course-id)')
   .argument('[course-id]', 'Optional course ID to get announcements for specific course')
   .option('-l, --limit <number>', 'Number of announcements to show', '5')
-  .action(requireConfig(showAnnouncements));
+  .action((...args) => requireConfig(showAnnouncements)(...args));
 
 // Profile command
 program
@@ -126,17 +104,17 @@ program
   .alias('me')
   .description('Show current user profile information')
   .option('-v, --verbose', 'Show detailed profile information')
-  .action(requireConfig(showProfile));
+  .action((...args) => requireConfig(showProfile)(...args));
 
-// Submit command for interactive assignment submission
+// Submit command for interactive assignment submission (always list files in current directory)
 program
   .command('submit')
   .alias('sub')
   .description('Interactively submit one or multiple files to an assignment')
   .option('-c, --course <course-id>', 'Skip course selection and use specific course ID')
-  .option('-a, --assignment <assignment-id>', 'Skip assignment selection and use specific assignment ID')
   .option('-f, --file <file-path>', 'Skip file selection and use specific file path')
-  .action(requireConfig(submitAssignment));
+  .option('-a, --all', 'Show all enrolled courses instead of just starred ones')
+  .action((...args) => requireConfig(submitAssignment)(...args));
 
 // Parse command line arguments
 program.parse();
