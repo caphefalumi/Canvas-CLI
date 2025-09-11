@@ -5,7 +5,7 @@
 import fs from 'fs';
 import path from 'path';
 import { makeCanvasRequest } from '../lib/api-client.js';
-import { createReadlineInterface, askQuestion, askConfirmation, selectFilesImproved, pad } from '../lib/interactive.js';
+import { createReadlineInterface, askQuestion, askConfirmation, selectFilesImproved, selectFilesKeyboard, pad } from '../lib/interactive.js';
 import { uploadSingleFileToCanvas, submitAssignmentWithFiles } from '../lib/file-upload.js';
 import chalk from 'chalk';
 
@@ -137,9 +137,8 @@ export async function submitAssignment(options) {
         return;
       }
       assignmentId = selectedAssignment.id;
-      console.log(chalk.green(`Success: Selected ${selectedAssignment.name}\n`));
-      if (selectedAssignment.submission && selectedAssignment.submission.submitted_at) {
-        const resubmit = await askConfirmation(rl, chalk.yellow('This assignment has already been submitted. Do you want to resubmit?'), false);
+      console.log(chalk.green(`Success: Selected ${selectedAssignment.name}\n`));      if (selectedAssignment.submission && selectedAssignment.submission.submitted_at) {
+        const resubmit = await askConfirmation(rl, chalk.yellow('This assignment has already been submitted. Do you want to resubmit?'), true);
         if (!resubmit) {
           console.log(chalk.yellow('Submission cancelled.'));
           rl.close();
@@ -147,14 +146,33 @@ export async function submitAssignment(options) {
         }
       }
     }
-    // Step 3: Always list files in current directory and prompt user to select
+    
+    // Step 3: Choose file selection method and select files
     let filePaths = [];
     console.log(chalk.cyan.bold('-'.repeat(60)));
-    console.log(chalk.cyan.bold('File Selection'));
+    console.log(chalk.cyan.bold('File Selection Method'));
     console.log(chalk.cyan('-'.repeat(60)));
     console.log(chalk.white('Course: ') + chalk.bold(selectedCourse.name));
     console.log(chalk.white('Assignment: ') + chalk.bold(selectedAssignment.name) + '\n');
-    filePaths = await selectFilesImproved(rl);
+    
+    console.log(chalk.yellow('📁 Choose file selection method:'));
+    console.log(chalk.white('1. ') + chalk.cyan('Keyboard Navigator') + chalk.gray(' (NEW! - Use arrow keys and space bar to navigate and select)'));
+    console.log(chalk.white('2. ') + chalk.cyan('Text-based Selector') + chalk.gray(' (Traditional - Type filenames and wildcards)'));
+    console.log(chalk.white('3. ') + chalk.cyan('Basic Directory Listing') + chalk.gray(' (Simple - Select from numbered list)'));
+    
+    const selectorChoice = await askQuestion(rl, chalk.bold.cyan('\nChoose method (1-3): '));
+    
+    console.log(chalk.cyan.bold('-'.repeat(60)));
+    console.log(chalk.cyan.bold('File Selection'));
+    console.log(chalk.cyan('-'.repeat(60)));
+    
+    if (selectorChoice === '1') {
+      filePaths = await selectFilesKeyboard(rl);
+    } else if (selectorChoice === '2') {
+      filePaths = await selectFilesImproved(rl);
+    } else {
+      filePaths = await selectFiles(rl);
+    }
     // Validate all selected files exist
     const validFiles = [];
     for (const file of filePaths) {

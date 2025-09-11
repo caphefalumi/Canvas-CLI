@@ -1,6 +1,6 @@
 {
   "name": "canvaslms-cli",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "A command line tool for interacting with Canvas LMS API",
   "keywords": [
     "canvas",
@@ -38,8 +38,8 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node src/index.js",
+    "start": "bun src/index.js",
+    "dev": "bun src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "echo \"Add linting here\"",
     "format": "echo \"Add formatting here\"",
