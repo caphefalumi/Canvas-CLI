@@ -340,7 +340,7 @@ Choose method (1-3): `));
       }
     });
     const confirm = await askConfirmation(rl, chalk.bold.cyan(`
-Proceed with submission?`), true);
+Proceed with submission?`), true, { requireExplicit: true });
     if (!confirm) {
       console.log(chalk.yellow('Submission cancelled.'));
       return;
