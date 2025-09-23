@@ -23,7 +23,7 @@ const program = new Command();
 program
   .name('canvas')
   .description('Canvas API Command Line Tool')
-  .version('1.3.3');
+  .version('1.4.5');
 
 // List command to show enrolled courses
 program

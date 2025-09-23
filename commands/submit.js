@@ -358,11 +358,13 @@ Uploading files, please wait...`));
         uploadedFileIds.push(fileId);
         console.log(chalk.green('Success: Uploaded.'));
       } catch (error) {
-        console.error(chalk.red(`Error: Failed to upload ${currentFile}: ${error.message}`));
-        const continueUpload = await askConfirmation(rl, chalk.yellow('Continue with remaining files?'), true);
-        if (!continueUpload) {
-          break;
+        if (error && error.message && error.message.includes('filetype not allowed')) {
+          console.error(chalk.red(`Error: File type not allowed for ${currentFile}. Please select a permitted file type.`));
+        } else {
+          console.error(chalk.red(`Error: Failed to upload ${currentFile}: ${error.message}`));
         }
+        const continueUpload = await askConfirmation(rl, chalk.yellow('Continue with remaining files?'), true);
+        if (!continueUpload) break;
       }
     }
     // Submit assignment with uploaded files
