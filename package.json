@@ -1,6 +1,6 @@
 {
   "name": "canvaslms-cli",
-  "version": "1.4.3",
+  "version": "1.4.5",
   "description": "A command line tool for interacting with Canvas LMS API",
   "keywords": [
     "canvas",
@@ -49,6 +49,7 @@
   "dependencies": {
     "adm-zip": "^0.5.16",
     "axios": "^1.6.0",
+    "canvaslms-cli": "^1.4.4",
     "chalk": "^5.4.1",
     "commander": "^11.1.0",
     "form-data": "^4.0.3"

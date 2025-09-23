@@ -6,6 +6,7 @@
       "dependencies": {
         "adm-zip": "^0.5.16",
         "axios": "^1.6.0",
+        "canvaslms-cli": "^1.4.4",
         "chalk": "^5.4.1",
         "commander": "^11.1.0",
         "form-data": "^4.0.3",
@@ -64,6 +65,8 @@
     "call-bind-apply-helpers": ["call-bind-apply-helpers@1.0.2", "", { "dependencies": { "es-errors": "^1.3.0", "function-bind": "^1.1.2" } }, "sha512-Sp1ablJ0ivDkSzjcaJdxEunN5/XvksFJ2sMBFfq6x0ryhQV/2b/KwFe21cMpmHtPOSij8K99/wSfoEuTObmuMQ=="],
 
     "callsites": ["callsites@3.1.0", "", {}, "sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ=="],
+
+    "canvaslms-cli": ["canvaslms-cli@1.4.4", "", { "dependencies": { "adm-zip": "^0.5.16", "axios": "^1.6.0", "chalk": "^5.4.1", "commander": "^11.1.0", "form-data": "^4.0.3" }, "os": [ "linux", "win32", "darwin", ], "bin": { "canvaslms-cli": "src/index.js", "canvas": "src/index.js" } }, "sha512-6RMB+4bKDhcW421z1UDJT3crXLQ81h202iBnXlWt4g8wB5zJFDlEucTZkbj1HE5uGgGIh3hctBzyA7jRokrI9g=="],
 
     "chalk": ["chalk@5.4.1", "", {}, "sha512-zgVZuo2WcZgfUEmsn6eO3kINexW8RAE4maiQ8QNs8CtpPCSyMiYsULR3HQYkm3w8FIA3SberyMJMSldGsW+U3w=="],
 
