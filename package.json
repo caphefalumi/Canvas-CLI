@@ -1,6 +1,6 @@
 {
   "name": "canvaslms-cli",
-  "version": "1.4.5",
+  "version": "1.4.6",
   "description": "A command line tool for interacting with Canvas LMS API",
   "keywords": [
     "canvas",
@@ -25,21 +25,22 @@
     "email": "your.email@example.com"
   },
   "type": "module",
-  "main": "src/index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
-    "canvaslms-cli": "src/index.js",
-    "canvas": "src/index.js"
+    "canvaslms-cli": "dist/src/index.js",
+    "canvas": "dist/src/index.js"
   },
   "files": [
-    "src/",
-    "lib/",
-    "commands/",
+    "dist/",
     "README.md",
     "CHANGELOG.md"
   ],
   "scripts": {
-    "start": "bun src/index.js",
-    "dev": "bun src/index.js",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "bun dist/src/index.js",
+    "prepublishOnly": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "echo \"Add linting here\"",
     "format": "echo \"Add formatting here\"",
@@ -55,8 +56,12 @@
     "form-data": "^4.0.3"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "@types/minimatch": "^6.0.0",
+    "@types/node": "^24.10.0",
     "eslint": "^8.0.0",
-    "prettier": "^3.0.0"
+    "prettier": "^3.0.0",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=14.0.0",

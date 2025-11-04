@@ -5,8 +5,9 @@
 import { configExists, readConfig, saveConfig, deleteConfig, getConfigPath } from '../lib/config.js';
 import { createReadlineInterface, askQuestion } from '../lib/interactive.js';
 import chalk from 'chalk';
+import readline from 'readline';
 
-export async function showConfig() {
+export async function showConfig(): Promise<void> {
   console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
   console.log(chalk.cyan.bold('Canvas CLI Configuration'));
   console.log(chalk.cyan('-'.repeat(60)));
@@ -25,7 +26,8 @@ export async function showConfig() {
       console.log(chalk.white('  API Token: ') + (config.token ? config.token.substring(0, 10) + '...' : 'Not set'));
       console.log(chalk.white('  Created: ') + (config.createdAt ? new Date(config.createdAt).toLocaleString() : 'Unknown'));
       console.log(chalk.white('  Last Updated: ') + (config.lastUpdated ? new Date(config.lastUpdated).toLocaleString() : 'Unknown'));
-    }  } else {
+    }
+  } else {
     console.log(chalk.yellow('No configuration found.'));
   }
   
@@ -54,7 +56,7 @@ export async function showConfig() {
   console.log(chalk.white('  canvas grades            # Show grades for all courses'));
 }
 
-export async function setupConfig() {
+export async function setupConfig(): Promise<void> {
   const rl = createReadlineInterface();
   
   try {
@@ -62,12 +64,11 @@ export async function setupConfig() {
     console.log(chalk.cyan.bold('Canvas CLI Configuration Setup'));
     console.log(chalk.cyan('-'.repeat(60)));
     
-    // Check if config already exists
     if (configExists()) {
       const config = readConfig();
       console.log(chalk.yellow('Existing configuration found:'));
-      console.log(chalk.white('  Domain: ') + (config.domain || 'Not set'));
-      console.log(chalk.white('  Token: ') + (config.token ? 'Set (hidden)' : 'Not set') + '\n');
+      console.log(chalk.white('  Domain: ') + (config?.domain || 'Not set'));
+      console.log(chalk.white('  Token: ') + (config?.token ? 'Set (hidden)' : 'Not set') + '\n');
       
       const overwrite = await askQuestion(rl, 'Do you want to overwrite the existing configuration? (y/N): ');
       if (overwrite.toLowerCase() !== 'y' && overwrite.toLowerCase() !== 'yes') {
@@ -76,9 +77,9 @@ export async function setupConfig() {
       }
       console.log('');
     }
-      // Get Canvas domain
+    
     const currentConfig = readConfig();
-      let domain = await askQuestion(rl, `Enter your Canvas domain${currentConfig?.domain ? ` (${currentConfig.domain})` : ''}: `);
+    let domain = await askQuestion(rl, `Enter your Canvas domain${currentConfig?.domain ? ` (${currentConfig.domain})` : ''}: `);
     if (!domain && currentConfig?.domain) {
       domain = currentConfig.domain;
     }
@@ -88,7 +89,6 @@ export async function setupConfig() {
       return;
     }
     
-    // Validate and clean domain
     domain = domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
     if (!domain.includes('.')) {
       console.log(chalk.red('Invalid domain format. Please enter a valid domain (e.g., school.instructure.com)'));
@@ -96,7 +96,7 @@ export async function setupConfig() {
     }
     
     console.log(chalk.green(`Domain set to: ${domain}\n`));
-      // Get API token
+    
     const defaultToken = currentConfig?.token || '';
     let token = await askQuestion(rl, `Enter your Canvas API token${defaultToken ? ' (press Enter to keep current)' : ''}: `);
     if (!token && defaultToken) {
@@ -114,7 +114,6 @@ export async function setupConfig() {
       return;
     }
     
-    // Validate token format (basic check)
     if (token.length < 10) {
       console.log(chalk.red('API token seems too short. Please check your token.'));
       return;
@@ -122,7 +121,6 @@ export async function setupConfig() {
     
     console.log('Token received\n');
     
-    // Save configuration
     const saved = saveConfig(domain, token);
     if (saved) {
       console.log(chalk.green('Success: Configuration setup completed successfully!'));
@@ -133,13 +131,14 @@ export async function setupConfig() {
     }
     
   } catch (error) {
-    console.error(chalk.red('Error: Setup failed: ') + error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(chalk.red('Error: Setup failed: ') + errorMessage);
   } finally {
     rl.close();
   }
 }
 
-export async function editConfig() {
+export async function editConfig(): Promise<void> {
   const rl = createReadlineInterface();
   
   try {
@@ -149,6 +148,11 @@ export async function editConfig() {
     }
     
     const config = readConfig();
+    if (!config) {
+      console.log(chalk.red('Error reading configuration.'));
+      return;
+    }
+    
     console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
     console.log(chalk.cyan.bold('Edit Canvas CLI Configuration'));
     console.log(chalk.cyan('-'.repeat(60)));
@@ -156,11 +160,9 @@ export async function editConfig() {
     console.log(chalk.white('  Domain: ') + config.domain);
     console.log(chalk.white('  Token: ') + (config.token ? config.token.substring(0, 10) + '...' : 'Not set') + '\n');
     
-    // Edit domain
     const newDomain = await askQuestion(rl, `New Canvas domain (${config.domain}): `);
     const domain = newDomain.trim() || config.domain;
     
-    // Edit token
     const changeToken = await askQuestion(rl, 'Change API token? (y/N): ');
     let token = config.token;
     
@@ -171,7 +173,6 @@ export async function editConfig() {
       }
     }
     
-    // Confirm changes
     console.log(chalk.cyan('New configuration:'));
     console.log(chalk.white('  Domain: ') + domain);
     console.log(chalk.white('  Token: ') + (token ? token.substring(0, 10) + '...' : 'Not set'));
@@ -188,18 +189,19 @@ export async function editConfig() {
     }
     
   } catch (error) {
-    console.error(chalk.red('Error: Edit failed: ') + error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(chalk.red('Error: Edit failed: ') + errorMessage);
   } finally {
     rl.close();
   }
 }
 
-export function showConfigPath() {
+export function showConfigPath(): void {
   console.log(chalk.cyan('Configuration file location: ') + getConfigPath());
   console.log(chalk.white('Exists: ') + (configExists() ? chalk.green('Yes') : chalk.red('No')));
 }
 
-export function deleteConfigFile() {
+export function deleteConfigFile(): void {
   console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
   console.log(chalk.cyan.bold('Delete Configuration'));
   console.log(chalk.cyan('-'.repeat(60)));
@@ -211,22 +213,20 @@ export function deleteConfigFile() {
   
   const config = readConfig();
   console.log(chalk.cyan('Current configuration:'));
-  console.log(chalk.white('  Domain: ') + config.domain);
-  console.log(chalk.white('  Token: ') + (config.token ? 'Set (hidden)' : 'Not set'));
+  console.log(chalk.white('  Domain: ') + (config?.domain || 'N/A'));
+  console.log(chalk.white('  Token: ') + (config?.token ? 'Set (hidden)' : 'Not set'));
   console.log(chalk.white('  File: ') + getConfigPath() + '\n');
   
-  // For safety, require explicit confirmation
   console.log(chalk.red('This will permanently delete your Canvas CLI configuration.'));
   console.log(chalk.yellow('You will need to run "canvas config setup" again to use the CLI.'));
   console.log(chalk.cyan('\nTo confirm deletion, type: DELETE'));
   
-  const readline = require('readline');
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
   });
   
-  rl.question('Confirmation: ', (answer) => {
+  rl.question('Confirmation: ', (answer: string) => {
     if (answer === 'DELETE') {
       deleteConfig();
       console.log(chalk.green('Success: Configuration deleted.'));
@@ -236,4 +236,3 @@ export function deleteConfigFile() {
     rl.close();
   });
 }
-

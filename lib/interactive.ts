@@ -21,10 +21,21 @@ const KEYS = {
   TAB: '\t'
 };
 
+interface FileListItem {
+  type: 'file' | 'directory' | 'parent';
+  path: string;
+  name: string;
+  size?: number;
+}
+
+interface AskConfirmationOptions {
+  requireExplicit?: boolean;
+}
+
 /**
  * Create readline interface for user input
  */
-function createReadlineInterface() {
+export function createReadlineInterface(): readline.Interface {
   return readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -34,7 +45,7 @@ function createReadlineInterface() {
 /**
  * Prompt user for input
  */
-function askQuestion(rl, question) {
+export function askQuestion(rl: readline.Interface, question: string): Promise<string> {
   return new Promise((resolve) => {
     rl.question(question, (answer) => {
       resolve(answer.trim());
@@ -45,9 +56,14 @@ function askQuestion(rl, question) {
 /**
  * Ask a question with validation and retry logic
  */
-function askQuestionWithValidation(rl, question, validator, errorMessage) {
+export function askQuestionWithValidation(
+  rl: readline.Interface,
+  question: string,
+  validator: (input: string) => boolean,
+  errorMessage?: string
+): Promise<string> {
   return new Promise(async (resolve) => {
-    let answer;
+    let answer: string;
     do {
       answer = await askQuestion(rl, question);
       if (validator(answer)) {
@@ -63,7 +79,12 @@ function askQuestionWithValidation(rl, question, validator, errorMessage) {
 /**
  * Ask for confirmation (Y/n format)
  */
-async function askConfirmation(rl, question, defaultYes = true, options = {}) {
+export async function askConfirmation(
+  rl: readline.Interface,
+  question: string,
+  defaultYes: boolean = true,
+  options: AskConfirmationOptions = {}
+): Promise<boolean> {
   const { requireExplicit = false } = options;
   const suffix = defaultYes ? " (Y/n)" : " (y/N)";
 
@@ -100,7 +121,12 @@ async function askConfirmation(rl, question, defaultYes = true, options = {}) {
 /**
  * Select from a list of options
  */
-async function selectFromList(rl, items, displayProperty = null, allowCancel = true) {
+export async function selectFromList<T>(
+  rl: readline.Interface,
+  items: T[],
+  displayProperty: keyof T | null = null,
+  allowCancel: boolean = true
+): Promise<T | null> {
   if (!items || items.length === 0) {
     console.log('No items to select from.');
     return null;
@@ -108,7 +134,7 @@ async function selectFromList(rl, items, displayProperty = null, allowCancel = t
   
   console.log('\nSelect an option:');
   items.forEach((item, index) => {
-    const displayText = displayProperty ? item[displayProperty] : item;
+    const displayText = displayProperty && typeof item === 'object' && item !== null ? (item[displayProperty] as any) : item;
     console.log(`${index + 1}. ${displayText}`);
   });
   
@@ -116,7 +142,7 @@ async function selectFromList(rl, items, displayProperty = null, allowCancel = t
     console.log('0. Cancel');
   }
   
-  const validator = (input) => {
+  const validator = (input: string): boolean => {
     const num = parseInt(input);
     return !isNaN(num) && num >= (allowCancel ? 0 : 1) && num <= items.length;
   };
@@ -134,12 +160,13 @@ async function selectFromList(rl, items, displayProperty = null, allowCancel = t
     return null;
   }
   
-  return items[choice - 1];
+  const selectedItem = items[choice - 1];
+  return selectedItem !== undefined ? selectedItem : null;
 }
 
-function getSubfoldersRecursive(startDir = process.cwd()) {
-  const result = [];
-  function walk(dir) {
+export function getSubfoldersRecursive(startDir: string = process.cwd()): string[] {
+  const result: string[] = [];
+  function walk(dir: string): void {
     const items = fs.readdirSync(dir);
     for (const item of items) {
       const fullPath = path.join(dir, item);
@@ -163,11 +190,11 @@ function getSubfoldersRecursive(startDir = process.cwd()) {
 /**
  * Get files matching a wildcard pattern
  */
-function getFilesMatchingWildcard(pattern, currentDir = process.cwd()) {
+export function getFilesMatchingWildcard(pattern: string, currentDir: string = process.cwd()): string[] {
   try {
     // Gather all subfolders
     const allFolders = [currentDir, ...getSubfoldersRecursive(currentDir)];
-    let allFiles = [];
+    let allFiles: string[] = [];
     for (const folder of allFolders) {
       const files = fs.readdirSync(folder).map(f => path.join(folder, f));
       for (const filePath of files) {
@@ -179,7 +206,7 @@ function getFilesMatchingWildcard(pattern, currentDir = process.cwd()) {
       }
     }
     // Convert wildcard pattern to regex
-    let regexPattern;
+    let regexPattern: RegExp;
     let matchFullPath = false;
     if (pattern === '*' || (!pattern.includes('.') && !pattern.includes('/'))) {
       regexPattern = new RegExp('.*', 'i');
@@ -202,20 +229,21 @@ function getFilesMatchingWildcard(pattern, currentDir = process.cwd()) {
     });
     return matchedFiles;
   } catch (error) {
-    console.error(`Error reading directory: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`Error reading directory: ${errorMessage}`);
     return [];
   }
 }
 
-function pad(str, len) {
+export function pad(str: string, len: number): string {
   return str + ' '.repeat(Math.max(0, len - str.length));
 }
 
 /**
  * Enhanced file selection with wildcard support
  */
-async function selectFilesImproved(rl, currentDir = process.cwd()) {
-  const selectedFiles = [];
+export async function selectFilesImproved(rl: readline.Interface, currentDir: string = process.cwd()): Promise<string[]> {
+  const selectedFiles: string[] = [];
   console.log(chalk.cyan.bold('\n' + '-'.repeat(50)));
   console.log(chalk.cyan.bold('File Selection'));
   console.log(chalk.cyan('-'.repeat(50)));
@@ -246,8 +274,8 @@ async function selectFilesImproved(rl, currentDir = process.cwd()) {
       console.log(chalk.cyan('\n' + '-'.repeat(50)));
       console.log(chalk.cyan.bold('Browsing available files:'));
       try {
-        const listedFiles = [];
-        function walk(dir) {
+        const listedFiles: { path: string; rel: string; size: number; }[] = [];
+        function walk(dir: string): void {
           const entries = fs.readdirSync(dir);
           for (const entry of entries) {
             const fullPath = path.join(dir, entry);
@@ -273,7 +301,8 @@ async function selectFilesImproved(rl, currentDir = process.cwd()) {
           });
         }
       } catch (error) {
-        console.log(chalk.red('  Error reading directory: ' + error.message));
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.log(chalk.red('  Error reading directory: ' + errorMessage));
       }
       continue;
     }
@@ -291,7 +320,9 @@ async function selectFilesImproved(rl, currentDir = process.cwd()) {
         const removeIndex = parseInt(removeChoice) - 1;
         if (removeIndex >= 0 && removeIndex < selectedFiles.length) {
           const removedFile = selectedFiles.splice(removeIndex, 1)[0];
-          console.log(chalk.green(`Removed: ${path.basename(removedFile)}`));
+          if (removedFile) {
+            console.log(chalk.green(`Removed: ${path.basename(removedFile)}`));
+          }
         } else {
           console.log(chalk.red('Invalid selection.'));
         }
@@ -342,8 +373,8 @@ async function selectFilesImproved(rl, currentDir = process.cwd()) {
       if (stats.isDirectory()) {
         const baseName = path.basename(filePath);
         if (['node_modules', '.git', 'dist', 'build'].includes(baseName)) continue;
-        const collectedFiles = [];
-        function walk(dir) {
+        const collectedFiles: string[] = [];
+        function walk(dir: string): void {
           const entries = fs.readdirSync(dir);
           for (const entry of entries) {
             const fullPath = path.join(dir, entry);
@@ -388,7 +419,8 @@ async function selectFilesImproved(rl, currentDir = process.cwd()) {
       const size = (stats.size / 1024).toFixed(1) + ' KB';
       console.log(chalk.green(`Added: ${path.basename(filePath)} (${size})`));
     } catch (error) {
-      console.log(chalk.red('Error accessing file: ' + error.message));
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.log(chalk.red('Error accessing file: ' + errorMessage));
     }
   }
   return selectedFiles;
@@ -397,86 +429,24 @@ async function selectFilesImproved(rl, currentDir = process.cwd()) {
 /**
  * Interactive file selector with tree view and keyboard navigation
  */
-async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
-  const selectedFiles = [];
-  let expandedFolders = new Set();
-  let fileTree = [];
-  let fileList = [];
+export async function selectFilesKeyboard(_rl: readline.Interface, currentDir: string = process.cwd()): Promise<string[]> {
+  const selectedFiles: string[] = [];
+  let fileList: FileListItem[] = [];
   let currentPath = currentDir;
   let currentIndex = 0;
   let isNavigating = true;
-  let viewStartIndex = 0;
-  const maxVisibleItems = 15;
 
   // Setup raw mode for keyboard input
-  process.stdin.setRawMode(true);
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true);
+  }
   process.stdin.resume();
   process.stdin.setEncoding('utf8');
 
-  // Helper function to build file tree
-  function buildFileTree(basePath = currentDir, level = 0, parentPath = '') {
-    const tree = [];
-    try {
-      const entries = fs.readdirSync(basePath).sort();
-      
-      // Add directories first
-      entries.forEach(entry => {
-        const fullPath = path.join(basePath, entry);
-        const relativePath = parentPath ? `${parentPath}/${entry}` : entry;
-        
-        try {
-          const stats = fs.statSync(fullPath);
-          if (stats.isDirectory() && !['node_modules', '.git', 'dist', 'build', '.vscode', '.next'].includes(entry)) {
-            const isExpanded = expandedFolders.has(fullPath);
-            tree.push({
-              name: entry,
-              path: fullPath,
-              relativePath,
-              type: 'directory',
-              level,
-              isExpanded,
-              size: 0
-            });
-            
-            // If expanded, add children
-            if (isExpanded) {
-              const children = buildFileTree(fullPath, level + 1, relativePath);
-              tree.push(...children);
-            }
-          }
-        } catch (e) {}
-      });
-      
-      // Add files
-      entries.forEach(entry => {
-        const fullPath = path.join(basePath, entry);
-        const relativePath = parentPath ? `${parentPath}/${entry}` : entry;
-        
-        try {
-          const stats = fs.statSync(fullPath);
-          if (stats.isFile()) {
-            tree.push({
-              name: entry,
-              path: fullPath,
-              relativePath,
-              type: 'file',
-              level,
-              size: stats.size
-            });
-          }
-        } catch (e) {}
-      });
-    } catch (error) {
-      console.log(chalk.red('Error reading directory: ' + error.message));
-    }
-    
-    return tree;
-  }
-
   // Helper function to get file icon based on extension
-  function getFileIcon(filename) {
+  function getFileIcon(filename: string): string {
     const ext = path.extname(filename).toLowerCase();
-    const icons = {
+    const icons: Record<string, string> = {
       '.pdf': '📄', '.doc': '📄', '.docx': '📄', '.txt': '📄',
       '.js': '📜', '.ts': '📜', '.py': '📜', '.java': '📜', '.cpp': '📜', '.c': '📜',
       '.html': '🌐', '.css': '🎨', '.scss': '🎨', '.less': '🎨',
@@ -488,11 +458,12 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
     };
     return icons[ext] || '📋';
   }
+
   // Helper function to build breadcrumb path
-  function buildBreadcrumb() {
+  function buildBreadcrumb(): string {
     const relativePath = path.relative(currentDir, currentPath);
     if (!relativePath || relativePath === '.') {
-      return ''
+      return '';
     }
     
     const parts = relativePath.split(path.sep);
@@ -507,24 +478,17 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
   }
 
   // Helper to clear the terminal without dropping scrollback history
-  function safeClearScreen() {
+  function safeClearScreen(): void {
     if (!process.stdout.isTTY) return;
-
-    process.stdout.write('\x1b[H\x1b[J'); // Move cursor to top and clear below, not full console.clear()
-
+    process.stdout.write('\x1b[H\x1b[J');
   }
 
   // Helper function to display the file browser
-  function displayBrowser() {
+  function displayBrowser(): void {
     safeClearScreen();
-    // Keyboard controls - compact format at top
-    const controls = [
-    ];
-      // Breadcrumb path
     console.log(buildBreadcrumb());
     console.log(chalk.gray('💡 ↑↓←→:Navigate', 'Space:Select', 'Enter:Open/Finish', 'Backspace:Up', 'a:All', 'c:Clear', 'Esc:Exit'));
     
-    // Selected files count
     if (selectedFiles.length > 0) {
       const totalSize = selectedFiles.reduce((sum, file) => {
         try {
@@ -543,33 +507,28 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
       return;
     }
     
-    // Display files with tree-like structure
     displayFileTree();
   }
-  // Helper function to display files in a horizontal grid layout
-  function displayFileTree() {
+
+  function displayFileTree(): void {
     const terminalWidth = process.stdout.columns || 80;
-    const maxDisplayItems = 50; // Show more items in grid view
+    const maxDisplayItems = 50;
     const startIdx = Math.max(0, currentIndex - Math.floor(maxDisplayItems / 2));
     const endIdx = Math.min(fileList.length, startIdx + maxDisplayItems);
     const visibleItems = fileList.slice(startIdx, endIdx);
     
-    // Show scroll indicators
     if (startIdx > 0) {
       console.log(chalk.gray(`    ⋮ (${startIdx} items above)`));
     }
     
-    // Calculate item width and columns
     const maxItemWidth = Math.max(...visibleItems.map(item => {
       const name = path.basename(item.path);
-      return name.length + 4; // 2 for icon + space, 2 for padding
+      return name.length + 4;
     }));
     
-    const itemWidth = Math.min(Math.max(maxItemWidth, 15), 25); // Min 15, max 25 chars
-    const columnsPerRow = Math.floor((terminalWidth - 4) / itemWidth); // Leave 4 chars margin
-    const actualColumns = Math.max(1, columnsPerRow);
+    const itemWidth = Math.min(Math.max(maxItemWidth, 15), 25);
+    const columnsPerRow = Math.max(1, Math.floor((terminalWidth - 4) / itemWidth));
     
-    // Group items into rows
     let currentRow = '';
     let itemsInCurrentRow = 0;
     
@@ -578,7 +537,6 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
       const isSelected = selectedFiles.includes(item.path);
       const isCurrent = actualIndex === currentIndex;
       
-      // Get icon and name
       let icon = '';
       if (item.type === 'parent' || item.type === 'directory') {
         icon = '📁';
@@ -589,10 +547,8 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
       const name = item.name || path.basename(item.path);
       const truncatedName = name.length > itemWidth - 4 ? name.slice(0, itemWidth - 7) + '...' : name;
       
-      // Build item display string
       let itemDisplay = `${icon} ${truncatedName}`;
       
-      // Apply styling based on state
       if (isCurrent) {
         if (isSelected) {
           itemDisplay = chalk.black.bgGreen(` ${itemDisplay}`.padEnd(itemWidth - 1));
@@ -615,41 +571,36 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
         }
       }
       
-      // Add to current row
       currentRow += itemDisplay;
       itemsInCurrentRow++;
       
-      // Check if we need to start a new row
-      if (itemsInCurrentRow >= actualColumns || index === visibleItems.length - 1) {
+      if (itemsInCurrentRow >= columnsPerRow || index === visibleItems.length - 1) {
         console.log(currentRow);
         currentRow = '';
         itemsInCurrentRow = 0;
       }
     });
     
-    // Show scroll indicators
     if (endIdx < fileList.length) {
       console.log(chalk.gray(`    ⋮ (${fileList.length - endIdx} items below)`));
     }
     
     console.log();
     
-    // Show current position and navigation info
     if (fileList.length > maxDisplayItems) {
       console.log(chalk.gray(`Showing ${startIdx + 1}-${endIdx} of ${fileList.length} items | Current: ${currentIndex + 1}`));
     } else {
       console.log(chalk.gray(`${fileList.length} items | Current: ${currentIndex + 1}`));
     }
     
-    // Show grid info
-    console.log(chalk.gray(`Grid: ${actualColumns} columns × ${itemWidth} chars | Terminal width: ${terminalWidth}`));
+    const columnsInfo = `Grid: ${columnsPerRow} columns × ${itemWidth} chars | Terminal width: ${terminalWidth}`;
+    console.log(chalk.gray(columnsInfo));
   }
-  // Helper function to refresh file list for current directory
-  function refreshFileList() {
+
+  function refreshFileList(): void {
     fileList = [];
     
     try {
-      // Add parent directory option if not at root
       if (currentPath !== currentDir) {
         fileList.push({
           type: 'parent',
@@ -658,10 +609,8 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
         });
       }
       
-      // Read current directory
       const entries = fs.readdirSync(currentPath).sort();
       
-      // Add directories first
       entries.forEach(entry => {
         const fullPath = path.join(currentPath, entry);
         const stat = fs.statSync(fullPath);
@@ -675,7 +624,6 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
         }
       });
       
-      // Add files
       entries.forEach(entry => {
         const fullPath = path.join(currentPath, entry);
         const stat = fs.statSync(fullPath);
@@ -690,19 +638,17 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
         }
       });
       
-      // Ensure currentIndex is within bounds
       if (currentIndex >= fileList.length) {
         currentIndex = Math.max(0, fileList.length - 1);
       }
       
     } catch (error) {
-      console.error('Error reading directory:', error.message);
+      console.error('Error reading directory:', error);
       fileList = [];
     }
   }
-  // Main keyboard event handler
-  function handleKeyInput(key) {
-    // Calculate grid dimensions for navigation
+
+  function handleKeyInput(key: string): void {
     const terminalWidth = process.stdout.columns || 80;
     const maxItemWidth = Math.max(...fileList.map(item => {
       const name = path.basename(item.path);
@@ -713,7 +659,6 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
     
     switch (key) {
       case KEYS.UP:
-        // Move up by one row (subtract columns)
         const newUpIndex = currentIndex - columnsPerRow;
         if (newUpIndex >= 0) {
           currentIndex = newUpIndex;
@@ -722,7 +667,6 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
         break;
         
       case KEYS.DOWN:
-        // Move down by one row (add columns)
         const newDownIndex = currentIndex + columnsPerRow;
         if (newDownIndex < fileList.length) {
           currentIndex = newDownIndex;
@@ -731,7 +675,6 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
         break;
         
       case KEYS.LEFT:
-        // Move left by one column
         if (currentIndex > 0) {
           currentIndex--;
           displayBrowser();
@@ -739,7 +682,6 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
         break;
         
       case KEYS.RIGHT:
-        // Move right by one column
         if (currentIndex < fileList.length - 1) {
           currentIndex++;
           displayBrowser();
@@ -749,7 +691,7 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
       case KEYS.SPACE:
         if (fileList.length > 0) {
           const item = fileList[currentIndex];
-          if (item.type === 'file') {
+          if (item && item.type === 'file') {
             const index = selectedFiles.indexOf(item.path);
             if (index === -1) {
               selectedFiles.push(item.path);
@@ -759,23 +701,22 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
             displayBrowser();
           }
         }
-        break;         
+        break;
+        
       case KEYS.ENTER:
         if (fileList.length > 0) {
           const item = fileList[currentIndex];
-          if (item.type === 'parent' || item.type === 'directory') {
+          if (item && (item.type === 'parent' || item.type === 'directory')) {
             currentPath = item.path;
             currentIndex = 0;
             refreshFileList();
             displayBrowser();
           } else {
-            // When Enter is pressed on a file, finish selection if files are selected
             if (selectedFiles.length > 0) {
               isNavigating = false;
             }
           }
         } else {
-          // Finish selection when directory is empty and Enter is pressed (if files selected)
           if (selectedFiles.length > 0) {
             isNavigating = false;
           }
@@ -792,7 +733,6 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
         break;
         
       case 'a':
-        // Select all files in current directory
         let addedCount = 0;
         fileList.forEach(item => {
           if (item.type === 'file' && !selectedFiles.includes(item.path)) {
@@ -806,23 +746,20 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
         break;
 
       case 'c':
-        // Clear all selections
         selectedFiles.length = 0;
         displayBrowser();
         break;
         
       case KEYS.ESCAPE:
-      case '\u001b': // ESC key
+      case '\u001b':
         isNavigating = false;
         break;
         
       default:
-        // Ignore other keys
         break;
     }
   }
 
-  // Initialize and start navigation
   return new Promise((resolve) => {
     refreshFileList();
     displayBrowser();
@@ -836,12 +773,12 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
       handleKeyInput(keyStr);
       
       if (!isNavigating) {
-        // Cleanup
         process.stdin.removeAllListeners('data');
-        process.stdin.setRawMode(false);
+        if (process.stdin.isTTY) {
+          process.stdin.setRawMode(false);
+        }
         process.stdin.pause();
         
-        // Display completion summary
         if (selectedFiles.length > 0) {
           console.log(chalk.green.bold('✅ File Selection Complete!'));
           console.log(chalk.cyan('-'.repeat(50)));
@@ -874,16 +811,3 @@ async function selectFilesKeyboard(rl, currentDir = process.cwd()) {
     });
   });
 }
-
-export {
-  createReadlineInterface,
-  askQuestion,
-  askQuestionWithValidation,
-  askConfirmation,
-  selectFromList,
-  selectFilesImproved,
-  selectFilesKeyboard,
-  getFilesMatchingWildcard,
-  getSubfoldersRecursive,
-  pad
-};

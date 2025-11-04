@@ -4,27 +4,28 @@
 
 import { makeCanvasRequest } from '../lib/api-client.js';
 import chalk from 'chalk';
+import type { CanvasCourse, CanvasAssignment, ListAssignmentsOptions } from '../types/index.js';
 
-function pad(str, len) {
+function pad(str: string, len: number): string {
   return str + ' '.repeat(Math.max(0, len - str.length));
 }
 
-export async function listAssignments(courseId, options) {
+export async function listAssignments(courseId: string, options: ListAssignmentsOptions): Promise<void> {
   try {
-    const course = await makeCanvasRequest('get', `courses/${courseId}`);
+    const course = await makeCanvasRequest<CanvasCourse>('get', `courses/${courseId}`);
     const queryParams = ['include[]=submission', 'include[]=score_statistics', 'per_page=100'];
     console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
     console.log(chalk.cyan.bold('Loading assignments, please wait...'));
-    const assignments = await makeCanvasRequest('get', `courses/${courseId}/assignments`, queryParams);
+    const assignments = await makeCanvasRequest<CanvasAssignment[]>('get', `courses/${courseId}/assignments`, queryParams);
     if (!assignments || assignments.length === 0) {
       console.log(chalk.red(`Error: No assignments found for course: ${course.name}`));
       return;
     }
     let filteredAssignments = assignments;
     if (options.submitted) {
-      filteredAssignments = assignments.filter(a => a.submission && a.submission.submitted_at);
+      filteredAssignments = assignments.filter(a => (a as any).submission && (a as any).submission.submitted_at);
     } else if (options.pending) {
-      filteredAssignments = assignments.filter(a => !a.submission || !a.submission.submitted_at);
+      filteredAssignments = assignments.filter(a => !(a as any).submission || !(a as any).submission.submitted_at);
     }
     console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
     console.log(chalk.cyan.bold(`Assignments for: ${course.name}`));
@@ -42,7 +43,7 @@ export async function listAssignments(courseId, options) {
     );
     console.log(chalk.cyan('-'.repeat(60)));
     filteredAssignments.forEach((assignment, index) => {
-      const submission = assignment.submission;
+      const submission = (assignment as any).submission;
       let gradeDisplay = '';
       if (submission && submission.score !== null && submission.score !== undefined) {
         const score = submission.score % 1 === 0 ? Math.round(submission.score) : submission.score;
@@ -82,7 +83,7 @@ export async function listAssignments(courseId, options) {
           console.log('   ' + chalk.gray('Description: N/A'));
         }
         console.log('   ' + chalk.gray('Submission Types: ') + (assignment.submission_types?.join(', ') || 'N/A'));
-        console.log('   ' + chalk.gray('Published: ') + (assignment.published ? 'Yes' : 'No'));
+        console.log('   ' + chalk.gray('Published: ') + (assignment.has_submitted_submissions ? 'Yes' : 'No'));
         if (assignment.points_possible) {
           console.log('   ' + chalk.gray('Points Possible: ') + assignment.points_possible);
         }
@@ -94,7 +95,8 @@ export async function listAssignments(courseId, options) {
     });
     console.log(chalk.cyan('-'.repeat(60)));
   } catch (error) {
-    console.error(chalk.red('Error fetching assignments:'), error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(chalk.red('Error fetching assignments:'), errorMessage);
     process.exit(1);
   }
 }

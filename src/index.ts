@@ -4,7 +4,7 @@
  * Canvas CLI - A command line tool for interacting with Canvas API
  * 
  * @author Canvas CLI Team
- * @version 1.0.0
+ * @version 1.4.6
  */
 
 import { Command } from 'commander';
@@ -23,7 +23,7 @@ const program = new Command();
 program
   .name('canvas')
   .description('Canvas API Command Line Tool')
-  .version('1.4.5');
+  .version('1.4.6');
 
 // List command to show enrolled courses
 program
@@ -32,42 +32,42 @@ program
   .description('List starred courses (default) or all courses with -a')
   .option('-a, --all', 'Show all enrolled courses instead of just starred ones')
   .option('-v, --verbose', 'Show detailed course information')
-  .action((...args) => requireConfig(listCourses)(...args));
+  .action(requireConfig(listCourses));
 
 // Config command with subcommands
 const configCommand = program
   .command('config')
   .description('Manage Canvas CLI configuration')
-  .action((...args) => showConfig(...args)); // Default action when no subcommand is provided
+  .action(showConfig); // Default action when no subcommand is provided
 
 configCommand
   .command('show')
   .alias('status')
   .description('Show current configuration')
-  .action((...args) => showConfig(...args));
+  .action(showConfig);
 
 configCommand
   .command('setup')
   .alias('init')
   .description('Interactive configuration setup')
-  .action((...args) => setupConfig(...args));
+  .action(setupConfig);
 
 configCommand
   .command('edit')
   .alias('update')
   .description('Edit existing configuration')
-  .action((...args) => editConfig(...args));
+  .action(editConfig);
 
 configCommand
   .command('path')
   .description('Show configuration file path')
-  .action((...args) => showConfigPath(...args));
+  .action(showConfigPath);
 
 configCommand
   .command('delete')
   .alias('remove')
   .description('Delete configuration file')
-  .action((...args) => deleteConfigFile(...args));
+  .action(deleteConfigFile);
 
 // Assignments command to show assignments for a course
 program
@@ -78,7 +78,7 @@ program
   .option('-v, --verbose', 'Show detailed assignment information')
   .option('-s, --submitted', 'Only show submitted assignments')
   .option('-p, --pending', 'Only show pending assignments')
-  .action((...args) => requireConfig(listAssignments)(...args));
+  .action(requireConfig(listAssignments));
 
 // Grades command to show grades
 program
@@ -87,7 +87,7 @@ program
   .description('Show grades for all courses or a specific course')
   .argument('[course-id]', 'Optional course ID to get grades for specific course')
   .option('-v, --verbose', 'Show detailed grade information')
-  .action((...args) => requireConfig(showGrades)(...args));
+  .action(requireConfig(showGrades));
 
 // Announcements command
 program
@@ -96,7 +96,7 @@ program
   .description('Show recent announcements (interactive if no course-id)')
   .argument('[course-id]', 'Optional course ID to get announcements for specific course')
   .option('-l, --limit <number>', 'Number of announcements to show', '5')
-  .action((...args) => requireConfig(showAnnouncements)(...args));
+  .action(requireConfig(showAnnouncements));
 
 // Profile command
 program
@@ -104,7 +104,7 @@ program
   .alias('me')
   .description('Show current user profile information')
   .option('-v, --verbose', 'Show detailed profile information')
-  .action((...args) => requireConfig(showProfile)(...args));
+  .action(requireConfig(showProfile));
 
 // Submit command for interactive assignment submission (always list files in current directory)
 program
@@ -114,7 +114,7 @@ program
   .option('-c, --course <course-id>', 'Skip course selection and use specific course ID')
   .option('-f, --file <file-path>', 'Skip file selection and use specific file path')
   .option('-a, --all', 'Show all enrolled courses instead of just starred ones')
-  .action((...args) => requireConfig(submitAssignment)(...args));
+  .action(requireConfig(submitAssignment));
 
 // Parse command line arguments
 program.parse();

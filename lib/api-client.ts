@@ -2,14 +2,19 @@
  * Canvas API client
  */
 
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import fs from 'fs';
 import { getInstanceConfig } from './config.js';
 
 /**
  * Make Canvas API request
  */
-export async function makeCanvasRequest(method, endpoint, queryParams = [], requestBody = null) {
+export async function makeCanvasRequest<T = any>(
+  method: string,
+  endpoint: string,
+  queryParams: string[] = [],
+  requestBody: string | null = null
+): Promise<T> {
   const instanceConfig = getInstanceConfig();
   
   // Construct the full URL
@@ -17,7 +22,7 @@ export async function makeCanvasRequest(method, endpoint, queryParams = [], requ
   const url = `${baseUrl}/${endpoint.replace(/^\//, '')}`;
   
   // Setup request configuration
-  const config = {
+  const config: AxiosRequestConfig = {
     method: method.toLowerCase(),
     url: url,
     headers: {
@@ -30,8 +35,12 @@ export async function makeCanvasRequest(method, endpoint, queryParams = [], requ
   if (queryParams.length > 0) {
     const params = new URLSearchParams();
     queryParams.forEach(param => {
-      const [key, value] = param.split('=', 2);
-      params.append(key, value || '');
+      const parts = param.split('=', 2);
+      const key = parts[0];
+      const value = parts[1] ?? '';
+      if (key) {
+        params.append(key, value);
+      }
     });
     config.params = params;
   }
@@ -44,7 +53,8 @@ export async function makeCanvasRequest(method, endpoint, queryParams = [], requ
       try {
         config.data = JSON.parse(fs.readFileSync(filename, 'utf8'));
       } catch (error) {
-        console.error(`Error reading file ${filename}: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`Error reading file ${filename}: ${errorMessage}`);
         process.exit(1);
       }
     } else {
@@ -52,23 +62,25 @@ export async function makeCanvasRequest(method, endpoint, queryParams = [], requ
       try {
         config.data = JSON.parse(requestBody);
       } catch (error) {
-        console.error(`Error parsing JSON: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`Error parsing JSON: ${errorMessage}`);
         process.exit(1);
       }
     }
   }
   
   try {
-    const response = await axios(config);
+    const response = await axios<T>(config);
     return response.data;
   } catch (error) {
-    if (error.response) {
+    if (axios.isAxiosError(error) && error.response) {
       console.error(`HTTP ${error.response.status}: ${error.response.statusText}`);
       if (error.response.data) {
         console.error(JSON.stringify(error.response.data, null, 2));
       }
     } else {
-      console.error(`Request failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`Request failed: ${errorMessage}`);
     }
     process.exit(1);
   }

@@ -7,11 +7,16 @@ import path from 'path';
 import axios from 'axios';
 import FormData from 'form-data';
 import { makeCanvasRequest } from './api-client.js';
+import type { FileUploadResponse } from '../types/index.js';
 
 /**
  * Upload single file to Canvas and return the file ID
  */
-export async function uploadSingleFileToCanvas(courseId, assignmentId, filePath) {
+export async function uploadSingleFileToCanvas(
+  courseId: number,
+  assignmentId: number,
+  filePath: string
+): Promise<number> {
   try {
     // Check if file exists
     if (!fs.existsSync(filePath)) {
@@ -23,12 +28,16 @@ export async function uploadSingleFileToCanvas(courseId, assignmentId, filePath)
     
     // Step 1: Get upload URL from Canvas
     const uploadParams = [
-      `name=${encodeURIComponent(fileName)}`,
+      `name=${fileName}`,
       `size=${fileContent.length}`,
       'parent_folder_path=/assignments'
     ];
     
-    const uploadData = await makeCanvasRequest('post', `courses/${courseId}/assignments/${assignmentId}/submissions/self/files`, uploadParams);
+    const uploadData = await makeCanvasRequest<FileUploadResponse>(
+      'post',
+      `courses/${courseId}/assignments/${assignmentId}/submissions/self/files`,
+      uploadParams
+    );
     
     if (!uploadData.upload_url) {
       throw new Error('Failed to get upload URL from Canvas');
@@ -52,17 +61,26 @@ export async function uploadSingleFileToCanvas(courseId, assignmentId, filePath)
     });
 
     // Return the file ID for later submission
-    return uploadData.id || uploadResponse.data.id;
+    const fileId = (uploadData as any).id || uploadResponse.data.id;
+    if (typeof fileId !== 'number') {
+      throw new Error('Failed to get file ID from upload response');
+    }
+    return fileId;
     
   } catch (error) {
-    throw new Error(`Failed to upload file ${filePath}: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to upload file ${filePath}: ${errorMessage}`);
   }
 }
 
 /**
  * Submit assignment with uploaded files
  */
-export async function submitAssignmentWithFiles(courseId, assignmentId, fileIds) {
+export async function submitAssignmentWithFiles(
+  courseId: number,
+  assignmentId: number,
+  fileIds: number[]
+): Promise<any> {
   const submissionData = {
     submission: {
       submission_type: 'online_upload',
@@ -70,5 +88,10 @@ export async function submitAssignmentWithFiles(courseId, assignmentId, fileIds)
     }
   };
 
-  return await makeCanvasRequest('post', `courses/${courseId}/assignments/${assignmentId}/submissions`, [], JSON.stringify(submissionData));
+  return await makeCanvasRequest(
+    'post',
+    `courses/${courseId}/assignments/${assignmentId}/submissions`,
+    [],
+    JSON.stringify(submissionData)
+  );
 }
