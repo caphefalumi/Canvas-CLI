@@ -1,0 +1,30 @@
+# Source files
+src/
+lib/
+commands/
+types/
+*.ts
+tsconfig.json
+
+# Development files
+.vscode/
+.git/
+node_modules/
+*.log
+*.md
+!README.md
+!CHANGELOG.md
+
+# Test files
+test/
+tests/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+
+# Config files
+.eslintrc*
+.prettierrc*
+.editorconfig
+jest.config.*

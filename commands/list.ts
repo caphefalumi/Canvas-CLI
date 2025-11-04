@@ -4,14 +4,15 @@
 
 import { makeCanvasRequest } from '../lib/api-client.js';
 import chalk from 'chalk';
+import type { CanvasCourse, ListCoursesOptions } from '../types/index.js';
 
-function pad(str, len) {
+function pad(str: string, len: number): string {
   return str + ' '.repeat(Math.max(0, len - str.length));
 }
 
-export async function listCourses(options) {
+export async function listCourses(options: ListCoursesOptions): Promise<void> {
   try {
-    const queryParams = [];
+    const queryParams: string[] = [];
     queryParams.push('enrollment_state=active');
     queryParams.push('include[]=term');
     queryParams.push('include[]=course_progress');
@@ -20,7 +21,7 @@ export async function listCourses(options) {
 
     console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
     console.log(chalk.cyan.bold('Loading courses, please wait...'));
-    const courses = await makeCanvasRequest('get', 'courses', queryParams);
+    const courses = await makeCanvasRequest<CanvasCourse[]>('get', 'courses', queryParams);
     if (!courses || courses.length === 0) {
       console.log(chalk.red('Error: No courses found.'));
       return;
@@ -51,18 +52,19 @@ export async function listCourses(options) {
         pad(String(course.id), 10) +
         pad(course.course_code || 'N/A', 12);
       if (options.verbose) {
-        line += pad(course.term?.name || 'N/A', 15) +
-          pad(String(course.total_students || 'N/A'), 10) +
+        line += pad((course as any).term?.name || 'N/A', 15) +
+          pad(String((course as any).total_students || 'N/A'), 10) +
           pad(course.start_at ? new Date(course.start_at).toLocaleDateString() : 'N/A', 12) +
           pad(course.end_at ? new Date(course.end_at).toLocaleDateString() : 'N/A', 12) +
           pad(course.workflow_state, 12) +
-          pad(course.course_progress ? `${course.course_progress.requirement_completed_count || 0}/${course.course_progress.requirement_count || 0}` : 'N/A', 18);
+          pad((course as any).course_progress ? `${(course as any).course_progress.requirement_completed_count || 0}/${(course as any).course_progress.requirement_count || 0}` : 'N/A', 18);
       }
       console.log(line);
     });
     console.log(chalk.cyan('-'.repeat(60)));
   } catch (error) {
-    console.error(chalk.red('Error fetching courses:'), error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(chalk.red('Error fetching courses:'), errorMessage);
     process.exit(1);
   }
 }

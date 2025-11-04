@@ -1,13 +1,16 @@
 import { makeCanvasRequest } from '../lib/api-client.js';
 import { createReadlineInterface, askQuestion } from '../lib/interactive.js';
 import chalk from 'chalk';
+import type { CanvasCourse, CanvasAnnouncement, ShowAnnouncementsOptions } from '../types/index.js';
 
-export async function showAnnouncements(courseId, options) {
+export async function showAnnouncements(courseId?: string, options: ShowAnnouncementsOptions = {}): Promise<void> {
   const rl = createReadlineInterface();
   try {
-    if (!courseId) {
+    let selectedCourseId = courseId;
+    
+    if (!selectedCourseId) {
       console.log(chalk.cyan.bold('Loading your courses, please wait...\n'));
-      const courses = await makeCanvasRequest('get', 'courses', [
+      const courses = await makeCanvasRequest<CanvasCourse[]>('get', 'courses', [
         'enrollment_state=active',
         'include[]=favorites'
       ]);
@@ -38,15 +41,14 @@ export async function showAnnouncements(courseId, options) {
         return;
       }
 
-      courseId = courses[courseIndex].id;
-      console.log(chalk.green(`Success: Selected ${courses[courseIndex].name}\n`));
+      selectedCourseId = String(courses[courseIndex]?.id);
+      console.log(chalk.green(`Success: Selected ${courses[courseIndex]?.name}\n`));
     }
 
-    // ✅ FIXED: Use discussion_topics endpoint with only_announcements=true
-    const limit = parseInt(options.limit) || 5;
-    const announcements = await makeCanvasRequest(
+    const limit = parseInt(options.limit || '5') || 5;
+    const announcements = await makeCanvasRequest<CanvasAnnouncement[]>(
       'get',
-      `courses/${courseId}/discussion_topics`,
+      `courses/${selectedCourseId}/discussion_topics`,
       [`only_announcements=true`, `per_page=${limit}`]
     );
 
@@ -79,10 +81,10 @@ export async function showAnnouncements(courseId, options) {
     }
 
     const ann = announcements[annIndex];
-    const title = ann.title || 'Untitled';
-    const date = ann.posted_at ? new Date(ann.posted_at).toLocaleString() : 'N/A';
-    const author = ann.author?.display_name || 'Unknown';
-    const message = ann.message?.replace(/<[^>]+>/g, '').trim() || 'No content';
+    const title = ann?.title || 'Untitled';
+    const date = ann?.posted_at ? new Date(ann.posted_at).toLocaleString() : 'N/A';
+    const author = ann?.author?.display_name || 'Unknown';
+    const message = ann?.message?.replace(/<[^>]+>/g, '').trim() || 'No content';
 
     console.log('\n' + chalk.cyan('='.repeat(60)));
     console.log(chalk.bold('  ' + title));
@@ -94,9 +96,9 @@ export async function showAnnouncements(courseId, options) {
     console.log(chalk.cyan('='.repeat(60)) + '\n');
 
   } catch (error) {
-    console.error(chalk.red('Error: Failed to fetch announcements: ') + error.message);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(chalk.red('Error: Failed to fetch announcements: ') + errorMessage);
   } finally {
     rl.close();
   }
 }
-
