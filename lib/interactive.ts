@@ -421,14 +421,22 @@ export async function selectFilesImproved(rl: readline.Interface, currentDir: st
 /**
  * Interactive file selector with tree view and keyboard navigation
  */
-export async function selectFilesKeyboard(_rl: readline.Interface, currentDir: string = process.cwd()): Promise<string[]> {
+export async function selectFilesKeyboard(
+  _rl: readline.Interface,
+  currentDir: string = process.cwd(),
+  allowedExtensions?: string[]
+): Promise<string[]> {
   const selectedFiles: string[] = [];
   let fileList: FileListItem[] = [];
   let currentPath = currentDir;
   let currentIndex = 0;
   let isNavigating = true;
 
-  // Clean up any existing stdin listeners
+  // Save and temporarily remove any existing stdin 'data' listeners so
+  // the file browser can take exclusive control of keyboard input.
+  // We'll restore them before resolving so other parts of the app (readline,
+  // signal handlers, etc.) keep working after the browser exits.
+  const prevDataListeners = process.stdin.listeners('data').slice();
   process.stdin.removeAllListeners('data');
   
   // Setup raw mode for keyboard input
@@ -496,8 +504,18 @@ export async function selectFilesKeyboard(_rl: readline.Interface, currentDir: s
       lastDisplayLines++;
     }
     
-    console.log(chalk.gray('💡 ↑↓←→:Navigate', 'Space:Select', 'Enter:Open/Finish', 'Backspace:Up', 'a:All', 'c:Clear', 'Esc/Ctrl+C:Exit'));
+  console.log(chalk.gray('💡 ↑↓←→:Navigate', 'Space:Select', 'Enter:Open/Finish', 'Backspace:Up', 'a:All', 'c:Clear', 'r:Reload', 'Esc/Ctrl+C:Exit'));
     lastDisplayLines++;
+
+    // If the caller supplied allowedExtensions, show a visible hint so users
+    // know what file types they are allowed to submit for this assignment.
+    if (Array.isArray(allowedExtensions) && allowedExtensions.length > 0) {
+      const exts = allowedExtensions
+        .map(e => (e.startsWith('.') ? e.toLowerCase() : '.' + e.toLowerCase()))
+        .join(', ');
+      console.log(chalk.yellow(`Allowed: ${exts}`));
+      lastDisplayLines++;
+    }
     
     if (selectedFiles.length > 0) {
       const totalSize = selectedFiles.reduce((sum, file) => {
@@ -648,6 +666,16 @@ export async function selectFilesKeyboard(_rl: readline.Interface, currentDir: s
         const stat = fs.statSync(fullPath);
         
         if (stat.isFile()) {
+          // If allowedExtensions is provided, filter files that don't match
+          if (Array.isArray(allowedExtensions) && allowedExtensions.length > 0) {
+            const lowerExts = allowedExtensions.map(e => (e.startsWith('.') ? e.toLowerCase() : '.' + e.toLowerCase()));
+            const ext = path.extname(entry).toLowerCase();
+            if (!lowerExts.includes(ext)) {
+              // Skip files that are not allowed for this assignment
+              return;
+            }
+          }
+
           fileList.push({
             type: 'file',
             path: fullPath,
@@ -768,6 +796,12 @@ export async function selectFilesKeyboard(_rl: readline.Interface, currentDir: s
         selectedFiles.length = 0;
         displayBrowser();
         break;
+
+      case 'r':
+        // Reload the current directory listing
+        refreshFileList();
+        displayBrowser();
+        break;
         
       case KEYS.CTRL_C:
         selectedFiles.length = 0;
@@ -799,7 +833,17 @@ export async function selectFilesKeyboard(_rl: readline.Interface, currentDir: s
       if (!isNavigating) {
         // Clean up event listener and terminal state
         process.stdin.removeListener('data', onData);
-        
+
+        // Restore any previously attached 'data' listeners so callers like
+        // readline keep working as expected.
+        try {
+          for (const l of prevDataListeners) {
+            process.stdin.on('data', l as (...args: any[]) => void);
+          }
+        } catch {
+          // If restoration fails for any reason, continue with cleanup.
+        }
+
         // Always reset terminal to a safe state
         if (process.stdin.isTTY) {
           process.stdin.setRawMode(false);
