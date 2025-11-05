@@ -20,16 +20,8 @@ A modern, user-friendly command-line interface for Canvas LMS. Manage courses, a
 ### Global (Recommended)
 
 ```bash
-npm install -g canvas-cli-tool
+npm install -g canvaslms-cli
 ```
-
-### Local (Project)
-
-```bash
-npm install canvas-cli-tool
-```
-
----
 
 ## Setup
 

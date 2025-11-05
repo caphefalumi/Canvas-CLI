@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.0] - 2025-07-05
 
+## [1.4.7] - 2025-11-05
+
+### Added
+
+- Show allowed file extensions hint in the interactive file browser when an assignment restricts uploads (e.g. "Allowed: .pdf, .docx").
+- Add `r` keybinding to the file browser to reload the current directory listing without exiting the browser.
+
+### Fixed
+
+- Prevent the interactive file browser from permanently removing other stdin listeners: save and restore `process.stdin` 'data' listeners so `readline` and SIGINT (Ctrl+C) continue to work after browser exit.
+- Filter file browser listings by `allowed_extensions` when provided by the assignment so disallowed file types cannot be selected (prevents HTTP 400 "filetype not allowed").
+- Allow pressing Enter at the final "Proceed with submission? (Y/n)" prompt to accept the default (Yes) to match the shown prompt.
+
+### Notes
+
+- Bumped package version to 1.4.7.
+
+
 ### Added
 
 - **Enhanced File Selection UX**: Implemented continuous file selection until empty input
