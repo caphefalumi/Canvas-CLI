@@ -18,7 +18,8 @@ const KEYS = {
   ENTER: '\r',
   ESCAPE: '\u001b',
   BACKSPACE: '\u007f',
-  TAB: '\t'
+  TAB: '\t',
+  CTRL_C: '\u0003'
 };
 
 interface FileListItem {
@@ -32,9 +33,6 @@ interface AskConfirmationOptions {
   requireExplicit?: boolean;
 }
 
-/**
- * Create readline interface for user input
- */
 export function createReadlineInterface(): readline.Interface {
   return readline.createInterface({
     input: process.stdin,
@@ -42,9 +40,6 @@ export function createReadlineInterface(): readline.Interface {
   });
 }
 
-/**
- * Prompt user for input
- */
 export function askQuestion(rl: readline.Interface, question: string): Promise<string> {
   return new Promise((resolve) => {
     rl.question(question, (answer) => {
@@ -53,9 +48,6 @@ export function askQuestion(rl: readline.Interface, question: string): Promise<s
   });
 }
 
-/**
- * Ask a question with validation and retry logic
- */
 export function askQuestionWithValidation(
   rl: readline.Interface,
   question: string,
@@ -436,6 +428,9 @@ export async function selectFilesKeyboard(_rl: readline.Interface, currentDir: s
   let currentIndex = 0;
   let isNavigating = true;
 
+  // Clean up any existing stdin listeners
+  process.stdin.removeAllListeners('data');
+  
   // Setup raw mode for keyboard input
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(true);
@@ -477,17 +472,32 @@ export async function selectFilesKeyboard(_rl: readline.Interface, currentDir: s
     return chalk.yellow('📂 ') + breadcrumb;
   }
 
-  // Helper to clear the terminal without dropping scrollback history
-  function safeClearScreen(): void {
-    if (!process.stdout.isTTY) return;
-    process.stdout.write('\x1b[H\x1b[J');
+  // Track the number of lines displayed for clean updates
+  let lastDisplayLines = 0;
+
+  // Helper to clear previous browser display
+  function clearPreviousDisplay(): void {
+    if (!process.stdout.isTTY || lastDisplayLines === 0) return;
+    for (let i = 0; i < lastDisplayLines; i++) {
+      process.stdout.moveCursor(0, -1);
+      process.stdout.clearLine(0);
+    }
+    process.stdout.cursorTo(0);
   }
 
   // Helper function to display the file browser
   function displayBrowser(): void {
-    safeClearScreen();
-    console.log(buildBreadcrumb());
-    console.log(chalk.gray('💡 ↑↓←→:Navigate', 'Space:Select', 'Enter:Open/Finish', 'Backspace:Up', 'a:All', 'c:Clear', 'Esc:Exit'));
+    clearPreviousDisplay();
+    lastDisplayLines = 0;
+    
+    const breadcrumb = buildBreadcrumb();
+    if (breadcrumb) {
+      console.log(breadcrumb);
+      lastDisplayLines++;
+    }
+    
+    console.log(chalk.gray('💡 ↑↓←→:Navigate', 'Space:Select', 'Enter:Open/Finish', 'Backspace:Up', 'a:All', 'c:Clear', 'Esc/Ctrl+C:Exit'));
+    lastDisplayLines++;
     
     if (selectedFiles.length > 0) {
       const totalSize = selectedFiles.reduce((sum, file) => {
@@ -498,12 +508,15 @@ export async function selectFilesKeyboard(_rl: readline.Interface, currentDir: s
         }
       }, 0);
       console.log(chalk.green(`✅ Selected: ${selectedFiles.length} files (${(totalSize / 1024).toFixed(1)} KB) - Press Enter to finish`));
+      lastDisplayLines++;
     }
 
     console.log();
+    lastDisplayLines++;
 
     if (fileList.length === 0) {
       console.log(chalk.yellow('📭 No files found in this directory.'));
+      lastDisplayLines++;
       return;
     }
     
@@ -519,6 +532,7 @@ export async function selectFilesKeyboard(_rl: readline.Interface, currentDir: s
     
     if (startIdx > 0) {
       console.log(chalk.gray(`    ⋮ (${startIdx} items above)`));
+      lastDisplayLines++;
     }
     
     const maxItemWidth = Math.max(...visibleItems.map(item => {
@@ -576,6 +590,7 @@ export async function selectFilesKeyboard(_rl: readline.Interface, currentDir: s
       
       if (itemsInCurrentRow >= columnsPerRow || index === visibleItems.length - 1) {
         console.log(currentRow);
+        lastDisplayLines++;
         currentRow = '';
         itemsInCurrentRow = 0;
       }
@@ -583,18 +598,22 @@ export async function selectFilesKeyboard(_rl: readline.Interface, currentDir: s
     
     if (endIdx < fileList.length) {
       console.log(chalk.gray(`    ⋮ (${fileList.length - endIdx} items below)`));
+      lastDisplayLines++;
     }
     
     console.log();
+    lastDisplayLines++;
     
     if (fileList.length > maxDisplayItems) {
       console.log(chalk.gray(`Showing ${startIdx + 1}-${endIdx} of ${fileList.length} items | Current: ${currentIndex + 1}`));
     } else {
       console.log(chalk.gray(`${fileList.length} items | Current: ${currentIndex + 1}`));
     }
+    lastDisplayLines++;
     
     const columnsInfo = `Grid: ${columnsPerRow} columns × ${itemWidth} chars | Terminal width: ${terminalWidth}`;
     console.log(chalk.gray(columnsInfo));
+    lastDisplayLines++;
   }
 
   function refreshFileList(): void {
@@ -750,6 +769,11 @@ export async function selectFilesKeyboard(_rl: readline.Interface, currentDir: s
         displayBrowser();
         break;
         
+      case KEYS.CTRL_C:
+        selectedFiles.length = 0;
+        isNavigating = false;
+        break;
+        
       case KEYS.ESCAPE:
       case '\u001b':
         isNavigating = false;
@@ -764,7 +788,7 @@ export async function selectFilesKeyboard(_rl: readline.Interface, currentDir: s
     refreshFileList();
     displayBrowser();
     
-    process.stdin.on('data', (key) => {
+    const onData = (key: Buffer) => {
       if (!isNavigating) {
         return;
       }
@@ -773,12 +797,16 @@ export async function selectFilesKeyboard(_rl: readline.Interface, currentDir: s
       handleKeyInput(keyStr);
       
       if (!isNavigating) {
-        process.stdin.removeAllListeners('data');
+        // Clean up event listener and terminal state
+        process.stdin.removeListener('data', onData);
+        
+        // Always reset terminal to a safe state
         if (process.stdin.isTTY) {
           process.stdin.setRawMode(false);
         }
         process.stdin.pause();
-        
+
+        // Display final selection
         if (selectedFiles.length > 0) {
           console.log(chalk.green.bold('✅ File Selection Complete!'));
           console.log(chalk.cyan('-'.repeat(50)));
@@ -802,12 +830,12 @@ export async function selectFilesKeyboard(_rl: readline.Interface, currentDir: s
             }
           });
           console.log(chalk.cyan('-'.repeat(50)));
-        } else {
-          console.log(chalk.yellow('No files selected.'));
         }
         
         resolve(selectedFiles);
       }
-    });
+    };
+
+    process.stdin.on('data', onData);
   });
 }
