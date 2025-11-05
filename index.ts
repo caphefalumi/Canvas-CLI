@@ -5,7 +5,6 @@
  * for programmatic use by other applications.
  */
 
-// Re-export all library functions and types
 export * from './lib/api-client.js';
 export * from './lib/config.js';
 export * from './lib/config-validator.js';

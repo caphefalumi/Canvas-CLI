@@ -24,11 +24,9 @@ async function ensureConfig(): Promise<boolean> {
       process.exit(1);
     }
     
-    // Import and run setup (dynamic import to avoid circular dependency)
     const { setupConfig } = await import('../commands/config.js');
     await setupConfig();
     
-    // Check if setup was successful
     if (!configExists()) {
       console.log('\nConfiguration setup was not completed. Please run "canvas config setup" to try again.');
       process.exit(1);

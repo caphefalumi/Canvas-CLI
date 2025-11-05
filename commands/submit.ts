@@ -304,8 +304,10 @@ export async function submitAssignment(options: SubmitOptions): Promise<void> {
       rl.close();
       
       try {
-        // Launch file browser directly
-        filesToSubmit = await selectFilesKeyboard(rl, process.cwd());
+  // Launch file browser directly. If the assignment restricts allowed file
+  // extensions, pass them so the browser only shows allowed files.
+  const allowed = (selectedAssignment && (selectedAssignment as any).allowed_extensions) || undefined;
+  filesToSubmit = await selectFilesKeyboard(rl, process.cwd(), allowed);
 
         if (!filesToSubmit || filesToSubmit.length === 0) {
           console.log(chalk.yellow('No files selected. Submission cancelled.'));
@@ -348,11 +350,11 @@ export async function submitAssignment(options: SubmitOptions): Promise<void> {
       console.log(chalk.white(`  ${index + 1}. ${path.basename(file)}`));
     });
 
+    // Allow Enter to accept the default 'Yes' by not requiring explicit 'y'/'n'.
     const confirmed = await askConfirmation(
       rlForConfirm,
       chalk.bold.yellow('\n⚠️  Proceed with submission?'),
-      true,
-      { requireExplicit: true }
+      true
     );
 
     if (!confirmed) {
@@ -421,7 +423,7 @@ export async function submitAssignment(options: SubmitOptions): Promise<void> {
       );
 
       console.log(chalk.cyan('\n' + '='.repeat(60)));
-      console.log(chalk.green.bold('✅ SUCCESS! Assignment submitted successfully!'));
+      console.log(chalk.green.bold('Assignment submitted successfully!'));
       console.log(chalk.cyan('='.repeat(60)));
       console.log(chalk.white(`Course ID: ${courseId}`));
       console.log(chalk.white(`Assignment: ${selectedAssignment.name}`));
