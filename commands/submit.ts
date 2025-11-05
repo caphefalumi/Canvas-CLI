@@ -48,7 +48,7 @@ export async function submitAssignment(options: SubmitOptions): Promise<void> {
 
   try {
     console.log(chalk.cyan.bold('\n' + '='.repeat(60)));
-    console.log(chalk.cyan.bold('📤 Canvas Assignment Submission'));
+    console.log(chalk.cyan.bold('Canvas Assignment Submission'));
     console.log(chalk.cyan.bold('='.repeat(60)));
 
     // Step 1: Select Course
@@ -58,7 +58,7 @@ export async function submitAssignment(options: SubmitOptions): Promise<void> {
       console.log(chalk.green(`✓ Using specified course ID: ${courseId}`));
     } else {
       console.log(chalk.cyan('\n' + '-'.repeat(60)));
-      console.log(chalk.cyan.bold('Loading your courses, please wait...'));
+      console.log(chalk.cyan.bold('Step 1: Select Course'));
       console.log(chalk.cyan('-'.repeat(60)));
       
       const queryParams = options.all 
@@ -350,10 +350,9 @@ export async function submitAssignment(options: SubmitOptions): Promise<void> {
       console.log(chalk.white(`  ${index + 1}. ${path.basename(file)}`));
     });
 
-    // Allow Enter to accept the default 'Yes' by not requiring explicit 'y'/'n'.
     const confirmed = await askConfirmation(
       rlForConfirm,
-      chalk.bold.yellow('\n⚠️  Proceed with submission?'),
+      chalk.bold.yellow('\nProceed with submission?'),
       true
     );
 
