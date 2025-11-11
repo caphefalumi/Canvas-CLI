@@ -2,8 +2,6 @@
 
 A modern, user-friendly command-line interface for Canvas LMS. Manage courses, assignments, submissions, grades, and more directly from your terminal.
 
----
-
 ## Features
 
 - List and filter enrolled/starred courses
@@ -12,8 +10,6 @@ A modern, user-friendly command-line interface for Canvas LMS. Manage courses, a
 - View course announcements
 - Display user profile information
 - Direct access to Canvas API endpoints
-
----
 
 ## Installation
 
@@ -45,8 +41,6 @@ npm install -g canvaslms-cli
    CANVAS_DOMAIN=your-canvas-domain.instructure.com
    CANVAS_API_TOKEN=your-api-token
    ```
-
----
 
 ## Usage
 
@@ -84,15 +78,11 @@ canvas submit -f <file>              # Submit specific file
 | `profile`       | `me`      | Show user profile                 |
 | `config`        | -         | Show configuration                |
 
----
-
 ## Requirements
 
 - Node.js >= 14.x
 - npm >= 6.x
 - Valid Canvas LMS API token
-
----
 
 ## Contributing
 
@@ -103,8 +93,6 @@ canvas submit -f <file>              # Submit specific file
 5. Commit: `git commit -am 'Add feature'`
 6. Push: `git push origin feature-name`
 7. Submit a pull request
-
----
 
 ## License
 
