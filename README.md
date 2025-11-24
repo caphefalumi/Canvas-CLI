@@ -51,7 +51,8 @@ canvas config                # Configure domain and API token
 canvas list                  # List starred courses
 canvas list -a               # List all enrolled courses
 canvas assignments <course>  # List assignments for a course
-canvas grades                # Show grades for all courses
+canvas grades                # Interactive course selection + detailed grades
+canvas grades <course-id>    # Show detailed grades for specific course
 canvas announcements         # Show recent announcements
 canvas profile               # Show user profile
 canvas submit                # Interactive assignment submission
@@ -65,6 +66,35 @@ canvas submit -c <courseId>          # Specify course
 canvas submit -a <assignmentId>      # Specify assignment
 canvas submit -f <file>              # Submit specific file
 ```
+
+### Viewing Grades
+
+The grades command provides an enhanced, interactive experience:
+
+```bash
+canvas grades                        # Interactive course selection (active courses)
+canvas grades --all                  # Include inactive/completed courses
+canvas grades <course-id>            # Direct course grade view
+canvas grades --verbose              # Include enrollment details
+canvas grades -a -v                  # All courses with verbose details
+```
+
+**Features:**
+- 📊 Interactive course selection with grade summary table
+- 📝 Detailed assignment breakdown with scores
+- ✓ Color-coded status indicators (graded, pending, not done)
+- 📈 Calculated totals based on graded assignments
+- 📋 Table-formatted overall grades
+- 🔍 Option to view all courses including inactive ones
+- 🎯 Visual progress tracking with emojis
+
+**What you'll see:**
+1. List of all courses with current/final scores
+2. Select a course to view detailed breakdown
+3. Overall grades (Canvas official + calculated average)
+4. Complete assignment list with individual scores
+5. Points earned vs points possible
+6. Assignment submission status
 
 ## Command Reference
 

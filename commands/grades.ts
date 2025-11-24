@@ -3,71 +3,338 @@
  */
 
 import { makeCanvasRequest } from '../lib/api-client.js';
+import { createReadlineInterface, askQuestionWithValidation } from '../lib/interactive.js';
 import chalk from 'chalk';
-import type { CanvasCourse, CanvasEnrollment, ShowGradesOptions } from '../types/index.js';
+import type { CanvasCourse, CanvasEnrollment, CanvasAssignment, ShowGradesOptions } from '../types/index.js';
 
 function pad(str: string, len: number): string {
   return str + ' '.repeat(Math.max(0, len - str.length));
 }
 
+interface AssignmentGrade {
+  name: string;
+  id: number;
+  score: number | null;
+  pointsPossible: number;
+  submitted: boolean;
+  graded: boolean;
+  dueAt: string | null;
+}
+
+/**
+ * Show detailed grades for a specific course including assignment breakdown
+ */
+async function showDetailedGrades(courseId: string, options: ShowGradesOptions): Promise<void> {
+  console.log(chalk.cyan.bold('\n' + '='.repeat(80)));
+  console.log(chalk.cyan.bold('Loading course grades, please wait...'));
+  
+  const course = await makeCanvasRequest<CanvasCourse>('get', `courses/${courseId}`);
+  
+  const enrollmentParams = ['user_id=self', 'include[]=total_scores'];
+  // Always include all states to ensure we find the enrollment
+  enrollmentParams.push('state[]=active');
+  enrollmentParams.push('state[]=invited');
+  enrollmentParams.push('state[]=creation_pending');
+  enrollmentParams.push('state[]=rejected');
+  enrollmentParams.push('state[]=completed');
+  enrollmentParams.push('state[]=inactive');
+
+  const enrollments = await makeCanvasRequest<CanvasEnrollment[]>(
+    'get',
+    `courses/${courseId}/enrollments`,
+    enrollmentParams
+  );
+
+  if (!enrollments || enrollments.length === 0) {
+    console.log(chalk.red('Error: No enrollment found for this course.'));
+    return;
+  }
+
+  const enrollment = enrollments[0];
+  const grades = enrollment?.grades;
+
+  // Fetch assignments with submissions
+  const assignments = await makeCanvasRequest<CanvasAssignment[]>(
+    'get',
+    `courses/${courseId}/assignments`,
+    ['include[]=submission', 'per_page=100']
+  );
+
+  console.log(chalk.cyan.bold('\n' + '='.repeat(80)));
+  console.log(chalk.cyan.bold(`Course: ${course.name}`));
+  console.log(chalk.cyan('='.repeat(80)));
+
+  // Process assignments
+  const assignmentGrades: AssignmentGrade[] = assignments.map(assignment => {
+    const submission = (assignment as any).submission;
+    return {
+      name: assignment.name,
+      id: assignment.id,
+      score: submission?.score ?? null,
+      pointsPossible: assignment.points_possible || 0,
+      submitted: !!(submission && submission.submitted_at),
+      graded: submission?.score !== null && submission?.score !== undefined,
+      dueAt: assignment.due_at
+    };
+  });
+
+  // Calculate totals
+  const gradedAssignments = assignmentGrades.filter(a => a.graded);
+  const totalPointsEarned = gradedAssignments.reduce((sum, a) => sum + (a.score || 0), 0);
+  const totalPointsPossible = gradedAssignments.reduce((sum, a) => sum + a.pointsPossible, 0);
+  const calculatedPercentage = totalPointsPossible > 0 
+    ? ((totalPointsEarned / totalPointsPossible) * 100).toFixed(2)
+    : 'N/A';
+
+  // Display overall grades
+  console.log(chalk.white.bold('\n📈 Overall Grades:'));
+  
+  if (grades) {
+    const colMetric = 25;
+    const colScore = 20;
+    const colStatus = 15;
+
+    // Top border
+    console.log(
+      chalk.gray('┌─') + chalk.gray('─'.repeat(colMetric)) + chalk.gray('┬─') +
+      chalk.gray('─'.repeat(colScore)) + chalk.gray('┬─') +
+      chalk.gray('─'.repeat(colStatus)) + chalk.gray('┐')
+    );
+
+    // Header
+    console.log(
+      chalk.gray('│ ') + chalk.cyan.bold(pad('Metric', colMetric)) + chalk.gray('│ ') +
+      chalk.cyan.bold(pad('Score/Grade', colScore)) + chalk.gray('│ ') +
+      chalk.cyan.bold(pad('Status', colStatus)) + chalk.gray('│')
+    );
+
+    // Header separator
+    console.log(
+      chalk.gray('├─') + chalk.gray('─'.repeat(colMetric)) + chalk.gray('┼─') +
+      chalk.gray('─'.repeat(colScore)) + chalk.gray('┼─') +
+      chalk.gray('─'.repeat(colStatus)) + chalk.gray('┤')
+    );
+    
+    const currentScoreValue = grades.current_score !== null ? `${grades.current_score}%` : 'N/A';
+    const finalScoreValue = grades.final_score !== null ? `${grades.final_score}%` : 'N/A';
+    const currentGradeValue = grades.current_grade || 'N/A';
+    const finalGradeValue = grades.final_grade || 'N/A';
+    
+    console.log(
+      chalk.gray('│ ') + chalk.white(pad('Current Score', colMetric)) + chalk.gray('│ ') +
+      chalk.green.bold(pad(currentScoreValue, colScore)) + chalk.gray('│ ') +
+      chalk.gray(pad('Official', colStatus)) + chalk.gray('│')
+    );
+    console.log(
+      chalk.gray('│ ') + chalk.white(pad('Final Score', colMetric)) + chalk.gray('│ ') +
+      chalk.green.bold(pad(finalScoreValue, colScore)) + chalk.gray('│ ') +
+      chalk.gray(pad('Official', colStatus)) + chalk.gray('│')
+    );
+    console.log(
+      chalk.gray('│ ') + chalk.white(pad('Current Grade', colMetric)) + chalk.gray('│ ') +
+      chalk.green.bold(pad(currentGradeValue, colScore)) + chalk.gray('│ ') +
+      chalk.gray(pad('Letter Grade', colStatus)) + chalk.gray('│')
+    );
+    console.log(
+      chalk.gray('│ ') + chalk.white(pad('Final Grade', colMetric)) + chalk.gray('│ ') +
+      chalk.green.bold(pad(finalGradeValue, colScore)) + chalk.gray('│ ') +
+      chalk.gray(pad('Letter Grade', colStatus)) + chalk.gray('│')
+    );
+
+    // Bottom border
+    console.log(
+      chalk.gray('└─') + chalk.gray('─'.repeat(colMetric)) + chalk.gray('┴─') +
+      chalk.gray('─'.repeat(colScore)) + chalk.gray('┴─') +
+      chalk.gray('─'.repeat(colStatus)) + chalk.gray('┘')
+    );
+  } else {
+    console.log(chalk.yellow('  No official grades available from Canvas.'));
+  }
+
+  console.log();
+  
+  const colLabel = 30;
+  const colValue = 25;
+  const colNote = 20;
+
+  // Top border
+  console.log(
+    chalk.gray('┌─') + chalk.gray('─'.repeat(colLabel)) + chalk.gray('┬─') +
+    chalk.gray('─'.repeat(colValue)) + chalk.gray('┬─') +
+    chalk.gray('─'.repeat(colNote)) + chalk.gray('┐')
+  );
+
+  console.log(
+    chalk.gray('│ ') + chalk.white(pad('Graded Assignments', colLabel)) + chalk.gray('│ ') +
+    chalk.cyan.bold(pad(`${gradedAssignments.length} / ${assignments.length}`, colValue)) + chalk.gray('│ ') +
+    chalk.gray(pad('Completed', colNote)) + chalk.gray('│')
+  );
+  console.log(
+    chalk.gray('│ ') + chalk.white(pad('Points Earned', colLabel)) + chalk.gray('│ ') +
+    chalk.cyan.bold(pad(`${totalPointsEarned.toFixed(2)} / ${totalPointsPossible.toFixed(2)}`, colValue)) + chalk.gray('│ ') +
+    chalk.gray(pad('Total', colNote)) + chalk.gray('│')
+  );
+  console.log(
+    chalk.gray('│ ') + chalk.white(pad('Calculated Average', colLabel)) + chalk.gray('│ ') +
+    chalk.cyan.bold(pad(typeof calculatedPercentage === 'string' ? calculatedPercentage : `${calculatedPercentage}%`, colValue)) + chalk.gray('│ ') +
+    chalk.gray(pad('From Graded', colNote)) + chalk.gray('│')
+  );
+
+  // Bottom border
+  console.log(
+    chalk.gray('└─') + chalk.gray('─'.repeat(colLabel)) + chalk.gray('┴─') +
+    chalk.gray('─'.repeat(colValue)) + chalk.gray('┴─') +
+    chalk.gray('─'.repeat(colNote)) + chalk.gray('┘')
+  );
+
+  // Display assignment breakdown
+  console.log(chalk.white.bold('\nAssignment Breakdown:'));
+
+  if (assignments.length === 0) {
+    console.log(chalk.yellow('  No assignments found for this course.'));
+  } else {
+    const colNo = 6;
+    const colName = 40;
+    const colScore = 15;
+    const colStatus = 15;
+    const colDate = 20;
+
+    // Top border
+    console.log(
+      chalk.gray('┌─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┬─') +
+      chalk.gray('─'.repeat(colName)) + chalk.gray('┬─') +
+      chalk.gray('─'.repeat(colScore)) + chalk.gray('┬─') +
+      chalk.gray('─'.repeat(colStatus)) + chalk.gray('┬─') +
+      chalk.gray('─'.repeat(colDate)) + chalk.gray('┐')
+    );
+
+    // Header
+    console.log(
+      chalk.gray('│ ') + chalk.cyan.bold(pad('#', colNo)) + chalk.gray('│ ') +
+      chalk.cyan.bold(pad('Assignment Name', colName)) + chalk.gray('│ ') +
+      chalk.cyan.bold(pad('Score', colScore)) + chalk.gray('│ ') +
+      chalk.cyan.bold(pad('Status', colStatus)) + chalk.gray('│ ') +
+      chalk.cyan.bold(pad('Due Date', colDate)) + chalk.gray('│')
+    );
+
+    // Header separator
+    console.log(
+      chalk.gray('├─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┼─') +
+      chalk.gray('─'.repeat(colName)) + chalk.gray('┼─') +
+      chalk.gray('─'.repeat(colScore)) + chalk.gray('┼─') +
+      chalk.gray('─'.repeat(colStatus)) + chalk.gray('┼─') +
+      chalk.gray('─'.repeat(colDate)) + chalk.gray('┤')
+    );
+
+    assignmentGrades.forEach((assignment, index) => {
+      const scoreDisplay = assignment.graded
+        ? `${(assignment.score || 0).toFixed(1)}/${assignment.pointsPossible}`
+        : assignment.pointsPossible > 0
+        ? `–/${assignment.pointsPossible}`
+        : 'N/A';
+
+      let statusDisplay = '';
+      let statusColor = chalk.gray;
+      
+      if (assignment.graded) {
+        const percentage = assignment.pointsPossible > 0 
+          ? ((assignment.score || 0) / assignment.pointsPossible) * 100 
+          : 0;
+        
+        if (percentage >= 80) {
+          statusDisplay = '✓ Graded';
+          statusColor = chalk.green;
+        } else if (percentage >= 50) {
+          statusDisplay = '✓ Graded';
+          statusColor = chalk.yellow;
+        } else {
+          statusDisplay = '✓ Graded';
+          statusColor = chalk.red;
+        }
+      } else if (assignment.submitted) {
+        statusDisplay = 'Pending';
+        statusColor = chalk.cyan;
+      } else {
+        statusDisplay = 'Not Done';
+        statusColor = chalk.gray;
+      }
+
+      const dueDate = assignment.dueAt 
+        ? new Date(assignment.dueAt).toLocaleDateString()
+        : 'No due date';
+
+      // Truncate long assignment names
+      let displayName = assignment.name;
+      if (displayName.length > colName) {
+        displayName = displayName.substring(0, colName - 3) + '...';
+      }
+
+      console.log(
+        chalk.gray('│ ') + chalk.white(pad((index + 1).toString(), colNo)) + chalk.gray('│ ') +
+        chalk.white(pad(displayName, colName)) + chalk.gray('│ ') +
+        chalk.white(pad(scoreDisplay, colScore)) + chalk.gray('│ ') +
+        statusColor(pad(statusDisplay, colStatus)) + chalk.gray('│ ') +
+        chalk.gray(pad(dueDate, colDate)) + chalk.gray('│')
+      );
+    });
+    
+    // Bottom border
+    console.log(
+      chalk.gray('└─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┴─') +
+      chalk.gray('─'.repeat(colName)) + chalk.gray('┴─') +
+      chalk.gray('─'.repeat(colScore)) + chalk.gray('┴─') +
+      chalk.gray('─'.repeat(colStatus)) + chalk.gray('┴─') +
+      chalk.gray('─'.repeat(colDate)) + chalk.gray('┘')
+    );
+  }
+
+  console.log(chalk.cyan('='.repeat(80)));
+
+  if (options.verbose && enrollment) {
+    console.log(chalk.cyan('\n' + '-'.repeat(80)));
+    console.log(chalk.cyan.bold('Enrollment Details:'));
+    console.log(chalk.white('  Enrollment ID: ') + enrollment.id);
+    console.log(chalk.white('  Type:          ') + enrollment.type);
+    console.log(chalk.white('  State:         ') + enrollment.enrollment_state);
+    console.log(chalk.cyan('-'.repeat(80)));
+  }
+}
+
 export async function showGrades(courseId?: string, options: ShowGradesOptions = {}): Promise<void> {
   try {
     if (courseId) {
-      // Show grades for specific course
-      console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
-      console.log(chalk.cyan.bold('Loading course grades, please wait...'));
-      
-      const course = await makeCanvasRequest<CanvasCourse>('get', `courses/${courseId}`);
-      const enrollments = await makeCanvasRequest<CanvasEnrollment[]>(
-        'get',
-        `courses/${courseId}/enrollments`,
-        ['user_id=self', 'include[]=total_scores']
-      );
-
-      if (!enrollments || enrollments.length === 0) {
-        console.log(chalk.red('Error: No enrollment found for this course.'));
-        return;
-      }
-
-      const enrollment = enrollments[0];
-      const grades = enrollment?.grades;
-
-      console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
-      console.log(chalk.cyan.bold(`Grades for: ${course.name}`));
-      console.log(chalk.cyan('-'.repeat(60)));
-
-      if (grades) {
-        console.log(chalk.white('Current Score: ') + chalk.bold.green(grades.current_score !== null ? `${grades.current_score}%` : 'N/A'));
-        console.log(chalk.white('Final Score:   ') + chalk.bold.green(grades.final_score !== null ? `${grades.final_score}%` : 'N/A'));
-        console.log(chalk.white('Current Grade: ') + chalk.bold.green(grades.current_grade || 'N/A'));
-        console.log(chalk.white('Final Grade:   ') + chalk.bold.green(grades.final_grade || 'N/A'));
-      } else {
-        console.log(chalk.yellow('No grades available for this course.'));
-      }
-
-      if (options.verbose && enrollment) {
-        console.log(chalk.cyan('\n' + '-'.repeat(60)));
-        console.log(chalk.cyan.bold('Enrollment Details:'));
-        console.log(chalk.white('Enrollment ID: ') + enrollment.id);
-        console.log(chalk.white('Type:          ') + enrollment.type);
-        console.log(chalk.white('State:         ') + enrollment.enrollment_state);
-      }
-
-      console.log(chalk.cyan('-'.repeat(60)));
+      // Show grades for specific course with detailed assignment breakdown
+      await showDetailedGrades(courseId, options);
     } else {
-      // Show grades for all courses
-      console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
-      console.log(chalk.cyan.bold('Loading grades for all courses, please wait...'));
+      // Interactive course selection or show summary for all courses
+      const rl = createReadlineInterface();
       
-      const courses = await makeCanvasRequest<CanvasCourse[]>('get', 'courses', [
-        'enrollment_state=active',
+      console.log(chalk.cyan.bold('\n' + '='.repeat(80)));
+      console.log(chalk.cyan.bold('Loading your courses, please wait...'));
+      
+      // Determine enrollment state based on --all flag
+      const enrollmentState = options.all ? undefined : 'active';
+      const queryParams = [
         'include[]=total_scores',
         'include[]=current_grading_period_scores',
         'per_page=100'
-      ]);
+      ];
+      
+      if (enrollmentState) {
+        queryParams.unshift(`enrollment_state=${enrollmentState}`);
+      }
+      
+      let courses = await makeCanvasRequest<CanvasCourse[]>('get', 'courses', queryParams);
 
       if (!courses || courses.length === 0) {
-        console.log(chalk.red('Error: No courses found.'));
+        console.log(chalk.red('❌ Error: No courses found.'));
+        rl.close();
+        return;
+      }
+
+      if (courses.length === 0) {
+        console.log(chalk.red('❌ Error: No courses found (after filtering).'));
+        rl.close();
         return;
       }
 
@@ -79,10 +346,19 @@ export async function showGrades(courseId?: string, options: ShowGradesOptions =
 
       for (const course of courses) {
         try {
+          const enrollmentParams = ['user_id=self', 'include[]=total_scores'];
+          // Always include all states to ensure we find the enrollment
+          enrollmentParams.push('state[]=active');
+          enrollmentParams.push('state[]=invited');
+          enrollmentParams.push('state[]=creation_pending');
+          enrollmentParams.push('state[]=rejected');
+          enrollmentParams.push('state[]=completed');
+          enrollmentParams.push('state[]=inactive');
+
           const enrollments = await makeCanvasRequest<CanvasEnrollment[]>(
             'get',
             `courses/${course.id}/enrollments`,
-            ['user_id=self', 'include[]=total_scores']
+            enrollmentParams
           );
           coursesWithGrades.push({
             course,
@@ -96,33 +372,65 @@ export async function showGrades(courseId?: string, options: ShowGradesOptions =
         }
       }
 
-      console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
-      console.log(chalk.cyan.bold('Grades Summary'));
-      console.log(chalk.cyan('-'.repeat(60)));
-      console.log(chalk.green(`Success: Found ${coursesWithGrades.length} course(s).`));
-      console.log(chalk.cyan('-'.repeat(60)));
+      console.log(chalk.cyan.bold('\n' + '='.repeat(80)));
+      console.log(chalk.cyan.bold('Your Courses - Grades Summary'));
+      console.log(chalk.green(`✓ Found ${coursesWithGrades.length} course(s)${options.all ? ' (including inactive)' : ' (active only)'}.`));
 
-      // Column headers
-      if (options.verbose) {
-        console.log(
-          pad(chalk.bold('No.'), 5) +
-          pad(chalk.bold('Course Name'), 35) +
-          pad(chalk.bold('ID'), 10) +
-          pad(chalk.bold('Current Score'), 15) +
-          pad(chalk.bold('Final Score'), 15) +
-          pad(chalk.bold('Current Grade'), 15) +
-          pad(chalk.bold('Final Grade'), 15)
-        );
-      } else {
-        console.log(
-          pad(chalk.bold('No.'), 5) +
-          pad(chalk.bold('Course Name'), 35) +
-          pad(chalk.bold('ID'), 10) +
-          pad(chalk.bold('Current'), 12) +
-          pad(chalk.bold('Final'), 12)
-        );
-      }
-      console.log(chalk.cyan('-'.repeat(60)));
+      // Calculate dynamic column widths
+      const colNo = Math.max(3, coursesWithGrades.length.toString().length + 1);
+      
+      const colStatus = Math.max(8, ...coursesWithGrades.map(c => 
+        (c.course.workflow_state === 'available' ? 'Active' : (c.course.workflow_state || 'Inactive')).length
+      ));
+      
+      const colCurrent = Math.max(9, ...coursesWithGrades.map(c => {
+        const s = c.enrollment?.grades?.current_score;
+        return s !== null && s !== undefined ? `${s}%`.length : 3;
+      }));
+      
+      const colFinal = Math.max(7, ...coursesWithGrades.map(c => {
+        const s = c.enrollment?.grades?.final_score;
+        return s !== null && s !== undefined ? `${s}%`.length : 3;
+      }));
+
+      // Calculate remaining width for name
+      const terminalWidth = process.stdout.columns || 80;
+      // Borders overhead: │ # │ Name │ Status │ Current │ Final │
+      // 2 + colNo + 3 + colName + 3 + colStatus + 3 + colCurrent + 3 + colFinal + 2
+      // Total overhead = 16 chars + other cols
+      const overhead = 16; 
+      const availableForName = Math.max(20, terminalWidth - (colNo + colStatus + colCurrent + colFinal + overhead));
+      
+      // Calculate max name length from data (min 11 for header "Course Name")
+      const maxNameLength = Math.max(11, ...coursesWithGrades.map(c => c.course.name.length));
+      const colName = Math.min(maxNameLength, availableForName);
+
+      // Top border
+      console.log(
+        chalk.gray('┌─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┬─') +
+        chalk.gray('─'.repeat(colName)) + chalk.gray('┬─') +
+        chalk.gray('─'.repeat(colStatus)) + chalk.gray('┬─') +
+        chalk.gray('─'.repeat(colCurrent)) + chalk.gray('┬─') +
+        chalk.gray('─'.repeat(colFinal)) + chalk.gray('┐')
+      );
+
+      // Header
+      console.log(
+        chalk.gray('│ ') + chalk.cyan.bold(pad('#', colNo)) + chalk.gray('│ ') +
+        chalk.cyan.bold(pad('Course Name', colName)) + chalk.gray('│ ') +
+        chalk.cyan.bold(pad('Status', colStatus)) + chalk.gray('│ ') +
+        chalk.cyan.bold(pad('Current', colCurrent)) + chalk.gray('│ ') +
+        chalk.cyan.bold(pad('Final', colFinal)) + chalk.gray('│')
+      );
+
+      // Header separator
+      console.log(
+        chalk.gray('├─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┼─') +
+        chalk.gray('─'.repeat(colName)) + chalk.gray('┼─') +
+        chalk.gray('─'.repeat(colStatus)) + chalk.gray('┼─') +
+        chalk.gray('─'.repeat(colCurrent)) + chalk.gray('┼─') +
+        chalk.gray('─'.repeat(colFinal)) + chalk.gray('┤')
+      );
 
       coursesWithGrades.forEach((item, index) => {
         const { course, enrollment } = item;
@@ -134,31 +442,71 @@ export async function showGrades(courseId?: string, options: ShowGradesOptions =
         const finalScore = grades?.final_score !== null && grades?.final_score !== undefined
           ? `${grades.final_score}%`
           : 'N/A';
-        const currentGrade = grades?.current_grade || 'N/A';
-        const finalGrade = grades?.final_grade || 'N/A';
 
-        if (options.verbose) {
-          console.log(
-            pad(chalk.white((index + 1) + '.'), 5) +
-            pad(course.name, 35) +
-            pad(String(course.id), 10) +
-            pad(currentScore, 15) +
-            pad(finalScore, 15) +
-            pad(currentGrade, 15) +
-            pad(finalGrade, 15)
-          );
-        } else {
-          console.log(
-            pad(chalk.white((index + 1) + '.'), 5) +
-            pad(course.name, 35) +
-            pad(String(course.id), 10) +
-            pad(currentScore, 12) +
-            pad(finalScore, 12)
-          );
+        // Determine course status
+        const statusText = course.workflow_state === 'available' ? 'Active' : (course.workflow_state || 'Inactive');
+        const statusColored = course.workflow_state === 'available' ? 
+          chalk.green(pad(statusText, colStatus)) : 
+          chalk.gray(pad(statusText, colStatus));
+
+        // Truncate long course names
+        let displayName = course.name;
+        if (displayName.length > colName) {
+          displayName = displayName.substring(0, colName - 3) + '...';
         }
+
+        console.log(
+          chalk.gray('│ ') + chalk.white(pad((index + 1).toString(), colNo)) + chalk.gray('│ ') +
+          chalk.white(pad(displayName, colName)) + chalk.gray('│ ') +
+          statusColored + chalk.gray('│ ') +
+          chalk.white(pad(currentScore, colCurrent)) + chalk.gray('│ ') +
+          chalk.white(pad(finalScore, colFinal)) + chalk.gray('│')
+        );
       });
 
-      console.log(chalk.cyan('-'.repeat(60)));
+      // Bottom border
+      console.log(
+        chalk.gray('└─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┴─') +
+        chalk.gray('─'.repeat(colName)) + chalk.gray('┴─') +
+        chalk.gray('─'.repeat(colStatus)) + chalk.gray('┴─') +
+        chalk.gray('─'.repeat(colCurrent)) + chalk.gray('┴─') +
+        chalk.gray('─'.repeat(colFinal)) + chalk.gray('┘')
+      );
+
+      console.log(chalk.yellow('\n💡 Select a course to view detailed grades for all assignments.'));
+      console.log(chalk.gray('   Or enter 0 to exit.'));
+      if (!options.all) {
+        console.log(chalk.gray('   Tip: Use --all flag to include inactive courses.\n'));
+      } else {
+        console.log();
+      }
+
+      // Ask user to select a course
+      const validator = (input: string): boolean => {
+        const num = parseInt(input);
+        return !isNaN(num) && num >= 0 && num <= coursesWithGrades.length;
+      };
+
+      const answer = await askQuestionWithValidation(
+        rl,
+        chalk.bold.cyan('Enter course number: '),
+        validator,
+        chalk.red(`Please enter a number between 0 and ${coursesWithGrades.length}.`)
+      );
+
+      const choice = parseInt(answer);
+      rl.close();
+
+      if (choice === 0) {
+        console.log(chalk.yellow('\n👋 Exiting grades viewer.'));
+        return;
+      }
+
+      const selectedCourse = coursesWithGrades[choice - 1];
+      if (selectedCourse) {
+        console.log(chalk.green(`\n✓ Selected: ${selectedCourse.course.name}\n`));
+        await showDetailedGrades(String(selectedCourse.course.id), options);
+      }
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

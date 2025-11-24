@@ -10,13 +10,19 @@ export async function showAnnouncements(courseId?: string, options: ShowAnnounce
     
     if (!selectedCourseId) {
       console.log(chalk.cyan.bold('Loading your courses, please wait...\n'));
-      const courses = await makeCanvasRequest<CanvasCourse[]>('get', 'courses', [
+      let courses = await makeCanvasRequest<CanvasCourse[]>('get', 'courses', [
         'enrollment_state=active',
         'include[]=favorites'
       ]);
 
       if (!courses || courses.length === 0) {
         console.log(chalk.red('Error: No courses found.'));
+        rl.close();
+        return;
+      }
+
+      if (courses.length === 0) {
+        console.log(chalk.red('Error: No courses found (after filtering).'));
         rl.close();
         return;
       }

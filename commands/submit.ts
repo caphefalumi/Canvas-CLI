@@ -304,10 +304,10 @@ export async function submitAssignment(options: SubmitOptions): Promise<void> {
       rl.close();
       
       try {
-  // Launch file browser directly. If the assignment restricts allowed file
-  // extensions, pass them so the browser only shows allowed files.
-  const allowed = (selectedAssignment && (selectedAssignment as any).allowed_extensions) || undefined;
-  filesToSubmit = await selectFilesKeyboard(rl, process.cwd(), allowed);
+        // Launch file browser directly. If the assignment restricts allowed file
+        // extensions, pass them so the browser only shows allowed files.
+        const allowed = (selectedAssignment && (selectedAssignment as any).allowed_extensions) || undefined;
+        filesToSubmit = await selectFilesKeyboard(rl, process.cwd(), allowed);
 
         if (!filesToSubmit || filesToSubmit.length === 0) {
           console.log(chalk.yellow('No files selected. Submission cancelled.'));

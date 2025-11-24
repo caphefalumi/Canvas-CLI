@@ -71,6 +71,16 @@ export async function makeCanvasRequest<T = any>(
   
   try {
     const response = await axios<T>(config);
+
+    // Filter ORG- courses for Swinburne
+    if (instanceConfig.domain === 'swinburne.instructure.com' && 
+        endpoint === 'courses' && 
+        Array.isArray(response.data)) {
+      const data = response.data as any[];
+      const filteredData = data.filter((item: any) => !item.name || !item.name.startsWith('ORG-'));
+      return filteredData as unknown as T;
+    }
+
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {

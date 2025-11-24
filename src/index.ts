@@ -3,7 +3,7 @@
 /**
  * Canvas CLI - A command line tool for interacting with Canvas API
  * 
- * @author Canvas CLI Team
+ * @author caphefalumi
  * @version 1.4.6
  */
 
@@ -87,6 +87,7 @@ program
   .description('Show grades for all courses or a specific course')
   .argument('[course-id]', 'Optional course ID to get grades for specific course')
   .option('-v, --verbose', 'Show detailed grade information')
+  .option('-a, --all', 'Show all courses including inactive ones')
   .action(requireConfig(showGrades));
 
 // Announcements command

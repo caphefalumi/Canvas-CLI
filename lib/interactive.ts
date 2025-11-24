@@ -483,6 +483,23 @@ export async function selectFilesKeyboard(
   // Track the number of lines displayed for clean updates
   let lastDisplayLines = 0;
 
+  function stripAnsi(str: string): string {
+    // eslint-disable-next-line no-control-regex
+    return str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+  }
+
+  function printAndTrack(message: string = '') {
+    console.log(message);
+    const width = process.stdout.columns || 80;
+    const clean = stripAnsi(message);
+    const lines = clean.split('\n');
+    let count = 0;
+    for (const line of lines) {
+      count += Math.max(1, Math.ceil((line.length || 0.5) / width));
+    }
+    lastDisplayLines += count;
+  }
+
   // Helper to clear previous browser display
   function clearPreviousDisplay(): void {
     if (!process.stdout.isTTY || lastDisplayLines === 0) return;
@@ -500,12 +517,10 @@ export async function selectFilesKeyboard(
     
     const breadcrumb = buildBreadcrumb();
     if (breadcrumb) {
-      console.log(breadcrumb);
-      lastDisplayLines++;
+      printAndTrack(breadcrumb);
     }
     
-  console.log(chalk.gray('💡 ↑↓←→:Navigate', 'Space:Select', 'Enter:Open/Finish', 'Backspace:Up', 'a:All', 'c:Clear', 'r:Reload', 'Esc/Ctrl+C:Exit'));
-    lastDisplayLines++;
+    printAndTrack(chalk.gray('💡 ↑↓←→:Navigate Space:Select Enter:Open/Finish Backspace:Up a:All c:Clear r:Reload Esc/Ctrl+C:Exit'));
 
     // If the caller supplied allowedExtensions, show a visible hint so users
     // know what file types they are allowed to submit for this assignment.
@@ -513,8 +528,7 @@ export async function selectFilesKeyboard(
       const exts = allowedExtensions
         .map(e => (e.startsWith('.') ? e.toLowerCase() : '.' + e.toLowerCase()))
         .join(', ');
-      console.log(chalk.yellow(`Allowed: ${exts}`));
-      lastDisplayLines++;
+      printAndTrack(chalk.yellow(`Allowed: ${exts}`));
     }
     
     if (selectedFiles.length > 0) {
@@ -525,16 +539,13 @@ export async function selectFilesKeyboard(
           return sum;
         }
       }, 0);
-      console.log(chalk.green(`✅ Selected: ${selectedFiles.length} files (${(totalSize / 1024).toFixed(1)} KB) - Press Enter to finish`));
-      lastDisplayLines++;
+      printAndTrack(chalk.green(`✅ Selected: ${selectedFiles.length} files (${(totalSize / 1024).toFixed(1)} KB) - Press Enter to finish`));
     }
 
-    console.log();
-    lastDisplayLines++;
+    printAndTrack();
 
     if (fileList.length === 0) {
-      console.log(chalk.yellow('📭 No files found in this directory.'));
-      lastDisplayLines++;
+      printAndTrack(chalk.yellow('📭 No files found in this directory.'));
       return;
     }
     
@@ -549,8 +560,7 @@ export async function selectFilesKeyboard(
     const visibleItems = fileList.slice(startIdx, endIdx);
     
     if (startIdx > 0) {
-      console.log(chalk.gray(`    ⋮ (${startIdx} items above)`));
-      lastDisplayLines++;
+      printAndTrack(chalk.gray(`    ⋮ (${startIdx} items above)`));
     }
     
     const maxItemWidth = Math.max(...visibleItems.map(item => {
@@ -607,31 +617,26 @@ export async function selectFilesKeyboard(
       itemsInCurrentRow++;
       
       if (itemsInCurrentRow >= columnsPerRow || index === visibleItems.length - 1) {
-        console.log(currentRow);
-        lastDisplayLines++;
+        printAndTrack(currentRow);
         currentRow = '';
         itemsInCurrentRow = 0;
       }
     });
     
     if (endIdx < fileList.length) {
-      console.log(chalk.gray(`    ⋮ (${fileList.length - endIdx} items below)`));
-      lastDisplayLines++;
+      printAndTrack(chalk.gray(`    ⋮ (${fileList.length - endIdx} items below)`));
     }
     
-    console.log();
-    lastDisplayLines++;
+    printAndTrack();
     
     if (fileList.length > maxDisplayItems) {
-      console.log(chalk.gray(`Showing ${startIdx + 1}-${endIdx} of ${fileList.length} items | Current: ${currentIndex + 1}`));
+      printAndTrack(chalk.gray(`Showing ${startIdx + 1}-${endIdx} of ${fileList.length} items | Current: ${currentIndex + 1}`));
     } else {
-      console.log(chalk.gray(`${fileList.length} items | Current: ${currentIndex + 1}`));
+      printAndTrack(chalk.gray(`${fileList.length} items | Current: ${currentIndex + 1}`));
     }
-    lastDisplayLines++;
     
     const columnsInfo = `Grid: ${columnsPerRow} columns × ${itemWidth} chars | Terminal width: ${terminalWidth}`;
-    console.log(chalk.gray(columnsInfo));
-    lastDisplayLines++;
+    printAndTrack(chalk.gray(columnsInfo));
   }
 
   function refreshFileList(): void {

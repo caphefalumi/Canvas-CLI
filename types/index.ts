@@ -151,6 +151,7 @@ export interface ListAssignmentsOptions {
 
 export interface ShowGradesOptions {
   verbose?: boolean;
+  all?: boolean;
 }
 
 export interface ShowAnnouncementsOptions {
