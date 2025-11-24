@@ -36,32 +36,60 @@ export async function listCourses(options: ListCoursesOptions): Promise<void> {
     }
     const courseLabel = options.all ? 'enrolled course(s)' : 'starred course(s)';
     console.log(chalk.green(`Success: Found ${filteredCourses.length} ${courseLabel}.`));
-    console.log(chalk.cyan('-'.repeat(60)));
-    // Column headers
+    // Build a boxed table similar to grades/submit style
+    const total = filteredCourses.length;
+    const colNo = Math.max(3, String(total).length + 1);
+    const colID = Math.max(6, ...filteredCourses.map(c => String(c.id).length));
+
+    const terminalWidth = process.stdout.columns || 80;
+    // Overhead for borders and other columns: approximate fixed chars
+    // We have columns: #, Name, ID
+    const overhead = 12 + colNo + colID; // approximation for borders and paddings
+    const availableForName = Math.max(20, terminalWidth - overhead);
+
+    // Determine max course name length but don't exceed availableForName
+    const maxNameLength = Math.max(11, ...filteredCourses.map(c => c.name.length));
+    const colName = Math.min(maxNameLength, availableForName);
+
+    // Top border
     console.log(
-      pad(chalk.bold('No.'), 5) +
-      pad(chalk.bold('Course Name'), 35) +
-      pad(chalk.bold('ID'), 10) +
-      pad(chalk.bold('Code'), 12) +
-      (options.verbose ? pad(chalk.bold('Term'), 15) + pad(chalk.bold('Students'), 10) + pad(chalk.bold('Start'), 12) + pad(chalk.bold('End'), 12) + pad(chalk.bold('State'), 12) + pad(chalk.bold('Progress'), 18) : '')
+      chalk.gray('┌─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┬─') +
+      chalk.gray('─'.repeat(colName)) + chalk.gray('┬─') +
+      chalk.gray('─'.repeat(colID)) + chalk.gray('┐')
     );
-    console.log(chalk.cyan('-'.repeat(60)));
+
+    // Header
+    console.log(
+      chalk.gray('│ ') + chalk.cyan.bold(pad('#', colNo)) + chalk.gray('│ ') +
+      chalk.cyan.bold(pad('Course Name', colName)) + chalk.gray('│ ') +
+      chalk.cyan.bold(pad('ID', colID)) + chalk.gray('│')
+    );
+
+    // Header separator
+    console.log(
+      chalk.gray('├─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┼─') +
+      chalk.gray('─'.repeat(colName)) + chalk.gray('┼─') +
+      chalk.gray('─'.repeat(colID)) + chalk.gray('┤')
+    );
+
+    // Rows
     filteredCourses.forEach((course, index) => {
-      let line = pad(chalk.white((index + 1) + '.'), 5) +
-        pad(course.name, 35) +
-        pad(String(course.id), 10) +
-        pad(course.course_code || 'N/A', 12);
-      if (options.verbose) {
-        line += pad((course as any).term?.name || 'N/A', 15) +
-          pad(String((course as any).total_students || 'N/A'), 10) +
-          pad(course.start_at ? new Date(course.start_at).toLocaleDateString() : 'N/A', 12) +
-          pad(course.end_at ? new Date(course.end_at).toLocaleDateString() : 'N/A', 12) +
-          pad(course.workflow_state, 12) +
-          pad((course as any).course_progress ? `${(course as any).course_progress.requirement_completed_count || 0}/${(course as any).course_progress.requirement_count || 0}` : 'N/A', 18);
-      }
-      console.log(line);
+      let displayName = course.name;
+      if (displayName.length > colName) displayName = displayName.substring(0, colName - 3) + '...';
+
+      console.log(
+        chalk.gray('│ ') + chalk.white(pad((index + 1) + '.', colNo)) + chalk.gray('│ ') +
+        chalk.white(pad(displayName, colName)) + chalk.gray('│ ') +
+        chalk.white(pad(String(course.id), colID)) + chalk.gray('│')
+      );
     });
-    console.log(chalk.cyan('-'.repeat(60)));
+
+    // Bottom border
+    console.log(
+      chalk.gray('└─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┴─') +
+      chalk.gray('─'.repeat(colName)) + chalk.gray('┴─') +
+      chalk.gray('─'.repeat(colID)) + chalk.gray('┘')
+    );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(chalk.red('Error fetching courses:'), errorMessage);

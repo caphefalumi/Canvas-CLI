@@ -1,6 +1,6 @@
 {
   "name": "canvaslms-cli",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "A command line tool for interacting with Canvas LMS API",
   "keywords": [
     "canvas",
@@ -41,16 +41,11 @@
     "dev": "tsc --watch",
     "start": "bun dist/src/index.js",
     "prepublishOnly": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "echo \"Add linting here\"",
-    "format": "echo \"Add formatting here\"",
-    "setup": "powershell -ExecutionPolicy Bypass -File setup.ps1",
     "postinstall": "echo \"Canvas CLI installed successfully! Run 'canvas config' to get started.\""
   },
   "dependencies": {
     "adm-zip": "^0.5.16",
     "axios": "^1.6.0",
-    "canvaslms-cli": "^1.4.4",
     "chalk": "^5.4.1",
     "commander": "^11.1.0",
     "form-data": "^4.0.3"
