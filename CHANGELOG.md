@@ -5,7 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - 2025-07-05
+## [1.6.0] - 2025-12-06
+
+### Added
+
+- **Boxed Table Displays**: All commands now display data in modern boxed tables with rounded corners (╭╮╰╯)
+- **Adaptive Column Widths**: Tables dynamically adjust column widths based on terminal size for optimal display
+- **Color-Coded Grades**: Assignment grades are now color-coded (green: ≥80%, yellow: ≥50%, red: <50%)
+- **Announcements Table**: Course selection and announcements list now displayed in formatted tables
+- **Profile Table**: User profile information displayed in clean field/value table format
+
+### Changed
+
+- **Grades Display**: Merged official grades and calculated statistics into a unified table
+- **CLI Descriptions**: Shortened command descriptions for cleaner help output
+- **Config Output**: Simplified config help by removing redundant command examples
+- **Submit Command**: Updated to use rounded corners and adaptive widths
+- **Line Endings**: Standardized all files to LF line endings
+
+### Technical
+
+- Consistent use of box-drawing characters across all commands
+- Improved terminal width detection for responsive layouts
+
+## [1.5.1] - 2025-11-05
 
 ## [1.4.7] - 2025-11-05
 
