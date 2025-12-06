@@ -158,20 +158,26 @@ export async function submitAssignment(options: SubmitOptions): Promise<void> {
     console.log(chalk.white(`\nFound ${uploadableAssignments.length} assignment(s) that accept file uploads:`));
     console.log();
 
-    // Modern TUI table with box-drawing characters
-    const colNo = 5;
-    const colName = 40;
-    const colType = 18;
-    const colDate = 26;
-    const colStatus = 15;
+    // Calculate adaptive column widths based on terminal size
+    const termWidth = process.stdout.columns || 110;
+    const borderOverhead = 16; // borders and padding
+    const available = Math.max(90, termWidth - borderOverhead);
+    
+    // Proportional column distribution
+    const colNo = Math.max(3, Math.min(5, Math.floor(available * 0.04)));
+    const colType = Math.max(10, Math.min(18, Math.floor(available * 0.14)));
+    const colDate = Math.max(16, Math.min(26, Math.floor(available * 0.22)));
+    const colStatus = Math.max(12, Math.min(15, Math.floor(available * 0.12)));
+    // Name gets remaining space
+    const colName = Math.max(20, available - colNo - colType - colDate - colStatus);
 
-    // Top border
+    // Top border (rounded)
     console.log(
-      chalk.gray('┌─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┬─') +
+      chalk.gray('╭─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┬─') +
       chalk.gray('─'.repeat(colName)) + chalk.gray('┬─') +
       chalk.gray('─'.repeat(colType)) + chalk.gray('┬─') +
       chalk.gray('─'.repeat(colDate)) + chalk.gray('┬─') +
-      chalk.gray('─'.repeat(colStatus)) + chalk.gray('┐')
+      chalk.gray('─'.repeat(colStatus)) + chalk.gray('╮')
     );
 
     // Header
@@ -249,13 +255,13 @@ export async function submitAssignment(options: SubmitOptions): Promise<void> {
       );
     });
 
-    // Bottom border
+    // Bottom border (rounded)
     console.log(
-      chalk.gray('└─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┴─') +
+      chalk.gray('╰─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┴─') +
       chalk.gray('─'.repeat(colName)) + chalk.gray('┴─') +
       chalk.gray('─'.repeat(colType)) + chalk.gray('┴─') +
       chalk.gray('─'.repeat(colDate)) + chalk.gray('┴─') +
-      chalk.gray('─'.repeat(colStatus)) + chalk.gray('┘')
+      chalk.gray('─'.repeat(colStatus)) + chalk.gray('╯')
     );
 
     let selectedAssignment: CanvasAssignment | undefined;
@@ -430,13 +436,13 @@ export async function submitAssignment(options: SubmitOptions): Promise<void> {
       console.log(chalk.cyan('='.repeat(60)));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.log(chalk.red('\n❌ Error submitting assignment: ' + errorMessage));
+      console.log(chalk.red('\nError submitting assignment: ' + errorMessage));
       console.log(chalk.yellow('Files were uploaded but submission failed. You may need to complete the submission manually in Canvas.'));
     }
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(chalk.red('\n❌ Error during submission process:'), errorMessage);
+    console.error(chalk.red('\nError during submission process:'), errorMessage);
     process.exit(1);
   } finally {
     try {
