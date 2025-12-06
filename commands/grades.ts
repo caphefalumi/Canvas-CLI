@@ -86,35 +86,41 @@ async function showDetailedGrades(courseId: string, options: ShowGradesOptions):
     ? ((totalPointsEarned / totalPointsPossible) * 100).toFixed(2)
     : 'N/A';
 
-  // Display overall grades
-  console.log(chalk.white.bold('\n📈 Overall Grades:'));
+  // Display overall grades (merged table)
+  console.log(chalk.white.bold('\nOverall Grades:'));
+  
+  // Calculate adaptive column widths based on terminal size
+  const termWidth = process.stdout.columns || 80;
+  const borderOverhead = 10; // │ + │ + │ + │ and spaces
+  const availableWidth = Math.max(60, termWidth - borderOverhead);
+  
+  // Distribute width proportionally: Metric(35%), Score(40%), Status(25%)
+  const colMetric = Math.max(18, Math.floor(availableWidth * 0.35));
+  const colScore = Math.max(20, Math.floor(availableWidth * 0.40));
+  const colStatus = Math.max(12, availableWidth - colMetric - colScore);
+
+  // Top border (rounded)
+  console.log(
+    chalk.gray('╭─') + chalk.gray('─'.repeat(colMetric)) + chalk.gray('┬─') +
+    chalk.gray('─'.repeat(colScore)) + chalk.gray('┬─') +
+    chalk.gray('─'.repeat(colStatus)) + chalk.gray('╮')
+  );
+
+  // Header
+  console.log(
+    chalk.gray('│ ') + chalk.cyan.bold(pad('Metric', colMetric)) + chalk.gray('│ ') +
+    chalk.cyan.bold(pad('Score/Grade', colScore)) + chalk.gray('│ ') +
+    chalk.cyan.bold(pad('Status', colStatus)) + chalk.gray('│')
+  );
+
+  // Header separator
+  console.log(
+    chalk.gray('├─') + chalk.gray('─'.repeat(colMetric)) + chalk.gray('┼─') +
+    chalk.gray('─'.repeat(colScore)) + chalk.gray('┼─') +
+    chalk.gray('─'.repeat(colStatus)) + chalk.gray('┤')
+  );
   
   if (grades) {
-    const colMetric = 25;
-    const colScore = 20;
-    const colStatus = 15;
-
-    // Top border
-    console.log(
-      chalk.gray('┌─') + chalk.gray('─'.repeat(colMetric)) + chalk.gray('┬─') +
-      chalk.gray('─'.repeat(colScore)) + chalk.gray('┬─') +
-      chalk.gray('─'.repeat(colStatus)) + chalk.gray('┐')
-    );
-
-    // Header
-    console.log(
-      chalk.gray('│ ') + chalk.cyan.bold(pad('Metric', colMetric)) + chalk.gray('│ ') +
-      chalk.cyan.bold(pad('Score/Grade', colScore)) + chalk.gray('│ ') +
-      chalk.cyan.bold(pad('Status', colStatus)) + chalk.gray('│')
-    );
-
-    // Header separator
-    console.log(
-      chalk.gray('├─') + chalk.gray('─'.repeat(colMetric)) + chalk.gray('┼─') +
-      chalk.gray('─'.repeat(colScore)) + chalk.gray('┼─') +
-      chalk.gray('─'.repeat(colStatus)) + chalk.gray('┤')
-    );
-    
     const currentScoreValue = grades.current_score !== null ? `${grades.current_score}%` : 'N/A';
     const finalScoreValue = grades.final_score !== null ? `${grades.final_score}%` : 'N/A';
     const currentGradeValue = grades.current_grade || 'N/A';
@@ -140,51 +146,37 @@ async function showDetailedGrades(courseId: string, options: ShowGradesOptions):
       chalk.green.bold(pad(finalGradeValue, colScore)) + chalk.gray('│ ') +
       chalk.gray(pad('Letter Grade', colStatus)) + chalk.gray('│')
     );
-
-    // Bottom border
+    
+    // Add separator row between official grades and calculated stats
     console.log(
-      chalk.gray('└─') + chalk.gray('─'.repeat(colMetric)) + chalk.gray('┴─') +
-      chalk.gray('─'.repeat(colScore)) + chalk.gray('┴─') +
-      chalk.gray('─'.repeat(colStatus)) + chalk.gray('┘')
+      chalk.gray('├─') + chalk.gray('─'.repeat(colMetric)) + chalk.gray('┼─') +
+      chalk.gray('─'.repeat(colScore)) + chalk.gray('┼─') +
+      chalk.gray('─'.repeat(colStatus)) + chalk.gray('┤')
     );
-  } else {
-    console.log(chalk.yellow('  No official grades available from Canvas.'));
   }
 
-  console.log();
-  
-  const colLabel = 30;
-  const colValue = 25;
-  const colNote = 20;
-
-  // Top border
+  // Add calculated statistics rows
   console.log(
-    chalk.gray('┌─') + chalk.gray('─'.repeat(colLabel)) + chalk.gray('┬─') +
-    chalk.gray('─'.repeat(colValue)) + chalk.gray('┬─') +
-    chalk.gray('─'.repeat(colNote)) + chalk.gray('┐')
+    chalk.gray('│ ') + chalk.white(pad('Graded Assignments', colMetric)) + chalk.gray('│ ') +
+    chalk.cyan.bold(pad(`${gradedAssignments.length} / ${assignments.length}`, colScore)) + chalk.gray('│ ') +
+    chalk.gray(pad('Completed', colStatus)) + chalk.gray('│')
+  );
+  console.log(
+    chalk.gray('│ ') + chalk.white(pad('Points Earned', colMetric)) + chalk.gray('│ ') +
+    chalk.cyan.bold(pad(`${totalPointsEarned.toFixed(2)} / ${totalPointsPossible.toFixed(2)}`, colScore)) + chalk.gray('│ ') +
+    chalk.gray(pad('Total', colStatus)) + chalk.gray('│')
+  );
+  console.log(
+    chalk.gray('│ ') + chalk.white(pad('Calculated Average', colMetric)) + chalk.gray('│ ') +
+    chalk.cyan.bold(pad(typeof calculatedPercentage === 'string' ? calculatedPercentage : `${calculatedPercentage}%`, colScore)) + chalk.gray('│ ') +
+    chalk.gray(pad('From Graded', colStatus)) + chalk.gray('│')
   );
 
+  // Bottom border (rounded)
   console.log(
-    chalk.gray('│ ') + chalk.white(pad('Graded Assignments', colLabel)) + chalk.gray('│ ') +
-    chalk.cyan.bold(pad(`${gradedAssignments.length} / ${assignments.length}`, colValue)) + chalk.gray('│ ') +
-    chalk.gray(pad('Completed', colNote)) + chalk.gray('│')
-  );
-  console.log(
-    chalk.gray('│ ') + chalk.white(pad('Points Earned', colLabel)) + chalk.gray('│ ') +
-    chalk.cyan.bold(pad(`${totalPointsEarned.toFixed(2)} / ${totalPointsPossible.toFixed(2)}`, colValue)) + chalk.gray('│ ') +
-    chalk.gray(pad('Total', colNote)) + chalk.gray('│')
-  );
-  console.log(
-    chalk.gray('│ ') + chalk.white(pad('Calculated Average', colLabel)) + chalk.gray('│ ') +
-    chalk.cyan.bold(pad(typeof calculatedPercentage === 'string' ? calculatedPercentage : `${calculatedPercentage}%`, colValue)) + chalk.gray('│ ') +
-    chalk.gray(pad('From Graded', colNote)) + chalk.gray('│')
-  );
-
-  // Bottom border
-  console.log(
-    chalk.gray('└─') + chalk.gray('─'.repeat(colLabel)) + chalk.gray('┴─') +
-    chalk.gray('─'.repeat(colValue)) + chalk.gray('┴─') +
-    chalk.gray('─'.repeat(colNote)) + chalk.gray('┘')
+    chalk.gray('╰─') + chalk.gray('─'.repeat(colMetric)) + chalk.gray('┴─') +
+    chalk.gray('─'.repeat(colScore)) + chalk.gray('┴─') +
+    chalk.gray('─'.repeat(colStatus)) + chalk.gray('╯')
   );
 
   // Display assignment breakdown
@@ -193,19 +185,26 @@ async function showDetailedGrades(courseId: string, options: ShowGradesOptions):
   if (assignments.length === 0) {
     console.log(chalk.yellow('  No assignments found for this course.'));
   } else {
-    const colNo = 6;
-    const colName = 40;
-    const colScore = 15;
-    const colStatus = 15;
-    const colDate = 20;
+    // Calculate adaptive column widths
+    const tw = process.stdout.columns || 100;
+    const overhead = 16; // borders and padding
+    const available = Math.max(80, tw - overhead);
+    
+    // Fixed minimum widths for data columns
+    const colNo = Math.max(4, Math.min(6, Math.floor(available * 0.05)));
+    const colScore = Math.max(10, Math.min(15, Math.floor(available * 0.12)));
+    const colStatus = Math.max(10, Math.min(15, Math.floor(available * 0.12)));
+    const colDate = Math.max(12, Math.min(20, Math.floor(available * 0.18)));
+    // Name gets remaining space
+    const colName = Math.max(20, available - colNo - colScore - colStatus - colDate);
 
-    // Top border
+    // Top border (rounded)
     console.log(
-      chalk.gray('┌─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┬─') +
+      chalk.gray('╭─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┬─') +
       chalk.gray('─'.repeat(colName)) + chalk.gray('┬─') +
       chalk.gray('─'.repeat(colScore)) + chalk.gray('┬─') +
       chalk.gray('─'.repeat(colStatus)) + chalk.gray('┬─') +
-      chalk.gray('─'.repeat(colDate)) + chalk.gray('┐')
+      chalk.gray('─'.repeat(colDate)) + chalk.gray('╮')
     );
 
     // Header
@@ -278,13 +277,13 @@ async function showDetailedGrades(courseId: string, options: ShowGradesOptions):
       );
     });
     
-    // Bottom border
+    // Bottom border (rounded)
     console.log(
-      chalk.gray('└─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┴─') +
+      chalk.gray('╰─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┴─') +
       chalk.gray('─'.repeat(colName)) + chalk.gray('┴─') +
       chalk.gray('─'.repeat(colScore)) + chalk.gray('┴─') +
       chalk.gray('─'.repeat(colStatus)) + chalk.gray('┴─') +
-      chalk.gray('─'.repeat(colDate)) + chalk.gray('┘')
+      chalk.gray('─'.repeat(colDate)) + chalk.gray('╯')
     );
   }
 
@@ -327,13 +326,13 @@ export async function showGrades(courseId?: string, options: ShowGradesOptions =
       let courses = await makeCanvasRequest<CanvasCourse[]>('get', 'courses', queryParams);
 
       if (!courses || courses.length === 0) {
-        console.log(chalk.red('❌ Error: No courses found.'));
+        console.log(chalk.red('Error: No courses found.'));
         rl.close();
         return;
       }
 
       if (courses.length === 0) {
-        console.log(chalk.red('❌ Error: No courses found (after filtering).'));
+        console.log(chalk.red('Error: No courses found (after filtering).'));
         rl.close();
         return;
       }
@@ -405,13 +404,13 @@ export async function showGrades(courseId?: string, options: ShowGradesOptions =
       const maxNameLength = Math.max(11, ...coursesWithGrades.map(c => c.course.name.length));
       const colName = Math.min(maxNameLength, availableForName);
 
-      // Top border
+      // Top border (rounded)
       console.log(
-        chalk.gray('┌─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┬─') +
+        chalk.gray('╭─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┬─') +
         chalk.gray('─'.repeat(colName)) + chalk.gray('┬─') +
         chalk.gray('─'.repeat(colStatus)) + chalk.gray('┬─') +
         chalk.gray('─'.repeat(colCurrent)) + chalk.gray('┬─') +
-        chalk.gray('─'.repeat(colFinal)) + chalk.gray('┐')
+        chalk.gray('─'.repeat(colFinal)) + chalk.gray('╮')
       );
 
       // Header
@@ -464,16 +463,16 @@ export async function showGrades(courseId?: string, options: ShowGradesOptions =
         );
       });
 
-      // Bottom border
+      // Bottom border (rounded)
       console.log(
-        chalk.gray('└─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┴─') +
+        chalk.gray('╰─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┴─') +
         chalk.gray('─'.repeat(colName)) + chalk.gray('┴─') +
         chalk.gray('─'.repeat(colStatus)) + chalk.gray('┴─') +
         chalk.gray('─'.repeat(colCurrent)) + chalk.gray('┴─') +
-        chalk.gray('─'.repeat(colFinal)) + chalk.gray('┘')
+        chalk.gray('─'.repeat(colFinal)) + chalk.gray('╯')
       );
 
-      console.log(chalk.yellow('\n💡 Select a course to view detailed grades for all assignments.'));
+      console.log(chalk.yellow('\nSelect a course to view detailed grades for all assignments.'));
       console.log(chalk.gray('   Or enter 0 to exit.'));
       if (!options.all) {
         console.log(chalk.gray('   Tip: Use --all flag to include inactive courses.\n'));
@@ -498,7 +497,7 @@ export async function showGrades(courseId?: string, options: ShowGradesOptions =
       rl.close();
 
       if (choice === 0) {
-        console.log(chalk.yellow('\n👋 Exiting grades viewer.'));
+        console.log(chalk.yellow('\nExiting grades viewer.'));
         return;
       }
 
