@@ -51,11 +51,11 @@ export async function listCourses(options: ListCoursesOptions): Promise<void> {
     const maxNameLength = Math.max(11, ...filteredCourses.map(c => c.name.length));
     const colName = Math.min(maxNameLength, availableForName);
 
-    // Top border
+    // Top border (rounded)
     console.log(
-      chalk.gray('┌─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┬─') +
+      chalk.gray('╭─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┬─') +
       chalk.gray('─'.repeat(colName)) + chalk.gray('┬─') +
-      chalk.gray('─'.repeat(colID)) + chalk.gray('┐')
+      chalk.gray('─'.repeat(colID)) + chalk.gray('╮')
     );
 
     // Header
@@ -84,11 +84,11 @@ export async function listCourses(options: ListCoursesOptions): Promise<void> {
       );
     });
 
-    // Bottom border
+    // Bottom border (rounded)
     console.log(
-      chalk.gray('└─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┴─') +
+      chalk.gray('╰─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┴─') +
       chalk.gray('─'.repeat(colName)) + chalk.gray('┴─') +
-      chalk.gray('─'.repeat(colID)) + chalk.gray('┘')
+      chalk.gray('─'.repeat(colID)) + chalk.gray('╯')
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
