@@ -31,13 +31,6 @@ export async function showConfig(): Promise<void> {
     console.log(chalk.yellow('No configuration found.'));
   }
   
-  console.log(chalk.cyan('\nAvailable commands:'));
-  console.log(chalk.white('  canvas config setup      # Interactive setup wizard'));
-  console.log(chalk.white('  canvas config edit       # Edit existing configuration'));
-  console.log(chalk.white('  canvas config show       # Show current configuration'));
-  console.log(chalk.white('  canvas config delete     # Delete configuration file'));
-  console.log(chalk.white('  canvas config path       # Show configuration file path'));
-  
   console.log(chalk.cyan('\nManual setup:'));
   console.log(chalk.white('1. Get your Canvas API token:'));
   console.log(chalk.white('   - Log into your Canvas instance'));
@@ -46,14 +39,6 @@ export async function showConfig(): Promise<void> {
   console.log(chalk.white('   - Click "+ New Access Token"'));
   console.log(chalk.white('   - Copy the generated token'));
   console.log(chalk.white('2. Run "canvas config setup" to configure'));
-  
-  console.log(chalk.cyan('\nExample usage after setup:'));
-  console.log(chalk.white('  canvas list              # List starred courses'));
-  console.log(chalk.white('  canvas list -a           # List all enrolled courses'));
-  console.log(chalk.white('  canvas submit            # Interactive assignment submission'));
-  console.log(chalk.white('  canvas profile           # Show user profile'));
-  console.log(chalk.white('  canvas assignments 12345 # Show assignments for course'));
-  console.log(chalk.white('  canvas grades            # Show grades for all courses'));
 }
 
 export async function setupConfig(): Promise<void> {
