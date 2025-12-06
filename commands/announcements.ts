@@ -3,13 +3,17 @@ import { createReadlineInterface, askQuestion } from '../lib/interactive.js';
 import chalk from 'chalk';
 import type { CanvasCourse, CanvasAnnouncement, ShowAnnouncementsOptions } from '../types/index.js';
 
+function pad(str: string, len: number): string {
+  return str + ' '.repeat(Math.max(0, len - str.length));
+}
+
 export async function showAnnouncements(courseId?: string, options: ShowAnnouncementsOptions = {}): Promise<void> {
   const rl = createReadlineInterface();
   try {
     let selectedCourseId = courseId;
     
     if (!selectedCourseId) {
-      console.log(chalk.cyan.bold('Loading your courses, please wait...\n'));
+      console.log(chalk.cyan.bold('\nLoading your courses, please wait...'));
       let courses = await makeCanvasRequest<CanvasCourse[]>('get', 'courses', [
         'enrollment_state=active',
         'include[]=favorites'
@@ -21,19 +25,52 @@ export async function showAnnouncements(courseId?: string, options: ShowAnnounce
         return;
       }
 
-      if (courses.length === 0) {
-        console.log(chalk.red('Error: No courses found (after filtering).'));
-        rl.close();
-        return;
-      }
+      console.log(chalk.green(`✓ Found ${courses.length} course(s).`));
 
-      console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
-      console.log(chalk.cyan.bold('Select a course:'));
+      // Calculate dynamic column widths
+      const colNo = Math.max(3, String(courses.length).length + 1);
+      const terminalWidth = process.stdout.columns || 80;
+      const overhead = 10 + colNo;
+      const maxNameLength = Math.max(11, ...courses.map(c => c.name.length));
+      const colName = Math.min(maxNameLength, terminalWidth - overhead);
+
+      // Top border (rounded)
+      console.log(
+        chalk.gray('╭─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┬─') +
+        chalk.gray('─'.repeat(colName)) + chalk.gray('╮')
+      );
+
+      // Header
+      console.log(
+        chalk.gray('│ ') + chalk.cyan.bold(pad('#', colNo)) + chalk.gray('│ ') +
+        chalk.cyan.bold(pad('Course Name', colName)) + chalk.gray('│')
+      );
+
+      // Header separator
+      console.log(
+        chalk.gray('├─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┼─') +
+        chalk.gray('─'.repeat(colName)) + chalk.gray('┤')
+      );
+
+      // Rows
       courses.forEach((course, index) => {
-        console.log(chalk.white(`${index + 1}.`) + ' ' + course.name);
+        let displayName = course.name;
+        if (displayName.length > colName) {
+          displayName = displayName.substring(0, colName - 3) + '...';
+        }
+        console.log(
+          chalk.gray('│ ') + chalk.white(pad((index + 1) + '.', colNo)) + chalk.gray('│ ') +
+          chalk.white(pad(displayName, colName)) + chalk.gray('│')
+        );
       });
 
-      const courseChoice = await askQuestion(rl, chalk.white('\nEnter course number: '));
+      // Bottom border (rounded)
+      console.log(
+        chalk.gray('╰─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┴─') +
+        chalk.gray('─'.repeat(colName)) + chalk.gray('╯')
+      );
+
+      const courseChoice = await askQuestion(rl, chalk.bold.cyan('\nEnter course number: '));
       if (!courseChoice.trim()) {
         console.log(chalk.red('No course selected. Exiting...'));
         rl.close();
@@ -48,10 +85,12 @@ export async function showAnnouncements(courseId?: string, options: ShowAnnounce
       }
 
       selectedCourseId = String(courses[courseIndex]?.id);
-      console.log(chalk.green(`Success: Selected ${courses[courseIndex]?.name}\n`));
+      console.log(chalk.green(`✓ Selected: ${courses[courseIndex]?.name}\n`));
     }
 
     const limit = parseInt(options.limit || '5') || 5;
+    console.log(chalk.cyan.bold('Loading announcements...'));
+    
     const announcements = await makeCanvasRequest<CanvasAnnouncement[]>(
       'get',
       `courses/${selectedCourseId}/discussion_topics`,
@@ -64,17 +103,62 @@ export async function showAnnouncements(courseId?: string, options: ShowAnnounce
       return;
     }
 
-    console.log(chalk.green('Success: Announcement loaded.'));
-    console.log(chalk.cyan.bold('\n' + '-'.repeat(60)));
-    console.log(chalk.cyan.bold('Announcements:'));
+    console.log(chalk.green(`✓ Found ${announcements.length} announcement(s).`));
+
+    // Calculate dynamic column widths for announcements table
+    const colNo = Math.max(3, String(announcements.length).length + 1);
+    const colDate = 12;
+    const terminalWidth = process.stdout.columns || 80;
+    const overhead = 14 + colNo + colDate;
+    const maxTitleLength = Math.max(5, ...announcements.map(a => (a.title || 'Untitled').length));
+    const colTitle = Math.min(maxTitleLength, terminalWidth - overhead);
+
+    // Top border (rounded)
+    console.log(
+      chalk.gray('╭─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┬─') +
+      chalk.gray('─'.repeat(colTitle)) + chalk.gray('┬─') +
+      chalk.gray('─'.repeat(colDate)) + chalk.gray('╮')
+    );
+
+    // Header
+    console.log(
+      chalk.gray('│ ') + chalk.cyan.bold(pad('#', colNo)) + chalk.gray('│ ') +
+      chalk.cyan.bold(pad('Title', colTitle)) + chalk.gray('│ ') +
+      chalk.cyan.bold(pad('Posted', colDate)) + chalk.gray('│')
+    );
+
+    // Header separator
+    console.log(
+      chalk.gray('├─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┼─') +
+      chalk.gray('─'.repeat(colTitle)) + chalk.gray('┼─') +
+      chalk.gray('─'.repeat(colDate)) + chalk.gray('┤')
+    );
+
+    // Rows
     announcements.forEach((a, i) => {
-      const date = a.posted_at ? new Date(a.posted_at).toLocaleDateString() : '';
-      console.log(chalk.white(`${i + 1}.`) + ' ' + a.title + chalk.gray(date ? ` (${date})` : ''));
+      let displayTitle = a.title || 'Untitled';
+      if (displayTitle.length > colTitle) {
+        displayTitle = displayTitle.substring(0, colTitle - 3) + '...';
+      }
+      const date = a.posted_at ? new Date(a.posted_at).toLocaleDateString() : 'N/A';
+
+      console.log(
+        chalk.gray('│ ') + chalk.white(pad((i + 1) + '.', colNo)) + chalk.gray('│ ') +
+        chalk.white(pad(displayTitle, colTitle)) + chalk.gray('│ ') +
+        chalk.gray(pad(date, colDate)) + chalk.gray('│')
+      );
     });
 
-    const annChoice = await askQuestion(rl, chalk.white('\nEnter announcement number to view details: '));
-    if (!annChoice.trim()) {
-      console.log(chalk.red('No announcement selected. Exiting...'));
+    // Bottom border (rounded)
+    console.log(
+      chalk.gray('╰─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┴─') +
+      chalk.gray('─'.repeat(colTitle)) + chalk.gray('┴─') +
+      chalk.gray('─'.repeat(colDate)) + chalk.gray('╯')
+    );
+
+    const annChoice = await askQuestion(rl, chalk.bold.cyan('\nEnter announcement number to view details (0 to exit): '));
+    if (!annChoice.trim() || annChoice === '0') {
+      console.log(chalk.yellow('Exiting announcements viewer.'));
       rl.close();
       return;
     }
@@ -92,14 +176,37 @@ export async function showAnnouncements(courseId?: string, options: ShowAnnounce
     const author = ann?.author?.display_name || 'Unknown';
     const message = ann?.message?.replace(/<[^>]+>/g, '').trim() || 'No content';
 
-    console.log('\n' + chalk.cyan('='.repeat(60)));
-    console.log(chalk.bold('  ' + title));
-    console.log(chalk.cyan('-'.repeat(60)));
-    console.log(chalk.gray('  Posted: ') + date);
-    console.log(chalk.gray('  Author: ') + author);
-    console.log('\n' + chalk.bold('  Message:') + '\n');
-    console.log(message);
-    console.log(chalk.cyan('='.repeat(60)) + '\n');
+    // Display announcement detail in a nice adaptive box
+    const detailTermWidth = process.stdout.columns || 80;
+    const boxWidth = Math.max(50, Math.min(80, detailTermWidth - 4));
+    
+    console.log('\n' + chalk.cyan('╭' + '─'.repeat(boxWidth) + '╮'));
+    console.log(chalk.cyan('│') + chalk.bold.white(' ' + title.substring(0, boxWidth - 2)).padEnd(boxWidth) + chalk.cyan('│'));
+    console.log(chalk.cyan('├' + '─'.repeat(boxWidth) + '┤'));
+    console.log(chalk.cyan('│') + chalk.gray(' Posted: ') + chalk.white(date).padEnd(boxWidth - 9) + chalk.cyan('│'));
+    console.log(chalk.cyan('│') + chalk.gray(' Author: ') + chalk.white(author).padEnd(boxWidth - 9) + chalk.cyan('│'));
+    console.log(chalk.cyan('├' + '─'.repeat(boxWidth) + '┤'));
+    
+    // Word-wrap message content
+    const contentWidth = boxWidth - 2;
+    const words = message.split(' ');
+    let currentLine = '';
+    
+    for (const word of words) {
+      if ((currentLine + ' ' + word).trim().length <= contentWidth) {
+        currentLine = (currentLine + ' ' + word).trim();
+      } else {
+        if (currentLine) {
+          console.log(chalk.cyan('│') + ' ' + currentLine.padEnd(contentWidth) + chalk.cyan('│'));
+        }
+        currentLine = word;
+      }
+    }
+    if (currentLine) {
+      console.log(chalk.cyan('│') + ' ' + currentLine.padEnd(contentWidth) + chalk.cyan('│'));
+    }
+    
+    console.log(chalk.cyan('╰' + '─'.repeat(boxWidth) + '╯') + '\n');
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
