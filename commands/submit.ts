@@ -13,7 +13,6 @@ import {
 import chalk from 'chalk';
 import path from 'path';
 import type { CanvasCourse, CanvasAssignment } from '../types/index.js';
-import { randomInt } from 'crypto';
 
 interface SubmitOptions {
   course?: string;
