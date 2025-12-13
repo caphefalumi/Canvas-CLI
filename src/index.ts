@@ -4,7 +4,7 @@
  * Canvas CLI - A command line tool for interacting with Canvas API
  * 
  * @author caphefalumi
- * @version 1.4.6
+ * @version 1.6.0
  */
 
 import { Command } from 'commander';
@@ -115,6 +115,7 @@ program
   .option('-c, --course <course-id>', 'Specify course ID')
   .option('-f, --file <file-path>', 'Specify file path')
   .option('-a, --all', 'Show all courses')
+  .option('--dry-run', 'Test submission')
   .action(requireConfig(submitAssignment));
 
 // Parse command line arguments

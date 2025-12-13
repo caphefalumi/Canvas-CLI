@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] - 2025-12-13
+
+- **Dry Run Mode**: Submit command now supports `--dry-run` flag to test submission flow without actually uploading files or submitting assignments
+- **Assignment URL Display**: After successful submission, the direct link to the assignment is now displayed for easy access
+
 ## [1.6.0] - 2025-12-06
 
 ### Added

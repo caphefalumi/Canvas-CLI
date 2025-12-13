@@ -13,11 +13,13 @@ import {
 import chalk from 'chalk';
 import path from 'path';
 import type { CanvasCourse, CanvasAssignment } from '../types/index.js';
+import { randomInt } from 'crypto';
 
 interface SubmitOptions {
   course?: string;
   file?: string;
   all?: boolean;
+  dryRun?: boolean;
 }
 
 function pad(str: string, len: number): string {
@@ -36,6 +38,9 @@ function clearLines(count: number = 1): void {
 }
 
 export async function submitAssignment(options: SubmitOptions): Promise<void> {
+  if (options.dryRun) {
+    console.log(chalk.bgRedBright('Dry run mode - no actual submission will be made'))
+  }
   let rl = createReadlineInterface();
   let rlForConfirm = rl;
 
@@ -155,7 +160,12 @@ export async function submitAssignment(options: SubmitOptions): Promise<void> {
       return new Date(a.due_at).getTime() - new Date(b.due_at).getTime();
     });
 
-    console.log(chalk.white(`\nFound ${uploadableAssignments.length} assignment(s) that accept file uploads:`));
+    if (uploadableAssignments.length === 1) {
+      console.log(chalk.white(`\nFound ${uploadableAssignments.length} assignment that accept file uploads:`));
+    }
+    else {
+      console.log(chalk.white(`\nFound ${uploadableAssignments.length} assignment(s) that accept file uploads:`));
+    }
     console.log();
 
     // Calculate adaptive column widths based on terminal size
@@ -381,15 +391,19 @@ export async function submitAssignment(options: SubmitOptions): Promise<void> {
 
       try {
         console.log(chalk.white(`Uploading ${i + 1}/${filesToSubmit.length}: ${path.basename(file)}...`));
-        
-        const fileId = await uploadSingleFileToCanvas(
-          courseId,
-          selectedAssignment.id,
-          file
-        );
-        
-        fileIds.push(fileId);
-        console.log(chalk.green(`✓ Uploaded successfully (File ID: ${fileId})`));
+        if (!options.dryRun)
+        {
+          const fileId = await uploadSingleFileToCanvas(
+            courseId,
+            selectedAssignment.id,
+            file
+          );
+          fileIds.push(fileId);
+        }
+        else {
+          fileIds.push(1)
+        }
+        console.log(chalk.green(`✓ Uploaded ${file} successfully`));
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.log(chalk.red(`✗ Failed to upload ${path.basename(file)}: ${errorMessage}`));
@@ -421,18 +435,24 @@ export async function submitAssignment(options: SubmitOptions): Promise<void> {
     console.log(chalk.white('Finalizing submission...'));
 
     try {
-      await submitAssignmentWithFiles(
-        courseId,
-        selectedAssignment.id,
-        fileIds
-      );
+      if (!options.dryRun)
+      {
+        await submitAssignmentWithFiles(
+          courseId,
+          selectedAssignment.id,
+          fileIds
+        );
+      }
 
+      const config = await import('../lib/config.js').then(c => c.loadConfig());
+      const assignmentUrl = `https://${config.domain}/courses/${courseId}/assignments/${selectedAssignment.id}`
       console.log(chalk.cyan('\n' + '='.repeat(60)));
       console.log(chalk.green.bold('Assignment submitted successfully!'));
       console.log(chalk.cyan('='.repeat(60)));
       console.log(chalk.white(`Course ID: ${courseId}`));
       console.log(chalk.white(`Assignment: ${selectedAssignment.name}`));
       console.log(chalk.white(`Files submitted: ${fileIds.length}`));
+      console.log(chalk.white('Assignment URL: '), chalk.blue(assignmentUrl))
       console.log(chalk.cyan('='.repeat(60)));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
