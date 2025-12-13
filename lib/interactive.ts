@@ -34,9 +34,19 @@ interface AskConfirmationOptions {
 }
 
 export function createReadlineInterface(): readline.Interface {
+  // Ensure terminal is in normal mode before creating readline
+  if (process.stdin.isTTY && typeof process.stdin.setRawMode === 'function') {
+    try {
+      process.stdin.setRawMode(false);
+    } catch {
+      // Ignore errors if terminal doesn't support raw mode
+    }
+  }
+  
   return readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
+    terminal: true
   });
 }
 

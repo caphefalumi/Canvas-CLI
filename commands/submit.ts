@@ -10,6 +10,7 @@ import {
   askQuestion,
   askConfirmation 
 } from '../lib/interactive.js';
+import { displaySubmitAssignments } from '../lib/display.js';
 import chalk from 'chalk';
 import path from 'path';
 import type { CanvasCourse, CanvasAssignment } from '../types/index.js';
@@ -19,10 +20,6 @@ interface SubmitOptions {
   file?: string;
   all?: boolean;
   dryRun?: boolean;
-}
-
-function pad(str: string, len: number): string {
-  return str + ' '.repeat(Math.max(0, len - str.length));
 }
 
 /**
@@ -165,118 +162,16 @@ export async function submitAssignment(options: SubmitOptions): Promise<void> {
     else {
       console.log(chalk.white(`\nFound ${uploadableAssignments.length} assignment(s) that accept file uploads:`));
     }
-    console.log();
 
-    // Calculate adaptive column widths based on terminal size
-    const termWidth = process.stdout.columns || 110;
-    const borderOverhead = 16; // borders and padding
-    const available = Math.max(90, termWidth - borderOverhead);
-    
-    // Proportional column distribution
-    const colNo = Math.max(3, Math.min(5, Math.floor(available * 0.04)));
-    const colType = Math.max(10, Math.min(18, Math.floor(available * 0.14)));
-    const colDate = Math.max(16, Math.min(26, Math.floor(available * 0.22)));
-    const colStatus = Math.max(12, Math.min(15, Math.floor(available * 0.12)));
-    // Name gets remaining space
-    const colName = Math.max(20, available - colNo - colType - colDate - colStatus);
-
-    // Top border (rounded)
-    console.log(
-      chalk.gray('╭─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┬─') +
-      chalk.gray('─'.repeat(colName)) + chalk.gray('┬─') +
-      chalk.gray('─'.repeat(colType)) + chalk.gray('┬─') +
-      chalk.gray('─'.repeat(colDate)) + chalk.gray('┬─') +
-      chalk.gray('─'.repeat(colStatus)) + chalk.gray('╮')
-    );
-
-    // Header
-    console.log(
-      chalk.gray('│ ') + chalk.cyan.bold(pad('No', colNo)) + chalk.gray('│ ') +
-      chalk.cyan.bold(pad('Assignment Name', colName)) + chalk.gray('│ ') +
-      chalk.cyan.bold(pad('Type', colType)) + chalk.gray('│ ') +
-      chalk.cyan.bold(pad('Due Date', colDate)) + chalk.gray('│ ') +
-      chalk.cyan.bold(pad('Status', colStatus)) + chalk.gray('│')
-    );
-
-    // Header separator
-    console.log(
-      chalk.gray('├─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┼─') +
-      chalk.gray('─'.repeat(colName)) + chalk.gray('┼─') +
-      chalk.gray('─'.repeat(colType)) + chalk.gray('┼─') +
-      chalk.gray('─'.repeat(colDate)) + chalk.gray('┼─') +
-      chalk.gray('─'.repeat(colStatus)) + chalk.gray('┤')
-    );
-
-    // Display assignments in table format
-    uploadableAssignments.forEach((assignment, index) => {
-      const submission = (assignment as any).submission;
-      const isSubmitted = submission && submission.submitted_at;
-      const statusPlainText = isSubmitted ? '✓ Submitted' : 'Not submitted';
-      const statusColored = isSubmitted 
-        ? chalk.green(statusPlainText)
-        : chalk.yellow(statusPlainText);
-
-      const dueDateText = assignment.due_at 
-        ? new Date(assignment.due_at).toLocaleString()
-        : 'No due date';
-
-      // Determine assignment type from submission_types
-      let typeText = 'Unknown';
-      if (assignment.submission_types && assignment.submission_types.length > 0) {
-        const types = assignment.submission_types;
-        if (types.includes('online_quiz')) {
-          typeText = 'Quiz';
-        } else if (types.includes('online_upload')) {
-          // Check for allowed file extensions
-          if (assignment.allowed_extensions && assignment.allowed_extensions.length > 0) {
-            const exts = assignment.allowed_extensions.slice(0, 3); // Show max 3 extensions
-            const extList = exts.join(', ');
-            const suffix = assignment.allowed_extensions.length > 3 ? '...' : '';
-            typeText = `${extList}${suffix}`;
-          } else {
-            typeText = 'Any file';
-          }
-        } else if (types.includes('online_text_entry')) {
-          typeText = 'Text Entry';
-        } else if (types.includes('online_url')) {
-          typeText = 'URL';
-        } else if (types.includes('external_tool')) {
-          typeText = 'External Tool';
-        } else if (types.includes('media_recording')) {
-          typeText = 'Media';
-        } else if (types[0]) {
-          typeText = types[0].replace(/_/g, ' ');
-        }
-      }
-
-      // Truncate long assignment names
-      let displayName = assignment.name;
-      if (displayName.length > colName) {
-        displayName = displayName.substring(0, colName - 3) + '...';
-      }
-
-      console.log(
-        chalk.gray('│ ') + chalk.white(pad(`${index + 1}`, colNo)) + chalk.gray('│ ') +
-        chalk.white(pad(displayName, colName)) + chalk.gray('│ ') +
-        chalk.blue(pad(typeText, colType)) + chalk.gray('│ ') +
-        chalk.gray(pad(dueDateText, colDate)) + chalk.gray('│ ') +
-        statusColored + ' '.repeat(Math.max(0, colStatus - statusPlainText.length)) + chalk.gray('│')
-      );
-    });
-
-    // Bottom border (rounded)
-    console.log(
-      chalk.gray('╰─') + chalk.gray('─'.repeat(colNo)) + chalk.gray('┴─') +
-      chalk.gray('─'.repeat(colName)) + chalk.gray('┴─') +
-      chalk.gray('─'.repeat(colType)) + chalk.gray('┴─') +
-      chalk.gray('─'.repeat(colDate)) + chalk.gray('┴─') +
-      chalk.gray('─'.repeat(colStatus)) + chalk.gray('╯')
-    );
+    const assignmentTable = displaySubmitAssignments(uploadableAssignments);
 
     let selectedAssignment: CanvasAssignment | undefined;
     
     while (true) {
       const assignmentChoice = await askQuestion(rl, chalk.white('\nEnter assignment number (or ".."/"back" to cancel): '));
+      
+      // Stop watching for resize after first input
+      assignmentTable.stopWatching();
       
       if (!assignmentChoice.trim() || assignmentChoice === '..' || assignmentChoice.toLowerCase() === 'back') {
         console.log(chalk.yellow('Submission cancelled.'));

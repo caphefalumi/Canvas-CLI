@@ -4,12 +4,9 @@
 
 import { makeCanvasRequest } from '../lib/api-client.js';
 import { createReadlineInterface, askQuestionWithValidation } from '../lib/interactive.js';
+import { pad } from '../lib/display.js';
 import chalk from 'chalk';
 import type { CanvasCourse, CanvasEnrollment, CanvasAssignment, ShowGradesOptions } from '../types/index.js';
-
-function pad(str: string, len: number): string {
-  return str + ' '.repeat(Math.max(0, len - str.length));
-}
 
 interface AssignmentGrade {
   name: string;

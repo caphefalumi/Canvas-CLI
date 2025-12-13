@@ -23,7 +23,7 @@ const program = new Command();
 program
   .name('canvas')
   .description('Canvas LMS Command Line Interface')
-  .version('1.6.0');
+  .version('1.6.1', '-v, --version', 'Output the current version');
 
 // List command to show enrolled courses
 program
@@ -74,7 +74,7 @@ program
   .command('assignments')
   .alias('assign')
   .description('List assignments for a course')
-  .argument('<course-id>', 'Course ID')
+  .argument('[course-id]', 'Course ID (optional)')
   .option('-v, --verbose', 'Show detailed info')
   .option('-s, --submitted', 'Show submitted only')
   .option('-p, --pending', 'Show pending only')
