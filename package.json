@@ -1,6 +1,6 @@
 {
   "name": "canvaslms-cli",
-  "version": "1.6.1",
+  "version": "1.6.3",
   "description": "A command line tool for interacting with Canvas LMS API",
   "keywords": [
     "canvas",
@@ -40,8 +40,11 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "bun dist/src/index.js",
-    "prepublishOnly": "npm run build",
-    "postinstall": "echo \"Canvas CLI installed successfully! Run 'canvas config' to get started.\""
+    "lint": "oxlint --fix --fix-suggestions",
+    "format": "oxfmt --config .oxfmtrc.jsonc",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "adm-zip": "^0.5.16",
@@ -52,9 +55,11 @@
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.7",
+    "@types/bun": "latest",
     "@types/minimatch": "^6.0.0",
     "@types/node": "^24.10.0",
-    "eslint": "^8.0.0",
+    "oxfmt": "^0.17.0",
+    "oxlint": "^1.32.0",
     "prettier": "^3.0.0",
     "typescript": "^5.9.3"
   },

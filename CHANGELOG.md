@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.3] - 2025-12-14
+
+### Added
+
+- **Live table resize**: Tables now re-render automatically when terminal is resized
+- **Adaptive truncation**: Text truncation updates dynamically based on terminal width
+
+### Fixed
+
+- **Table overflow**: Fixed tables overflowing terminal width on small screens
+- **Column width calculation**: Corrected border overhead calculation for accurate fitting
+- **Resize clearing**: Fixed incomplete clearing of table when resizing terminal
+
+### Changed
+
+- **Submit table columns**: Optimized column widths - shortened "Due Date" to "Due", removed maxWidth on assignment name for better space usage
+
+## [1.6.2] - 2025-12-14
+
+- **Table display**: All table now have the same rounded corner format, text size adaptive to the terminal size
+
 ## [1.6.1] - 2025-12-13
 
 - **Dry Run Mode**: Submit command now supports `--dry-run` flag to test submission flow without actually uploading files or submitting assignments
@@ -52,7 +73,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bumped package version to 1.4.7.
 
-
 ### Added
 
 - **Enhanced File Selection UX**: Implemented continuous file selection until empty input
@@ -61,7 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Remove files from selection
   - Show currently selected files
   - Smart file filtering (excludes hidden files, package files)
-  - **Wildcard support**: Use patterns like *.html, *.js, *.pdf to select multiple files
+  - **Wildcard support**: Use patterns like _.html, _.js, \*.pdf to select multiple files
   - File type icons for better visual identification
 
 - **Improved Grade Viewing**:
