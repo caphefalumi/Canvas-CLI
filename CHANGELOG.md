@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.5] - 2025-12-15
+
+### Removed (1.6.5)
+
+- **Unused Command File**: Deleted `api.ts` - Raw API command handler that was never imported or used in the CLI
+- **Unused Functions from interactive.ts**: `getSubfoldersRecursive()`, `getFilesMatchingWildcard()`, `selectFilesImproved()`
+- **Unused Dependencies**: Removed `adm-zip` and `@types/adm-zip` packages
+
+## [1.6.4-fix] - 2025-12-15
+
+### Fix (1.6.4)
+
+- **Remove Postinstall Command**: Change to prepare husky
+
+## [1.6.4] - 2025-12-15
+
+### Added (1.6.4)
+
+- **Modules Command**: New `modules` command to view course modules and their items with progress tracking
+- **Calendar Command**: New `calendar` command to view upcoming assignments and events with due dates
+
+### Changed (1.6.4)
+
+- **Course Arguments**: Replaced course ID arguments with course name arguments across all commands (assignments, grades, announcements) for easier usage
+- **Workflow Name**: Changed CI workflow name from "CI" to "Test & Build" for better clarity
+
 ## [1.6.3] - 2025-12-14
 
 ### Added (1.6.3)

@@ -1,6 +1,6 @@
 {
   "name": "canvaslms-cli",
-  "version": "1.6.4",
+  "version": "1.6.5",
   "description": "A command line tool for interacting with Canvas LMS API",
   "keywords": [
     "canvas",
@@ -45,17 +45,15 @@
     "test": "bun test",
     "test:watch": "bun test --watch",
     "prepublishOnly": "npm run build",
-    "postinstall": "husky"
+    "prepare": "bunx husky"
   },
   "dependencies": {
-    "adm-zip": "^0.5.16",
     "axios": "^1.6.0",
     "chalk": "^5.4.1",
     "commander": "^11.1.0",
     "form-data": "^4.0.3"
   },
   "devDependencies": {
-    "@types/adm-zip": "^0.5.7",
     "@types/bun": "latest",
     "@types/minimatch": "^6.0.0",
     "@types/node": "^24.10.0",
