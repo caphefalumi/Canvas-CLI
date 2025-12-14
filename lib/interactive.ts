@@ -604,10 +604,10 @@ export async function selectFilesKeyboard(
   let lastDisplayLines = 0;
 
   function stripAnsi(str: string): string {
-    // oxc-ignore-next-line no-control-regex -- ANSI escape codes require control characters
-    const ansiRegex =
-      /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g;
-    return str.replace(ansiRegex, "");
+    const ESC = String.fromCharCode(0x1b);
+    const CSI = String.fromCharCode(0x9b);
+    const pattern = `[${ESC}${CSI}][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]`;
+    return str.replace(new RegExp(pattern, "g"), "");
   }
 
   function printAndTrack(message: string = "") {
