@@ -1,3 +1,4 @@
 bun test
 bun format
 bun lint
+git update-index --again
