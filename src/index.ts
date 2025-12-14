@@ -2,7 +2,7 @@
  * Canvas CLI - A command line tool for interacting with Canvas API
  *
  * @author caphefalumi
- * @version 1.6.2
+ * @version 1.6.3
  */
 
 import { Command } from "commander";
@@ -27,7 +27,7 @@ const program = new Command();
 program
   .name("canvas")
   .description("Canvas LMS Command Line Interface")
-  .version("1.6.2", "-v, --version", "Output the current version");
+  .version("1.6.3", "-v, --version", "Output the current version");
 
 // List command to show enrolled courses
 program
