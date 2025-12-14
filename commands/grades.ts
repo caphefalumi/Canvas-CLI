@@ -482,19 +482,17 @@ export async function showGrades(
             `courses/${course.id}/enrollments`,
             enrollmentParams,
           );
-          coursesWithGrades.push({
-            course,
-            enrollment: enrollments[0] || null,
-          });
-        } catch (error) {
-          coursesWithGrades.push({
-            course,
-            enrollment: null,
-          });
-        }
+        coursesWithGrades.push({
+          course,
+          enrollment: enrollments[0] || null,
+        });
+      } catch {
+        coursesWithGrades.push({
+          course,
+          enrollment: null,
+        });
       }
-
-      console.log(chalk.cyan.bold("\n" + "=".repeat(80)));
+    }      console.log(chalk.cyan.bold("\n" + "=".repeat(80)));
       console.log(chalk.cyan.bold("Your Courses - Grades Summary"));
       console.log(
         chalk.green(

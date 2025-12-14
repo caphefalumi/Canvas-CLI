@@ -67,8 +67,10 @@ export function askQuestionWithValidation(
   validator: (input: string) => boolean,
   errorMessage?: string,
 ): Promise<string> {
+  // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve) => {
     let answer: string;
+    // eslint-disable-next-line no-constant-condition
     do {
       answer = await askQuestion(rl, question);
       if (validator(answer)) {
@@ -189,8 +191,8 @@ export function getSubfoldersRecursive(
           result.push(fullPath);
           walk(fullPath); // recurse into subdirectory
         }
-      } catch (err) {
-        // Optionally log: console.warn(`Skipped unreadable folder: ${fullPath}`);
+      } catch {
+        console.warn(`Skipped unreadable folder: ${fullPath}`);
       }
     }
   }
@@ -216,7 +218,9 @@ export function getFilesMatchingWildcard(
           if (fs.statSync(filePath).isFile()) {
             allFiles.push(filePath);
           }
-        } catch (e) {}
+        } catch {
+          // Skip files that can't be accessed
+        }
       }
     }
     // Convert wildcard pattern to regex
@@ -328,7 +332,7 @@ export async function selectFilesImproved(
                   size: stat.size,
                 });
               }
-            } catch (e) {
+            } catch {
               continue;
             }
           }
@@ -1049,7 +1053,7 @@ export async function selectFilesKeyboard(
                   pad(path.basename(file), 35) +
                   chalk.gray(size),
               );
-            } catch (e) {
+            } catch {
               console.log(
                 pad(chalk.red(`${index + 1}.`), 5) +
                   chalk.red(path.basename(file) + " (Error reading file)"),
