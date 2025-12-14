@@ -36,8 +36,13 @@ function clearLines(count: number = 1): void {
   }
 }
 
-export async function submitAssignment(options: SubmitOptions): Promise<void> {
-  if (options.dryRun) {
+function getCanvasCourse() 
+
+export async function submitAssignment(
+  courseName?: CanvasCourse,
+  options: SubmitOptions = {},
+): Promise<void> {
+  if (options?.dryRun) {
     console.log(
       chalk.bgRedBright("Dry run mode - no actual submission will be made"),
     );
@@ -62,7 +67,11 @@ export async function submitAssignment(options: SubmitOptions): Promise<void> {
     if (options.course) {
       courseId = parseInt(options.course);
       console.log(chalk.green(`✓ Using specified course ID: ${courseId}`));
-    } else {
+    } 
+    else if(courseName) {
+      
+    }
+    else {
       console.log(chalk.cyan("\n" + "-".repeat(60)));
       console.log(chalk.cyan.bold("Step 1: Select Course"));
       console.log(chalk.cyan("-".repeat(60)));
