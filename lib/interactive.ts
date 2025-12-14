@@ -79,6 +79,7 @@ export function askQuestionWithValidation(
       } else {
         console.log(errorMessage || "Invalid input. Please try again.");
       }
+    // eslint-disable-next-line no-constant-condition
     } while (true);
   });
 }
@@ -603,11 +604,10 @@ export async function selectFilesKeyboard(
   let lastDisplayLines = 0;
 
   function stripAnsi(str: string): string {
-    // eslint-disable-next-line no-control-regex
-    return str.replace(
-      /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
-      "",
-    );
+    // oxc-ignore-next-line no-control-regex -- ANSI escape codes require control characters
+    const ansiRegex =
+      /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g;
+    return str.replace(ansiRegex, "");
   }
 
   function printAndTrack(message: string = "") {

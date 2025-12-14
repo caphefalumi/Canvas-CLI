@@ -44,7 +44,8 @@
     "format": "oxfmt --config .oxfmtrc.jsonc",
     "test": "bun test",
     "test:watch": "bun test --watch",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "prepare": "husky"
   },
   "dependencies": {
     "adm-zip": "^0.5.16",
@@ -58,6 +59,7 @@
     "@types/bun": "latest",
     "@types/minimatch": "^6.0.0",
     "@types/node": "^24.10.0",
+    "husky": "^9.1.7",
     "oxfmt": "^0.17.0",
     "oxlint": "^1.32.0",
     "prettier": "^3.0.0",
