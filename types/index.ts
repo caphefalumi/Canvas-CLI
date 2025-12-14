@@ -114,6 +114,49 @@ export interface CanvasFile {
   [key: string]: any;
 }
 
+export interface CanvasModule {
+  id: number;
+  name: string;
+  position: number;
+  unlock_at: string | null;
+  require_sequential_progress: boolean;
+  publish_final_grade: boolean;
+  prerequisite_module_ids: number[];
+  state: "locked" | "unlocked" | "started" | "completed";
+  completed_at: string | null;
+  items_count: number;
+  items_url: string;
+  [key: string]: any;
+}
+
+export interface CanvasModuleItem {
+  id: number;
+  module_id: number;
+  position: number;
+  title: string;
+  indent: number;
+  type:
+    | "File"
+    | "Page"
+    | "Discussion"
+    | "Assignment"
+    | "Quiz"
+    | "SubHeader"
+    | "ExternalUrl"
+    | "ExternalTool";
+  content_id?: number;
+  html_url?: string;
+  url?: string;
+  page_url?: string;
+  external_url?: string;
+  completion_requirement?: {
+    type: "must_view" | "must_submit" | "must_contribute" | "min_score";
+    completed: boolean;
+    min_score?: number;
+  };
+  [key: string]: any;
+}
+
 // File Upload types
 export interface FileUploadParams {
   name: string;
