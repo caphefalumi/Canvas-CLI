@@ -45,7 +45,7 @@
     "test": "bun test",
     "test:watch": "bun test --watch",
     "prepublishOnly": "npm run build",
-    "prepare": "husky"
+    "postinstall": "husky"
   },
   "dependencies": {
     "adm-zip": "^0.5.16",
