@@ -9,6 +9,12 @@ beforeEach(() => {
   logs = [];
   originalLog = console.log;
   console.log = (...args: any[]) => logs.push(args.join(" "));
+  // Set consistent terminal width for all tests
+  Object.defineProperty(process.stdout, "columns", {
+    value: 100,
+    writable: true,
+    configurable: true,
+  });
 });
 
 function restoreLog() {

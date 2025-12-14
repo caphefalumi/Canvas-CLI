@@ -15,7 +15,6 @@ function restoreLog() {
 }
 
 function stripAnsi(str: string): string {
-  // eslint-disable-next-line no-control-regex
   return str.replace(/\u001B\[[0-9;]*[a-zA-Z]/g, "");
 }
 

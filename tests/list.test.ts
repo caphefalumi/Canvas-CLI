@@ -8,6 +8,12 @@ beforeEach(() => {
   logs = [];
   originalLog = console.log;
   console.log = (...args: any[]) => logs.push(args.join(" "));
+  // Set consistent terminal width for all tests
+  Object.defineProperty(process.stdout, "columns", {
+    value: 100,
+    writable: true,
+    configurable: true,
+  });
 });
 
 function restoreLog() {
@@ -56,13 +62,6 @@ describe("List Command - Course List Table", () => {
   });
 
   test("course list with enrollment info", () => {
-    // Set sufficient terminal width for content
-    Object.defineProperty(process.stdout, "columns", {
-      value: 80,
-      writable: true,
-      configurable: true,
-    });
-
     const columns = [
       { key: "name", header: "Course", flex: 1 },
       { key: "term", header: "Term", width: 15 },

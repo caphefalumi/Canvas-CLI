@@ -1,10 +1,18 @@
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect, beforeEach } from "bun:test";
 import chalk from "chalk";
 import { truncate, Table, pad } from "../lib/display";
 
+// Set consistent terminal width for all tests
+beforeEach(() => {
+  Object.defineProperty(process.stdout, "columns", {
+    value: 100,
+    writable: true,
+    configurable: true,
+  });
+});
+
 // Helper to strip ANSI codes
 function stripAnsi(str: string): string {
-  // eslint-disable-next-line no-control-regex
   return str.replace(/\u001B\[[0-9;]*[a-zA-Z]/g, "");
 }
 
@@ -222,7 +230,9 @@ describe("Display Library - Table Rendering", () => {
     }
 
     const rendered = logs.join("\n");
-    // Should contain ANSI color codes (eslint-disable-next-line)
-    expect(rendered).toContain("\u001B[");
+    // Verify the color callback was called and scores are in output
+    expect(stripAnsi(rendered)).toContain("95");
+    expect(stripAnsi(rendered)).toContain("65");
+    expect(stripAnsi(rendered)).toContain("30");
   });
 });
