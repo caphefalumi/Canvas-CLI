@@ -80,6 +80,7 @@ canvas grades -a -v                  # All courses with verbose details
 ```
 
 **Features:**
+
 - 📊 Interactive course selection with grade summary table
 - 📝 Detailed assignment breakdown with scores
 - ✓ Color-coded status indicators (graded, pending, not done)
@@ -89,6 +90,7 @@ canvas grades -a -v                  # All courses with verbose details
 - 🎯 Visual progress tracking with emojis
 
 **What you'll see:**
+
 1. List of all courses with current/final scores
 2. Select a course to view detailed breakdown
 3. Overall grades (Canvas official + calculated average)
@@ -98,15 +100,15 @@ canvas grades -a -v                  # All courses with verbose details
 
 ## Command Reference
 
-| Command         | Alias      | Description                       |
-|-----------------|-----------|-----------------------------------|
-| `list`          | `l`       | List courses                      |
-| `assignments`   | `assign`  | List assignments                  |
-| `submit`        | `sub`     | Submit assignment files           |
-| `grades`        | `grade`   | Show grades                       |
-| `announcements` | `announce`| Show announcements                |
-| `profile`       | `me`      | Show user profile                 |
-| `config`        | -         | Show configuration                |
+| Command         | Alias      | Description             |
+| --------------- | ---------- | ----------------------- |
+| `list`          | `l`        | List courses            |
+| `assignments`   | `assign`   | List assignments        |
+| `submit`        | `sub`      | Submit assignment files |
+| `grades`        | `grade`    | Show grades             |
+| `announcements` | `announce` | Show announcements      |
+| `profile`       | `me`       | Show user profile       |
+| `config`        | -          | Show configuration      |
 
 ## Requirements
 
