@@ -4,14 +4,14 @@
     "target": "ES2022",
     "lib": ["ES2022"],
     "types": [],
-    
+
     /* Modules */
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "rootDir": "./",
     "outDir": "./dist",
     "resolveJsonModule": true,
-    
+
     /* Emit */
     "declaration": true,
     "declarationMap": true,
@@ -19,13 +19,13 @@
     "removeComments": true,
     "importHelpers": false,
     "newLine": "lf",
-    
+
     /* Interop Constraints */
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    
+
     /* Type Checking */
     "strict": true,
     "noImplicitAny": true,
@@ -40,21 +40,17 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-    
+
     /* Completeness */
     "skipLibCheck": true,
-    "skipDefaultLibCheck": true
+    "skipDefaultLibCheck": true,
   },
   "include": [
     "src/**/*",
     "lib/**/*",
     "commands/**/*",
     "types/**/*",
-    "index.ts"
+    "index.ts",
   ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.spec.ts"
-  ]
+  "exclude": ["node_modules", "dist", "**/*.spec.ts"],
 }

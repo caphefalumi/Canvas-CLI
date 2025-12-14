@@ -131,7 +131,7 @@ export interface FileUploadResponse {
 export interface SubmitAssignmentParams {
   courseId: number;
   assignmentId: number;
-  submissionType: 'online_upload' | 'online_text_entry' | 'online_url';
+  submissionType: "online_upload" | "online_text_entry" | "online_url";
   fileIds?: number[];
   body?: string;
   url?: string;
