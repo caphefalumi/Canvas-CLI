@@ -18,4 +18,6 @@ export * from "./commands/announcements.js";
 export * from "./commands/profile.js";
 export * from "./commands/submit.js";
 export * from "./commands/api.js";
+export * from "./commands/calendar.js";
+export * from "./commands/modules.js";
 export * from "./types/index.js";

@@ -19,6 +19,8 @@ import { showGrades } from "../commands/grades.js";
 import { showAnnouncements } from "../commands/announcements.js";
 import { showProfile } from "../commands/profile.js";
 import { submitAssignment } from "../commands/submit.js";
+import { showCalendar } from "../commands/calendar.js";
+import { showModules } from "../commands/modules.js";
 import { requireConfig } from "../lib/config-validator.js";
 
 const program = new Command();
@@ -88,6 +90,8 @@ program
 program
   .command("grades")
   .alias("grade")
+  .alias("mark")
+  .alias("marks")
   .description("View grades (interactive or by course name)")
   .argument("[course-name]", "Course name for detailed view (optional)")
   .option("-v, --verbose", "Show extra details")
@@ -121,6 +125,27 @@ program
   .option("-a, --all", "Show all courses", false)
   .option("--dry-run", "Test submission", false)
   .action(requireConfig(submitAssignment));
+
+// Calendar command to show upcoming due dates
+program
+  .command("calendar")
+  .alias("cal")
+  .alias("due")
+  .description("View upcoming due dates across courses")
+  .option("-d, --days <number>", "Days to look ahead", "14")
+  .option("-a, --all", "Include all courses", false)
+  .option("-p, --past", "Include past due (last 7 days)", false)
+  .action(requireConfig(showCalendar));
+
+// Modules command to browse course content
+program
+  .command("modules")
+  .alias("mod")
+  .alias("content")
+  .description("Browse course modules and content")
+  .argument("[course-name]", "Course name (optional)")
+  .option("-a, --all", "Show all courses", false)
+  .action(requireConfig(showModules));
 
 // Parse command line arguments
 program.parse();
