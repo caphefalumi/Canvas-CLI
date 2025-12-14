@@ -36,7 +36,6 @@ function clearLines(count: number = 1): void {
   }
 }
 
-
 export async function submitAssignment(
   courseName?: string,
   options: SubmitOptions = {},
@@ -64,7 +63,7 @@ export async function submitAssignment(
     // Step 1: Select Course
     let courseId: number;
 
-    if(courseName) {
+    if (courseName) {
       const course = await getCanvasCourse(courseName);
       if (!course) {
         console.log(chalk.red(`Error: Course "${courseName}" not found.`));
@@ -73,12 +72,11 @@ export async function submitAssignment(
       }
       courseId = course.id;
       console.log(chalk.green(`✓ Using course: ${courseName}`));
-    }
-    else {
+    } else {
       console.log(chalk.cyan("\n" + "-".repeat(60)));
       console.log(chalk.cyan.bold("Step 1: Select Course"));
       console.log(chalk.cyan("-".repeat(60)));
-      
+
       const courses = await getCanvasCourses(options.all ?? false);
 
       if (!courses || courses.length === 0) {
