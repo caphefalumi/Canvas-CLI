@@ -79,12 +79,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Better grade formatting and status indicators
   - Support for letter grades, excused, and missing assignments
 
-### Fixed (1.4.7)
-
-- Prevent the interactive file browser from permanently removing other stdin listeners: save and restore `process.stdin` 'data' listeners so `readline` and SIGINT (Ctrl+C) continue to work after browser exit.
-- Filter file browser listings by `allowed_extensions` when provided by the assignment so disallowed file types cannot be selected (prevents HTTP 400 "filetype not allowed").
-- Allow pressing Enter at the final "Proceed with submission? (Y/n)" prompt to accept the default (Yes) to match the shown prompt.
-
 ### Notes (1.4.7)
 
 - Bumped package version to 1.4.7.
@@ -113,6 +107,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed (1.4.7)
 
+- Prevent the interactive file browser from permanently removing other stdin listeners: save and restore `process.stdin` 'data' listeners so `readline` and SIGINT (Ctrl+C) continue to work after browser exit.
+- Filter file browser listings by `allowed_extensions` when provided by the assignment so disallowed file types cannot be selected (prevents HTTP 400 "filetype not allowed").
+- Allow pressing Enter at the final "Proceed with submission? (Y/n)" prompt to accept the default (Yes) to match the shown prompt.
 - **Assignment Name Display**: Fixed "Unknown Assignment" issue in submission summary
 - **File Selection Flow**: Better error handling and user guidance during file selection
 - **Variable Scope**: Proper assignment variable handling throughout submission process
