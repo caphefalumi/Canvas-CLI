@@ -2,7 +2,7 @@
  * Assignments command
  */
 
-import { makeCanvasRequest } from "../lib/api-client.js";
+import { makeCanvasRequest, getCanvasCourse } from "../lib/api-client.js";
 import {
   pickCourse,
   displayAssignments,
@@ -19,14 +19,14 @@ import type {
 } from "../types/index.js";
 
 export async function listAssignments(
-  courseId?: string,
+  courseName?: string,
   options: ListAssignmentsOptions = {},
 ): Promise<void> {
   try {
     let course: CanvasCourse | undefined;
-    let selectedCourseId = courseId;
+    let selectedCourseId: string;
 
-    if (!courseId) {
+    if (!courseName) {
       const result = await pickCourse({
         title: "\nLoading your courses, please wait...",
       });
@@ -36,10 +36,13 @@ export async function listAssignments(
       selectedCourseId = course.id.toString();
       result.rl.close();
     } else {
-      course = await makeCanvasRequest<CanvasCourse>(
-        "get",
-        `courses/${courseId}`,
-      );
+      course = await getCanvasCourse(courseName);
+      if (!course) {
+        printError(`Course "${courseName}" not found.`);
+        return;
+      }
+      selectedCourseId = course.id.toString();
+      printSuccess(`✓ Using course: ${course.name}`);
     }
 
     printSeparator("─", 60);

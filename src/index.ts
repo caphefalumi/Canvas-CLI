@@ -78,7 +78,7 @@ program
   .command("assignments")
   .alias("assign")
   .description("List assignments for a course")
-  .argument("[course-id]", "Course ID (optional)")
+  .argument("[course-name]", "Course name (optional)")
   .option("-v, --verbose", "Show detailed info")
   .option("-s, --submitted", "Show submitted only")
   .option("-p, --pending", "Show pending only")
@@ -88,8 +88,8 @@ program
 program
   .command("grades")
   .alias("grade")
-  .description("View grades (interactive or by course ID)")
-  .argument("[course-id]", "Course ID for detailed view")
+  .description("View grades (interactive or by course name)")
+  .argument("[course-name]", "Course name for detailed view (optional)")
   .option("-v, --verbose", "Show extra details")
   .option("-a, --all", "Include inactive courses")
   .action(requireConfig(showGrades));

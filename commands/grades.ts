@@ -2,7 +2,7 @@
  * Grades command
  */
 
-import { makeCanvasRequest } from "../lib/api-client.js";
+import { makeCanvasRequest, getCanvasCourse } from "../lib/api-client.js";
 import {
   createReadlineInterface,
   askQuestionWithValidation,
@@ -416,13 +416,19 @@ async function showDetailedGrades(
 }
 
 export async function showGrades(
-  courseId?: string,
+  courseName?: string,
   options: ShowGradesOptions = {},
 ): Promise<void> {
   try {
-    if (courseId) {
+    if (courseName) {
       // Show grades for specific course with detailed assignment breakdown
-      await showDetailedGrades(courseId, options);
+      const course = await getCanvasCourse(courseName);
+      if (!course) {
+        console.log(chalk.red(`Error: Course "${courseName}" not found.`));
+        return;
+      }
+      console.log(chalk.green(`✓ Using course: ${course.name}`));
+      await showDetailedGrades(course.id.toString(), options);
     } else {
       // Interactive course selection or show summary for all courses
       const rl = createReadlineInterface();
