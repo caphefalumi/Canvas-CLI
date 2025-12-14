@@ -7,20 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.6.3] - 2025-12-14
 
-### Added
+### Added (1.6.3)
 
-- **Live table resize**: Tables now re-render automatically when terminal is resized
+- **Live table resize**: Tables re-render automatically when terminal is resized
 - **Adaptive truncation**: Text truncation updates dynamically based on terminal width
 
-### Fixed
+### Fixed (1.6.3)
 
+- **Submit table truncation**: Reduced excessive truncation in the submit table by compacting columns and shortening date format
 - **Table overflow**: Fixed tables overflowing terminal width on small screens
 - **Column width calculation**: Corrected border overhead calculation for accurate fitting
-- **Resize clearing**: Fixed incomplete clearing of table when resizing terminal
 
-### Changed
+### Changed (1.6.3)
 
-- **Submit table columns**: Optimized column widths - shortened "Due Date" to "Due", removed maxWidth on assignment name for better space usage
+- **Submit table columns**: Optimized and tightened column widths for compact display (Assignment Name max width set to 35, Type fixed at 8, Due fixed at 16 with MM/DD/YYYY formatting, Status fixed at 12)
 
 ## [1.6.2] - 2025-12-14
 
@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.6.0] - 2025-12-06
 
-### Added
+### Added (1.6.0)
 
 - **Boxed Table Displays**: All commands now display data in modern boxed tables with rounded corners (╭╮╰╯)
 - **Adaptive Column Widths**: Tables dynamically adjust column widths based on terminal size for optimal display
@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Announcements Table**: Course selection and announcements list now displayed in formatted tables
 - **Profile Table**: User profile information displayed in clean field/value table format
 
-### Changed
+### Changed (1.6.0)
 
 - **Grades Display**: Merged official grades and calculated statistics into a unified table
 - **CLI Descriptions**: Shortened command descriptions for cleaner help output
@@ -58,22 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.4.7] - 2025-11-05
 
-### Added
+### Added (1.4.7)
 
-- Show allowed file extensions hint in the interactive file browser when an assignment restricts uploads (e.g. "Allowed: .pdf, .docx").
+- Show allowed file extensions hint in the interactive file browser when an assignment restricts uploads (e.g. `*.pdf`, `*.docx`).
 - Add `r` keybinding to the file browser to reload the current directory listing without exiting the browser.
-
-### Fixed
-
-- Prevent the interactive file browser from permanently removing other stdin listeners: save and restore `process.stdin` 'data' listeners so `readline` and SIGINT (Ctrl+C) continue to work after browser exit.
-- Filter file browser listings by `allowed_extensions` when provided by the assignment so disallowed file types cannot be selected (prevents HTTP 400 "filetype not allowed").
-- Allow pressing Enter at the final "Proceed with submission? (Y/n)" prompt to accept the default (Yes) to match the shown prompt.
-
-### Notes
-
-- Bumped package version to 1.4.7.
-
-### Added
 
 - **Enhanced File Selection UX**: Implemented continuous file selection until empty input
   - Browse current directory with file size display
@@ -81,11 +69,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Remove files from selection
   - Show currently selected files
   - Smart file filtering (excludes hidden files, package files)
-  - **Wildcard support**: Use patterns like _.html, _.js, \*.pdf to select multiple files
+  - **Wildcard support**: Use patterns like `*.html`, `*.js`, `*.pdf` to select multiple files
   - File type icons for better visual identification
 
 - **Improved Grade Viewing**:
   - Interactive course selection for grade viewing
+  - Assignment-level grade details with color coding
+  - Overall course grade summary
+  - Better grade formatting and status indicators
+  - Support for letter grades, excused, and missing assignments
+
+### Fixed (1.4.7)
+
+- Prevent the interactive file browser from permanently removing other stdin listeners: save and restore `process.stdin` 'data' listeners so `readline` and SIGINT (Ctrl+C) continue to work after browser exit.
+- Filter file browser listings by `allowed_extensions` when provided by the assignment so disallowed file types cannot be selected (prevents HTTP 400 "filetype not allowed").
+- Allow pressing Enter at the final "Proceed with submission? (Y/n)" prompt to accept the default (Yes) to match the shown prompt.
+
+### Notes (1.4.7)
+
+- Bumped package version to 1.4.7.
   - Assignment-level grade details with color coding
   - Overall course grade summary
   - Better grade formatting and status indicators
@@ -101,7 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Confirmation helpers with default values
   - List selection utilities with cancel option
 
-### Improved
+### Improved (1.4.7)
 
 - **Submit Command**: Complete redesign with better file selection workflow
 - **Grades Command**: Interactive course selection and detailed assignment grades
@@ -109,13 +111,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Announcements Command**: Show course names instead of IDs
 - **User Experience**: More consistent and intuitive interfaces across all commands
 
-### Fixed
+### Fixed (1.4.7)
 
 - **Assignment Name Display**: Fixed "Unknown Assignment" issue in submission summary
 - **File Selection Flow**: Better error handling and user guidance during file selection
 - **Variable Scope**: Proper assignment variable handling throughout submission process
 
-### Technical
+### Technical (1.4.7)
 
 - Enhanced interactive utilities in `lib/interactive.js`
 - Better error handling and user guidance
@@ -123,19 +125,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.1] - 2025-07-03
 
-### Fixed
+### Fixed (1.1.1)
 
 - Removed dotenv dependency that was causing module not found errors
 - Fixed configuration file path to use `.canvaslms-cli-config.json`
 - Resolved package publishing and global installation issues
 
-### Added
+### Added (1.1.1)
 
 - Dual binary support: both `canvaslms-cli` and `canvas` commands work
 
 ## [1.1.0] - 2025-07-03
 
-### Major Changes
+### Major Changes (1.1.0)
 
 - Home directory configuration system (~/.canvaslms-cli-config.json)
 - Interactive configuration setup wizard (`canvas config setup`)
@@ -147,21 +149,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic configuration validation for all commands
 - Improved error handling and user guidance
 
-### Changed
+### Changed (1.1.0)
 
 - **BREAKING**: Removed environment variable support (.env files)
 - Configuration now stored in user's home directory instead of project directory
 - Enhanced configuration validation with better error messages
 - Improved user onboarding with guided setup process
 
-### Removed
+### Removed (1.1.0)
 
 - dotenv dependency (no longer needed)
 - Environment variable fallback support
 
 ## [1.0.0] - 2025-07-03
 
-### Added
+### Added (1.0.0)
 
 - Initial release of Canvas CLI Tool
 - Modular architecture with separate command handlers
@@ -178,7 +180,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - File selection from current directory
 - Detailed verbose modes for all commands
 
-### Features
+### Features (1.0.0)
 
 - 📚 Course listing with favorites support
 - 📝 Assignment management with status indicators
@@ -190,7 +192,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🎨 Color-coded grade display
 - 📁 Smart file selection interface
 
-### Technical
+### Technical (1.0.0)
 
 - Modular command structure in separate files
 - Reusable API client library
@@ -201,7 +203,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned Features
+### Planned Features (Unreleased)
 
 - Assignment creation and editing
 - Bulk operations
