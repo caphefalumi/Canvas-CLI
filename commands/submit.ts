@@ -2,7 +2,7 @@
  * Submit assignment command
  */
 
-import { makeCanvasRequest } from "../lib/api-client.js";
+import { makeCanvasRequest, getCanvasCourse } from "../lib/api-client.js";
 import {
   uploadSingleFileToCanvas,
   submitAssignmentWithFiles,
@@ -14,12 +14,12 @@ import {
   askConfirmation,
 } from "../lib/interactive.js";
 import { displaySubmitAssignments } from "../lib/display.js";
+import { getCanvasCourses } from "../lib/api-client.js";
 import chalk from "chalk";
 import path from "path";
-import type { CanvasCourse, CanvasAssignment } from "../types/index.js";
+import type { CanvasAssignment } from "../types/index.js";
 
 interface SubmitOptions {
-  course?: string;
   file?: string;
   all?: boolean;
   dryRun?: boolean;
@@ -36,13 +36,12 @@ function clearLines(count: number = 1): void {
   }
 }
 
-function getCanvasCourse() 
 
 export async function submitAssignment(
-  courseName?: CanvasCourse,
+  courseName?: string,
   options: SubmitOptions = {},
 ): Promise<void> {
-  if (options?.dryRun) {
+  if (options.dryRun) {
     console.log(
       chalk.bgRedBright("Dry run mode - no actual submission will be made"),
     );
@@ -64,37 +63,23 @@ export async function submitAssignment(
 
     // Step 1: Select Course
     let courseId: number;
-    if (options.course) {
-      courseId = parseInt(options.course);
-      console.log(chalk.green(`✓ Using specified course ID: ${courseId}`));
-    } 
-    else if(courseName) {
-      
+
+    if(courseName) {
+      const course = await getCanvasCourse(courseName);
+      if (!course) {
+        console.log(chalk.red(`Error: Course "${courseName}" not found.`));
+        rl.close();
+        return;
+      }
+      courseId = course.id;
+      console.log(chalk.green(`✓ Using course: ${courseName}`));
     }
     else {
       console.log(chalk.cyan("\n" + "-".repeat(60)));
       console.log(chalk.cyan.bold("Step 1: Select Course"));
       console.log(chalk.cyan("-".repeat(60)));
-
-      const queryParams = options.all
-        ? [
-            "enrollment_state=active",
-            "per_page=100",
-            "include[]=term",
-            "include[]=favorites",
-          ]
-        : [
-            "enrollment_state=active",
-            "per_page=100",
-            "include[]=term",
-            "include[]=favorites",
-          ];
-
-      const courses = await makeCanvasRequest<CanvasCourse[]>(
-        "get",
-        "courses",
-        queryParams,
-      );
+      
+      const courses = await getCanvasCourses(options.all ?? false);
 
       if (!courses || courses.length === 0) {
         console.log(chalk.red("Error: No courses found."));

@@ -2,7 +2,7 @@
  * Announcements command
  */
 
-import { makeCanvasRequest } from "../lib/api-client.js";
+import { makeCanvasRequest, getCanvasCourses } from "../lib/api-client.js";
 import { createReadlineInterface, askQuestion } from "../lib/interactive.js";
 import {
   pickCourse,
@@ -20,13 +20,13 @@ import type {
 } from "../types/index.js";
 
 export async function showAnnouncements(
-  courseId?: string,
+  courseName?: string,
   options: ShowAnnouncementsOptions = {},
 ): Promise<void> {
   let rl: ReturnType<typeof createReadlineInterface> | null = null;
 
   try {
-    let selectedCourseId = courseId;
+    let selectedCourseId = courseName;
 
     if (!selectedCourseId) {
       const result = await pickCourse({
@@ -38,6 +38,7 @@ export async function showAnnouncements(
       rl = result.rl;
     } else {
       rl = createReadlineInterface();
+      // selectedCourseId = await getCanvasCourses(courseName)
     }
 
     const limit = parseInt(options.limit || "5") || 5;

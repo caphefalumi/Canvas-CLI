@@ -1,10 +1,8 @@
-#!/usr/bin/env node
-
 /**
  * Canvas CLI - A command line tool for interacting with Canvas API
  *
  * @author caphefalumi
- * @version 1.6.0
+ * @version 1.6.2
  */
 
 import { Command } from "commander";
@@ -101,7 +99,7 @@ program
   .command("announcements")
   .alias("an")
   .description("View course announcements")
-  .argument("[course-id]", "Course ID (optional)")
+  .argument("[course-name]", "Course name (optional)")
   .option("-l, --limit <number>", "Number to show", "5")
   .action(requireConfig(showAnnouncements));
 
@@ -118,10 +116,10 @@ program
   .command("submit")
   .alias("sub")
   .description("Submit files to an assignment")
-  .option("-c, --course <course-id>", "Specify course ID")
+  .argument("[course-name]", "Course name (optional)")
   .option("-f, --file <file-path>", "Specify file path")
-  .option("-a, --all", "Show all courses")
-  .option("--dry-run", "Test submission")
+  .option("-a, --all", "Show all courses", false)
+  .option("--dry-run", "Test submission", false)
   .action(requireConfig(submitAssignment));
 
 // Parse command line arguments

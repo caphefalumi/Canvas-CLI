@@ -5,7 +5,29 @@
 import axios, { AxiosRequestConfig } from "axios";
 import fs from "fs";
 import { getInstanceConfig } from "./config.js";
+import type { CanvasCourse } from "../types/index.js";
 
+export async function getCanvasCourse(courseName: string): Promise<CanvasCourse | undefined> {
+  const courses = await getCanvasCourses(true)
+  return courses.find(c => c.name.toLowerCase().includes(courseName.toLowerCase()));
+}
+
+export async function getCanvasCourses(getAllCourse: boolean): Promise<CanvasCourse[]> {
+  const queryParams = [
+    "enrollment_state=active",
+    "per_page=100",
+    "include[]=term",
+    "include[]=favorites",
+  ];
+
+  const courses = await makeCanvasRequest<CanvasCourse[]>(
+    "get",
+    "courses",
+    queryParams,
+  );
+
+  return getAllCourse ? courses : courses.filter((c) => c.is_favorite);
+}
 /**
  * Make Canvas API request
  */

@@ -96,10 +96,13 @@ function calculateColumnWidths(
     : 0;
   // Row number overhead: "│ " before + the width itself
   const rowNumOverhead = showRowNumbers ? 2 + rowNumWidth : 0;
-  
+
   // Use actual terminal width, cap at 240 for sanity
   const effectiveTermWidth = Math.min(terminalWidth, 240);
-  const availableWidth = Math.max(numCols * 4, effectiveTermWidth - borderOverhead - rowNumOverhead);
+  const availableWidth = Math.max(
+    numCols * 4,
+    effectiveTermWidth - borderOverhead - rowNumOverhead,
+  );
 
   let widths: number[] = [];
   const contentWidths: number[] = [];
@@ -250,16 +253,16 @@ export class Table {
     const maxPossibleWraps = Math.ceil(this.lastTableWidth / 20);
     const worstCaseLines = this.lastLineCount * Math.max(maxPossibleWraps, 3);
     const linesToClear = Math.max(worstCaseLines, 60);
-    
+
     // Clear current line first
     process.stdout.write("\x1b[2K");
-    
+
     // Move up and clear each line - works better on Windows
     for (let i = 0; i < linesToClear; i++) {
       process.stdout.write("\x1b[1A"); // Move up one line
       process.stdout.write("\x1b[2K"); // Clear entire line
     }
-    
+
     // Move cursor to beginning of line and clear below
     process.stdout.write("\x1b[G");
     process.stdout.write("\x1b[0J");
@@ -282,11 +285,12 @@ export class Table {
     const numCols = this.columns.length;
     const borderWidth = 2 * numCols + 1;
     const rowNumExtra = this.options.showRowNumbers ? 2 + this.rowNumWidth : 0;
-    const tableWidth = widths.reduce((a, b) => a + b, 0) + borderWidth + rowNumExtra;
-    
+    const tableWidth =
+      widths.reduce((a, b) => a + b, 0) + borderWidth + rowNumExtra;
+
     // Store for clear calculation
     this.lastTableWidth = tableWidth;
-    
+
     // Calculate how many terminal lines each table row takes (accounting for wrap)
     const linesPerRow = Math.max(1, Math.ceil(tableWidth / terminalWidth));
 
@@ -330,13 +334,19 @@ export class Table {
     let header = chalk.gray("│ ");
     if (this.options.showRowNumbers) {
       header +=
-        chalk.cyan.bold(pad(truncate(this.options.rowNumberHeader!, this.rowNumWidth), this.rowNumWidth)) +
-        chalk.gray("│ ");
+        chalk.cyan.bold(
+          pad(
+            truncate(this.options.rowNumberHeader!, this.rowNumWidth),
+            this.rowNumWidth,
+          ),
+        ) + chalk.gray("│ ");
     }
     header += this.columns
       .map((col, i) => {
         const colWidth = widths[i] || 10;
-        return chalk.cyan.bold(pad(truncate(col.header, colWidth), colWidth, col.align));
+        return chalk.cyan.bold(
+          pad(truncate(col.header, colWidth), colWidth, col.align),
+        );
       })
       .join(chalk.gray("│ "));
     header += chalk.gray("│");
@@ -570,7 +580,13 @@ export function displayAssignments(
   options: AssignmentDisplayOptions = {},
 ): void {
   const columns: ColumnDefinition[] = [
-    { key: "name", header: "Assignment Name", flex: 1, minWidth: 15, maxWidth: 35 },
+    {
+      key: "name",
+      header: "Assignment Name",
+      flex: 1,
+      minWidth: 15,
+      maxWidth: 35,
+    },
   ];
 
   if (options.showId) {
@@ -705,7 +721,7 @@ export function displaySubmitAssignments(
     let dueDate = "No due date";
     if (assignment.due_at) {
       const d = new Date(assignment.due_at);
-      dueDate = `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}/${d.getFullYear()}`;
+      dueDate = `${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getDate().toString().padStart(2, "0")}/${d.getFullYear()}`;
     }
 
     table.addRow({
