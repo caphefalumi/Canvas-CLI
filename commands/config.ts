@@ -53,17 +53,10 @@ export async function showConfig(): Promise<void> {
       );
     }
   } else {
-    console.log(chalk.yellow("No configuration found."));
+    console.log(
+      chalk.yellow("No configuration found, run canvas config setup to start."),
+    );
   }
-
-  console.log(chalk.cyan("\nManual setup:"));
-  console.log(chalk.white("1. Get your Canvas API token:"));
-  console.log(chalk.white("   - Log into your Canvas instance"));
-  console.log(chalk.white("   - Go to Account → Settings"));
-  console.log(chalk.white('   - Scroll down to "Approved Integrations"'));
-  console.log(chalk.white('   - Click "+ New Access Token"'));
-  console.log(chalk.white("   - Copy the generated token"));
-  console.log(chalk.white('2. Run "canvas config setup" to configure'));
 }
 
 export async function setupConfig(): Promise<void> {
@@ -73,6 +66,13 @@ export async function setupConfig(): Promise<void> {
     console.log(chalk.cyan.bold("\n" + "-".repeat(60)));
     console.log(chalk.cyan.bold("Canvas CLI Configuration Setup"));
     console.log(chalk.cyan("-".repeat(60)));
+
+    console.log(chalk.white("Get your Canvas API token:"));
+    console.log(chalk.white("   - Log into your Canvas"));
+    console.log(chalk.white("   - Go to Account → Settings"));
+    console.log(chalk.white('   - Scroll down to "Approved Integrations"'));
+    console.log(chalk.white('   - Click "+ New Access Token"'));
+    console.log(chalk.white("   - Copy the generated token"));
 
     if (configExists()) {
       const config = readConfig();

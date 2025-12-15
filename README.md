@@ -6,9 +6,12 @@ A modern, user-friendly command-line interface for Canvas LMS. Manage courses, a
 
 - List and filter enrolled/starred courses
 - View assignments, grades, and submission status
-- Interactive file upload for assignments
+- Interactive file upload for assignments with visual file browser
+- View upcoming due dates and calendar events
+- Browse course modules and content
 - View course announcements
 - Display user profile information
+- Modern table displays with adaptive column widths
 - Direct access to Canvas API endpoints
 
 ## Installation
@@ -47,85 +50,91 @@ npm install -g canvaslms-cli
 ### Common Commands
 
 ```bash
-canvas config                # Configure domain and API token
-canvas list                  # List starred courses
-canvas list -a               # List all enrolled courses
-canvas assignments <course>  # List assignments for a course
-canvas grades                # Interactive course selection + detailed grades
-canvas grades <course-id>    # Show detailed grades for specific course
-canvas announcements         # Show recent announcements
-canvas profile               # Show user profile
-canvas submit                # Interactive assignment submission
+canvas config                    # Configure domain and API token
+canvas list                      # List starred courses
+canvas list -a                   # List all enrolled courses
+
+# Assignments (supports course name instead of ID)
+canvas assignments               # Interactive course selection
+canvas assignments "math"        # List assignments for course matching "math"
+canvas assignments -s            # Show only submitted assignments
+canvas assignments -p            # Show only pending assignments
+
+# Grades (supports course name instead of ID)
+canvas grades                    # Interactive course selection + detailed grades
+canvas grades "database"         # Show detailed grades for course matching "database"
+canvas grades -a                 # Include inactive/completed courses
+canvas grades -v                 # Include verbose enrollment details
+
+# Announcements (supports course name instead of ID)
+canvas announcements             # Interactive course selection
+canvas announcements "software"  # Show announcements for course matching "software"
+canvas announcements -l 10       # Show last 10 announcements
+
+# Calendar & Due Dates
+canvas calendar                  # View upcoming due dates (next 14 days)
+canvas calendar -d 30            # View due dates for next 30 days
+canvas calendar -p               # Include past due items (last 7 days)
+canvas calendar -a               # Include all courses (not just starred)
+
+# Modules
+canvas modules                   # Interactive course selection
+canvas modules "algorithms"      # Browse modules for course matching "algorithms"
+
+# Submission
+canvas submit                    # Interactive assignment submission
+canvas submit "tools"            # Submit to course matching "tools"
+canvas submit -f file.pdf        # Submit specific file
+canvas submit --dry-run          # Test submission without uploading
+
+# Profile
+canvas profile                   # Show user profile
+canvas profile -v                # Show all profile fields
 ```
 
 ### Assignment Submission
 
+The submit command provides an interactive file selection experience with a visual file browser:
+
 ```bash
-canvas submit                        # Interactive mode
-canvas submit -c <courseId>          # Specify course
-canvas submit -a <assignmentId>      # Specify assignment
+canvas submit                        # Full interactive mode
+canvas submit "course name"          # Specify course by name
 canvas submit -f <file>              # Submit specific file
+canvas submit --dry-run              # Test submission flow without uploading
+canvas submit -a                     # Show all courses (not just starred)
 ```
 
-### Viewing Grades
-
-The grades command provides an enhanced, interactive experience:
+### Course Grades
 
 ```bash
 canvas grades                        # Interactive course selection (active courses)
+canvas grades "software"             # View grades for course matching "software"
 canvas grades --all                  # Include inactive/completed courses
-canvas grades <course-id>            # Direct course grade view
 canvas grades --verbose              # Include enrollment details
 canvas grades -a -v                  # All courses with verbose details
 ```
 
-**Features:**
+### Calendar & Due Dates
 
-- 📊 Interactive course selection with grade summary table
-- 📝 Detailed assignment breakdown with scores
-- ✓ Color-coded status indicators (graded, pending, not done)
-- 📈 Calculated totals based on graded assignments
-- 📋 Table-formatted overall grades
-- 🔍 Option to view all courses including inactive ones
-- 🎯 Visual progress tracking with emojis
+View upcoming assignments and events across all your courses:
 
-**What you'll see:**
+```bash
+canvas calendar                      # Next 14 days (default)
+canvas calendar -d 30                # Next 30 days
+canvas calendar -p                   # Include past due (last 7 days)
+canvas calendar -a                   # Include all courses
+```
 
-1. List of all courses with current/final scores
-2. Select a course to view detailed breakdown
-3. Overall grades (Canvas official + calculated average)
-4. Complete assignment list with individual scores
-5. Points earned vs points possible
-6. Assignment submission status
+### Course Modules
 
-## Command Reference
+Browse and explore course content and modules:
 
-| Command         | Alias      | Description             |
-| --------------- | ---------- | ----------------------- |
-| `list`          | `l`        | List courses            |
-| `assignments`   | `assign`   | List assignments        |
-| `submit`        | `sub`      | Submit assignment files |
-| `grades`        | `grade`    | Show grades             |
-| `announcements` | `announce` | Show announcements      |
-| `profile`       | `me`       | Show user profile       |
-| `config`        | -          | Show configuration      |
-
-## Requirements
-
-- Node.js >= 14.x
-- npm >= 6.x
-- Valid Canvas LMS API token
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Make your changes
-4. Run tests: `npm test`
-5. Commit: `git commit -am 'Add feature'`
-6. Push: `git push origin feature-name`
-7. Submit a pull request
+```bash
+canvas modules                       # Interactive course selection
+canvas modules "database"            # Browse modules for specific course
+canvas modules -a                    # Show all courses
+```
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+See [LICENSE](LICENSE) for details.
