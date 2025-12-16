@@ -7,8 +7,14 @@ on:
     branches: [main]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  test-and-build:
+    name: Test & Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+      fail-fast: false
+
     steps:
       - uses: actions/checkout@v4
 
@@ -29,8 +35,8 @@ jobs:
       - name: Type check
         run: bunx tsc --noEmit
 
-      - name: Run tests
-        run: bun test
-
       - name: Build
         run: bun run build
+
+      - name: Run tests
+        run: bun test
