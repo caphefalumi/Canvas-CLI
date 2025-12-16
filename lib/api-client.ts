@@ -121,17 +121,34 @@ export async function makeCanvasRequest<T = any>(
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
-      console.error(
-        `HTTP ${error.response.status}: ${error.response.statusText}`,
-      );
-      if (error.response.data) {
-        console.error(JSON.stringify(error.response.data, null, 2));
+      const status = error.response.status;
+      const statusText = error.response.statusText;
+
+      // Handle specific HTTP errors gracefully
+      if (status === 403) {
+        throw new Error(
+          "Access denied. You don't have permission to access this resource.",
+        );
       }
+      if (status === 401) {
+        throw new Error(
+          "Unauthorized. Please check your API token with 'canvas config setup'.",
+        );
+      }
+      if (status === 404) {
+        throw new Error(
+          "Resource not found. The requested item may have been deleted or moved.",
+        );
+      }
+
+      // Generic HTTP error
+      const errorData = error.response.data;
+      const message = errorData?.errors?.[0]?.message || statusText;
+      throw new Error(`HTTP ${status}: ${message}`);
     } else {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      console.error(`Request failed: ${errorMessage}`);
+      throw new Error(`Request failed: ${errorMessage}`);
     }
-    process.exit(1);
   }
 }

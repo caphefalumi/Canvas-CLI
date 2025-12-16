@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.8] - 2025-12-16
+
+### Added (1.6.8)
+
+- **Todo Command**: New `canvas todo` command to view all pending items across courses
+  - Shows assignments and quizzes with due dates, time remaining, and points
+  - Color-coded urgency indicators (overdue, due today, upcoming)
+  - Sortable by due date with configurable limit (`-l` option)
+  - Aliases: `canvas tasks`, `canvas pending`
+
+- **Files Command**: New `canvas files` command to browse and download course files
+  - Lists all files in a course with size, type, and last updated date
+  - Interactive file download directly from CLI
+  - Supports course name argument for quick access
+  - Aliases: `canvas file`, `canvas docs`
+
+- **Groups Command**: New `canvas groups` command to view Canvas group memberships
+  - Displays course groups and other groups separately
+  - Shows member count, role, and join level
+  - Option to view group members with `-m` or `--members` flag
+  - Aliases: `canvas group`, `canvas teams`
+
+### Changed (1.6.8)
+
+- **Removed Icons**: Cleaned up emoji icons from table displays for cleaner output
+  - Icons retained only in interactive file selection menu
+
 ## [1.6.7] - 2025-12-15
 
 ### Changed (1.6.7)

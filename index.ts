@@ -19,4 +19,7 @@ export * from "./commands/profile.js";
 export * from "./commands/submit.js";
 export * from "./commands/calendar.js";
 export * from "./commands/modules.js";
+export * from "./commands/todo.js";
+export * from "./commands/files.js";
+export * from "./commands/groups.js";
 export * from "./types/index.js";

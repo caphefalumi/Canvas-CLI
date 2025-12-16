@@ -214,3 +214,101 @@ export interface ReadlineInterface {
   question(query: string, callback: (answer: string) => void): void;
   close(): void;
 }
+
+// Canvas Todo Item types
+export interface CanvasTodoItem {
+  type: string;
+  assignment?: CanvasAssignment;
+  quiz?: {
+    id: number;
+    title: string;
+    due_at: string | null;
+    points_possible: number;
+    [key: string]: any;
+  };
+  ignore: string;
+  ignore_permanently: string;
+  html_url: string;
+  needs_grading_count?: number;
+  context_type: string;
+  course_id?: number;
+  group_id?: number;
+  [key: string]: any;
+}
+
+// Canvas Folder types
+export interface CanvasFolder {
+  id: number;
+  name: string;
+  full_name: string;
+  context_id: number;
+  context_type: string;
+  parent_folder_id: number | null;
+  created_at: string;
+  updated_at: string;
+  lock_at: string | null;
+  unlock_at: string | null;
+  position: number;
+  locked: boolean;
+  folders_url: string;
+  files_url: string;
+  files_count: number;
+  folders_count: number;
+  hidden: boolean;
+  locked_for_user: boolean;
+  hidden_for_user: boolean;
+  for_submissions: boolean;
+  can_upload: boolean;
+  [key: string]: any;
+}
+
+// Canvas Group types
+export interface CanvasGroup {
+  id: number;
+  name: string;
+  description: string | null;
+  is_public: boolean;
+  followed_by_user: boolean;
+  join_level: string;
+  members_count: number;
+  avatar_url: string | null;
+  context_type: string;
+  course_id?: number;
+  account_id?: number;
+  role: string | null;
+  group_category_id: number;
+  sis_group_id: string | null;
+  sis_import_id: number | null;
+  storage_quota_mb: number;
+  permissions?: {
+    create_discussion_topic: boolean;
+    create_announcement: boolean;
+  };
+  users?: CanvasUser[];
+  [key: string]: any;
+}
+
+export interface CanvasGroupMembership {
+  id: number;
+  group_id: number;
+  user_id: number;
+  workflow_state: string;
+  moderator: boolean;
+  [key: string]: any;
+}
+
+// Command options for new features
+export interface ShowTodoOptions {
+  all?: boolean;
+  limit?: string;
+}
+
+export interface ShowFilesOptions {
+  all?: boolean;
+  download?: string;
+}
+
+export interface ShowGroupsOptions {
+  verbose?: boolean;
+  members?: boolean;
+}

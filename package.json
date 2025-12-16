@@ -1,6 +1,6 @@
 {
   "name": "canvaslms-cli",
-  "version": "1.6.7",
+  "version": "1.6.8",
   "description": "A command line tool for interacting with Canvas LMS API",
   "keywords": [
     "canvas",
@@ -21,8 +21,8 @@
   },
   "license": "MIT",
   "author": {
-    "name": "Your Name",
-    "email": "your.email@example.com"
+    "name": "caphefalumi",
+    "email": "dangduytoan13l@gmail.com"
   },
   "type": "module",
   "main": "dist/index.js",
@@ -60,7 +60,6 @@
     "husky": "^9.1.7",
     "oxfmt": "^0.17.0",
     "oxlint": "^1.32.0",
-    "prettier": "^3.0.0",
     "typescript": "^5.9.3"
   },
   "engines": {

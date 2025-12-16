@@ -2,7 +2,7 @@
  * Canvas CLI - A command line tool for interacting with Canvas API
  *
  * @author caphefalumi
- * @version 1.6.7
+ * @version 1.6.8
  */
 
 import { Command } from "commander";
@@ -21,6 +21,9 @@ import { showProfile } from "../commands/profile.js";
 import { submitAssignment } from "../commands/submit.js";
 import { showCalendar } from "../commands/calendar.js";
 import { showModules } from "../commands/modules.js";
+import { showTodo } from "../commands/todo.js";
+import { showFiles } from "../commands/files.js";
+import { showGroups } from "../commands/groups.js";
 import { requireConfig } from "../lib/config-validator.js";
 
 const program = new Command();
@@ -29,7 +32,7 @@ const program = new Command();
 program
   .name("canvas")
   .description("Canvas LMS Command Line Interface")
-  .version("1.6.7", "-v, --version", "Output the current version");
+  .version("1.6.8", "-v, --version", "Output the current version");
 
 // List command to show enrolled courses
 program
@@ -146,6 +149,35 @@ program
   .argument("[course-name]", "Course name (optional)")
   .option("-a, --all", "Show all courses", false)
   .action(requireConfig(showModules));
+
+// Todo command to view all pending items
+program
+  .command("todo")
+  .alias("tasks")
+  .alias("pending")
+  .description("View all pending todo items across courses")
+  .option("-l, --limit <number>", "Number of items to show", "20")
+  .action(requireConfig(showTodo));
+
+// Files command to browse and download course files
+program
+  .command("files")
+  .alias("file")
+  .alias("docs")
+  .description("Browse and download course files")
+  .argument("[course-name]", "Course name (optional)")
+  .option("-a, --all", "Show all courses", false)
+  .action(requireConfig(showFiles));
+
+// Groups command to view group memberships
+program
+  .command("groups")
+  .alias("group")
+  .alias("teams")
+  .description("View your Canvas group memberships")
+  .option("-v, --verbose", "Show detailed info")
+  .option("-m, --members", "Show group members")
+  .action(requireConfig(showGroups));
 
 // Parse command line arguments
 program.parse();

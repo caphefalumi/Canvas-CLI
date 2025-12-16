@@ -81,6 +81,19 @@ canvas calendar -a               # Include all courses (not just starred)
 canvas modules                   # Interactive course selection
 canvas modules "algorithms"      # Browse modules for course matching "algorithms"
 
+# Todo List
+canvas todo                      # View all pending items across courses
+canvas todo -l 10                # Show only 10 items
+
+# Files
+canvas files                     # Interactive course file browser
+canvas files "math"              # Browse files for course matching "math"
+
+# Groups
+canvas groups                    # View your group memberships
+canvas groups -m                 # Show group members
+canvas groups -v                 # Show detailed group info
+
 # Submission
 canvas submit                    # Interactive assignment submission
 canvas submit "tools"            # Submit to course matching "tools"
@@ -133,6 +146,35 @@ Browse and explore course content and modules:
 canvas modules                       # Interactive course selection
 canvas modules "database"            # Browse modules for specific course
 canvas modules -a                    # Show all courses
+```
+
+### Todo List
+
+See all your pending Canvas items in one place:
+
+```bash
+canvas todo                          # View all pending items
+canvas todo -l 10                    # Limit to 10 items
+```
+
+### Course Files
+
+Browse and download files from your courses:
+
+```bash
+canvas files                         # Interactive course selection
+canvas files "course name"           # Browse files for specific course
+canvas files -a                      # Show all courses
+```
+
+### Groups
+
+View your Canvas group memberships:
+
+```bash
+canvas groups                        # View all groups
+canvas groups -m                     # Show group members
+canvas groups -v                     # Verbose mode with details
 ```
 
 ## License
