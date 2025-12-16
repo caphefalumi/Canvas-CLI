@@ -24,26 +24,23 @@ npm install -g canvaslms-cli
 
 ## Setup
 
-1. **Get your Canvas API Token**
-   - Log in to Canvas
-   - Go to Account → Settings
-   - Under Approved Integrations, click + New Access Token
-   - Copy the generated token
+The setup wizard will guide you through:
 
+1. **Getting your Canvas API Token**
+   - Log into your Canvas
+   - Go to Account → Settings
+   - Scroll down to "Approved Integrations"
+   - Click "+ New Access Token"
+   - Copy the generated token
 2. **Configure the CLI**
 
    ```bash
-   canvas config
+   canvas config setup
    ```
 
-3. **Environment Variables**
-
-   Create a `.env` file in your project root:
-
-   ```env
-   CANVAS_DOMAIN=your-canvas-domain.instructure.com
-   CANVAS_API_TOKEN=your-api-token
-   ```
+3. **Entering your credentials**
+   - Canvas domain (e.g., `school.instructure.com`)
+   - Your API token
 
 ## Usage
 
