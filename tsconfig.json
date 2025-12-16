@@ -43,14 +43,14 @@
 
     /* Completeness */
     "skipLibCheck": true,
-    "skipDefaultLibCheck": true,
+    "skipDefaultLibCheck": true
   },
   "include": [
     "src/**/*",
     "lib/**/*",
     "commands/**/*",
     "types/**/*",
-    "index.ts",
+    "index.ts"
   ],
-  "exclude": ["node_modules", "dist", "**/*.spec.ts"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts"]
 }
