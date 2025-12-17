@@ -180,6 +180,7 @@ export class Table {
   private lastTableWidth: number = 0;
   private resizeHandler: (() => void) | null = null;
   private isWatching: boolean = false;
+  private promptText: string | null = null;
 
   constructor(columns: ColumnDefinition[], options: TableOptions = {}) {
     this.columns = columns;
@@ -198,6 +199,14 @@ export class Table {
 
   addRows(rows: Record<string, any>[]): this {
     this.data.push(...rows);
+    return this;
+  }
+
+  /**
+   * Set a prompt to display after the table (will be re-rendered on resize)
+   */
+  setPrompt(prompt: string): this {
+    this.promptText = prompt;
     return this;
   }
 
@@ -249,10 +258,11 @@ export class Table {
   private clearTable(): void {
     if (this.lastLineCount <= 0) return;
 
-    // Calculate worst-case visual lines
+    // Calculate worst-case visual lines including extra lines for prompt
     const maxPossibleWraps = Math.ceil(this.lastTableWidth / 20);
     const worstCaseLines = this.lastLineCount * Math.max(maxPossibleWraps, 3);
-    const linesToClear = Math.max(worstCaseLines, 60);
+    // Add extra lines to clear prompt and any user input
+    const linesToClear = Math.max(worstCaseLines, 60) + 5;
 
     // Clear current line first
     process.stdout.write("\x1b[2K");
@@ -314,6 +324,12 @@ export class Table {
     });
     this.renderBottomBorder(widths);
     lineCount += linesPerRow;
+
+    // Render prompt if set
+    if (this.promptText) {
+      process.stdout.write(this.promptText);
+      lineCount += 1;
+    }
 
     this.lastLineCount = lineCount;
   }
@@ -728,11 +744,15 @@ export function displaySubmitAssignments(
       name: assignment.name,
       type: getAssignmentType(assignment),
       dueDate: dueDate,
-      status: isSubmitted ? "✓ Submitted" : "Not submit",
+      status: isSubmitted ? "✓ Submi..." : "Not submit",
       _isSubmitted: isSubmitted,
     });
   });
 
+  // Set prompt that will be re-rendered on resize
+  table.setPrompt(
+    chalk.white('\nEnter assignment number (or ".."/"back" to cancel): '),
+  );
   table.renderWithResize();
   return table;
 }

@@ -66,12 +66,10 @@ export async function submitAssignment(
     if (courseName) {
       const course = await getCanvasCourse(courseName);
       if (!course) {
-        console.log(chalk.red(`Error: Course "${courseName}" not found.`));
         rl.close();
         return;
       }
       courseId = course.id;
-      console.log(chalk.green(`✓ Using course: ${courseName}`));
     } else {
       console.log(chalk.cyan("\n" + "-".repeat(60)));
       console.log(chalk.cyan.bold("Step 1: Select Course"));
@@ -196,9 +194,10 @@ export async function submitAssignment(
     let selectedAssignment: CanvasAssignment | undefined;
 
     while (true) {
+      // Prompt is rendered by the table, just wait for input
       const assignmentChoice = await askQuestion(
         rl,
-        chalk.white('\nEnter assignment number (or ".."/"back" to cancel): '),
+        'Enter assignment number (or ".."/"back" to cancel):',
       );
 
       // Stop watching for resize after first input

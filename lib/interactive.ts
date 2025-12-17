@@ -208,42 +208,136 @@ export async function selectFilesKeyboard(
 
   // Helper function to get file icon based on extension
   function getFileIcon(filename: string): string {
-    const ext = path.extname(filename).toLowerCase();
+    const ext = path.extname(filename).toLowerCase().slice(1); // Remove the leading dot
     const icons: Record<string, string> = {
-      ".pdf": "📄",
-      ".doc": "📄",
-      ".docx": "📄",
-      ".txt": "📄",
-      ".js": "📜",
-      ".ts": "📜",
-      ".py": "📜",
-      ".java": "📜",
-      ".cpp": "📜",
-      ".c": "📜",
-      ".html": "🌐",
-      ".css": "🎨",
-      ".scss": "🎨",
-      ".less": "🎨",
-      ".json": "⚙️",
-      ".xml": "⚙️",
-      ".yml": "⚙️",
-      ".yaml": "⚙️",
-      ".zip": "📦",
-      ".rar": "📦",
-      ".7z": "📦",
-      ".tar": "📦",
-      ".jpg": "🖼️",
-      ".jpeg": "🖼️",
-      ".png": "🖼️",
-      ".gif": "🖼️",
-      ".svg": "🖼️",
-      ".mp4": "🎬",
-      ".avi": "🎬",
-      ".mov": "🎬",
-      ".mkv": "🎬",
-      ".mp3": "🎵",
-      ".wav": "🎵",
-      ".flac": "🎵",
+      // Documents
+      pdf: "📄",
+      doc: "�",
+      docx: "�",
+      txt: "📃",
+      rtf: "�",
+      odt: "📝",
+
+      // Spreadsheets
+      xls: "📊",
+      xlsx: "�",
+      csv: "📊",
+      ods: "📊",
+
+      // Presentations
+      ppt: "📽️",
+      pptx: "📽️",
+      odp: "�️",
+      key: "📽️",
+
+      // Archives
+      zip: "📦",
+      rar: "�",
+      "7z": "📦",
+      tar: "📦",
+      gz: "📦",
+      bz2: "📦",
+
+      // Images
+      jpg: "🖼️",
+      jpeg: "🖼️",
+      png: "🖼️",
+      gif: "�️",
+      svg: "🖼️",
+      bmp: "🖼️",
+      ico: "🖼️",
+      webp: "🖼️",
+
+      // Videos
+      mp4: "🎬",
+      avi: "🎬",
+      mov: "🎬",
+      mkv: "🎬",
+      wmv: "🎬",
+      flv: "🎬",
+      webm: "🎬",
+
+      // Audio
+      mp3: "🎵",
+      wav: "🎵",
+      flac: "🎵",
+      aac: "🎵",
+      ogg: "🎵",
+      wma: "🎵",
+      m4a: "🎵",
+
+      // Code - Web
+      html: "🌐",
+      htm: "🌐",
+      css: "🎨",
+      scss: "🎨",
+      sass: "🎨",
+      less: "🎨",
+
+      // Code - JavaScript/TypeScript
+      js: "📜",
+      jsx: "📜",
+      ts: "📜",
+      tsx: "📜",
+      mjs: "📜",
+
+      // Code - Python
+      py: "🐍",
+      pyc: "🐍",
+      pyw: "🐍",
+      pyx: "🐍",
+
+      // Code - Java
+      java: "☕",
+      class: "☕",
+      jar: "☕",
+
+      // Code - C/C++
+      c: "⚙️",
+      cpp: "⚙️",
+      cxx: "⚙️",
+      cc: "⚙️",
+      h: "⚙️",
+      hpp: "⚙️",
+
+      // Code - Other
+      cs: "�",
+      go: "🐹",
+      rs: "🦀",
+      rb: "💎",
+      php: "�",
+      swift: "🍊",
+      kt: "�",
+      scala: "🔺",
+
+      // Config/Data
+      json: "⚙️",
+      xml: "⚙️",
+      yml: "⚙️",
+      yaml: "⚙️",
+      toml: "⚙️",
+      ini: "⚙️",
+      conf: "⚙️",
+      config: "⚙️",
+
+      // Markdown/Documentation
+      md: "�",
+      mdx: "📃",
+      markdown: "�",
+
+      // Database
+      sql: "�️",
+      db: "🗄️",
+      sqlite: "🗄️",
+
+      // Shell scripts
+      sh: "🐚",
+      bash: "🐚",
+      zsh: "🐚",
+      fish: "🐚",
+      ps1: "💻",
+      bat: "💻",
+      cmd: "💻",
     };
     return icons[ext] || "📋";
   }

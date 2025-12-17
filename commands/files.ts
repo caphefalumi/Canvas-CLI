@@ -337,10 +337,8 @@ export async function showFiles(
     } else {
       course = await getCanvasCourse(courseName);
       if (!course) {
-        printError(`Course "${courseName}" not found.`);
         return;
       }
-      printSuccess(`✓ Using course: ${course.name}`);
     }
 
     printSeparator("─", 60);

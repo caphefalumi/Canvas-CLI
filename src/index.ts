@@ -3,7 +3,7 @@
  * Canvas CLI - A command line tool for interacting with Canvas API
  *
  * @author caphefalumi
- * @version 1.6.9
+ * @version 1.7.0
  */
 
 import { Command } from "commander";
@@ -33,12 +33,15 @@ const program = new Command();
 program
   .name("canvas")
   .description("Canvas LMS Command Line Interface")
-  .version("1.6.9", "-v, --version", "Output the current version");
+  .version("1.7.0", "-v, --version", "Output the current version");
 
 // List command to show enrolled courses
 program
   .command("list")
-  .alias("l")
+  .alias("courses")
+  .alias("course")
+  .alias("subject")
+  .alias("subjects")
   .description("List starred courses (use -a for all)")
   .option("-a, --all", "Show all enrolled courses")
   .option("-v, --verbose", "Show detailed info")
@@ -175,6 +178,7 @@ program
   .command("groups")
   .alias("group")
   .alias("teams")
+  .alias("team")
   .description("View your Canvas group memberships")
   .option("-v, --verbose", "Show detailed info")
   .option("-m, --members", "Show group members")

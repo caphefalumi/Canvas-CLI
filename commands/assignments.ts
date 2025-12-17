@@ -38,11 +38,9 @@ export async function listAssignments(
     } else {
       course = await getCanvasCourse(courseName);
       if (!course) {
-        printError(`Course "${courseName}" not found.`);
         return;
       }
       selectedCourseId = course.id.toString();
-      printSuccess(`✓ Using course: ${course.name}`);
     }
 
     printSeparator("─", 60);

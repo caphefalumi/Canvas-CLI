@@ -5,15 +5,24 @@
 import axios, { AxiosRequestConfig } from "axios";
 import fs from "fs";
 import { getInstanceConfig } from "./config.js";
+import { printError, printSuccess } from "./display.js";
 import type { CanvasCourse } from "../types/index.js";
 
 export async function getCanvasCourse(
   courseName: string,
 ): Promise<CanvasCourse | undefined> {
   const courses = await getCanvasCourses(true);
-  return courses.find((c) =>
+  const selectedCourse = courses.find((c) =>
     c.name.toLowerCase().includes(courseName.toLowerCase()),
   );
+
+  if (!selectedCourse) {
+    printError(`Course "${courseName}" not found.`);
+    return;
+  }
+  printSuccess(`Using course: ${selectedCourse.name}`);
+
+  return selectedCourse;
 }
 
 export async function getCanvasCourses(

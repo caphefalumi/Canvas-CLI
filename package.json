@@ -44,7 +44,7 @@
     "format": "oxfmt --config .oxfmtrc.jsonc",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
-    "prepublishOnly": "bun test && bun run build",
+    "prepublishOnly": "bun run build && bun test",
     "prepare": "bunx husky"
   },
   "dependencies": {

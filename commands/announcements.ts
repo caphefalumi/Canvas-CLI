@@ -39,11 +39,9 @@ export async function showAnnouncements(
     } else {
       const course = await getCanvasCourse(courseName);
       if (!course) {
-        printError(`Course "${courseName}" not found.`);
         return;
       }
       selectedCourseId = course.id.toString();
-      printSuccess(`✓ Using course: ${course.name}`);
       rl = createReadlineInterface();
     }
 
