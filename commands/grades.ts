@@ -7,7 +7,7 @@ import {
   createReadlineInterface,
   askQuestionWithValidation,
 } from "../lib/interactive.js";
-import { pad } from "../lib/display.js";
+import { Table } from "../lib/display.js";
 import chalk from "chalk";
 import type {
   CanvasCourse,
@@ -99,236 +99,115 @@ async function showDetailedGrades(
     (sum, a) => sum + a.pointsPossible,
     0,
   );
-  const calculatedPercentage =
-    totalPointsPossible > 0
-      ? ((totalPointsEarned / totalPointsPossible) * 100).toFixed(2)
-      : "N/A";
 
-  // Display overall grades (merged table)
+  // Display overall grades using Table class
   console.log(chalk.white.bold("\nOverall Grades:"));
 
-  // Calculate adaptive column widths based on terminal size
-  const termWidth = process.stdout.columns || 80;
-  const borderOverhead = 10; // │ + │ + │ + │ and spaces
-  const availableWidth = Math.max(60, termWidth - borderOverhead);
-
-  // Distribute width proportionally: Metric(35%), Score(40%), Status(25%)
-  const colMetric = Math.max(18, Math.floor(availableWidth * 0.35));
-  const colScore = Math.max(20, Math.floor(availableWidth * 0.4));
-  const colStatus = Math.max(12, availableWidth - colMetric - colScore);
-
-  // Top border (rounded)
-  console.log(
-    chalk.gray("╭─") +
-      chalk.gray("─".repeat(colMetric)) +
-      chalk.gray("┬─") +
-      chalk.gray("─".repeat(colScore)) +
-      chalk.gray("┬─") +
-      chalk.gray("─".repeat(colStatus)) +
-      chalk.gray("╮"),
-  );
-
-  // Header
-  console.log(
-    chalk.gray("│ ") +
-      chalk.cyan.bold(pad("Metric", colMetric)) +
-      chalk.gray("│ ") +
-      chalk.cyan.bold(pad("Score/Grade", colScore)) +
-      chalk.gray("│ ") +
-      chalk.cyan.bold(pad("Status", colStatus)) +
-      chalk.gray("│"),
-  );
-
-  // Header separator
-  console.log(
-    chalk.gray("├─") +
-      chalk.gray("─".repeat(colMetric)) +
-      chalk.gray("┼─") +
-      chalk.gray("─".repeat(colScore)) +
-      chalk.gray("┼─") +
-      chalk.gray("─".repeat(colStatus)) +
-      chalk.gray("┤"),
+  const overallTable = new Table(
+    [
+      { key: "metric", header: "Metric", flex: 1.5, minWidth: 18 },
+      {
+        key: "value",
+        header: "Score/Grade",
+        flex: 2,
+        minWidth: 20,
+        color: (val, row) => {
+          if (row.metric.includes("Current") || row.metric.includes("Final")) {
+            return chalk.green.bold(val);
+          }
+          return chalk.cyan.bold(val);
+        },
+      },
+      { key: "status", header: "Status", flex: 1, minWidth: 12 },
+    ],
+    { showRowNumbers: false, title: undefined },
   );
 
   if (grades) {
-    const currentScoreValue =
-      grades.current_score !== null ? `${grades.current_score}%` : "N/A";
-    const finalScoreValue =
-      grades.final_score !== null ? `${grades.final_score}%` : "N/A";
-    const currentGradeValue = grades.current_grade || "N/A";
-    const finalGradeValue = grades.final_grade || "N/A";
+    const hasFinalScore =
+      grades.final_score !== null && grades.final_score !== undefined;
 
-    console.log(
-      chalk.gray("│ ") +
-        chalk.white(pad("Current Score", colMetric)) +
-        chalk.gray("│ ") +
-        chalk.green.bold(pad(currentScoreValue, colScore)) +
-        chalk.gray("│ ") +
-        chalk.gray(pad("Official", colStatus)) +
-        chalk.gray("│"),
-    );
-    console.log(
-      chalk.gray("│ ") +
-        chalk.white(pad("Final Score", colMetric)) +
-        chalk.gray("│ ") +
-        chalk.green.bold(pad(finalScoreValue, colScore)) +
-        chalk.gray("│ ") +
-        chalk.gray(pad("Official", colStatus)) +
-        chalk.gray("│"),
-    );
-    console.log(
-      chalk.gray("│ ") +
-        chalk.white(pad("Current Grade", colMetric)) +
-        chalk.gray("│ ") +
-        chalk.green.bold(pad(currentGradeValue, colScore)) +
-        chalk.gray("│ ") +
-        chalk.gray(pad("Letter Grade", colStatus)) +
-        chalk.gray("│"),
-    );
-    console.log(
-      chalk.gray("│ ") +
-        chalk.white(pad("Final Grade", colMetric)) +
-        chalk.gray("│ ") +
-        chalk.green.bold(pad(finalGradeValue, colScore)) +
-        chalk.gray("│ ") +
-        chalk.gray(pad("Letter Grade", colStatus)) +
-        chalk.gray("│"),
-    );
+    if (hasFinalScore) {
+      // Only show final scores/grades if available
+      const finalScoreValue = `${grades.final_score}%`;
+      const finalGradeValue = grades.final_grade || "N/A";
 
-    // Add separator row between official grades and calculated stats
-    console.log(
-      chalk.gray("├─") +
-        chalk.gray("─".repeat(colMetric)) +
-        chalk.gray("┼─") +
-        chalk.gray("─".repeat(colScore)) +
-        chalk.gray("┼─") +
-        chalk.gray("─".repeat(colStatus)) +
-        chalk.gray("┤"),
-    );
+      overallTable.addRows([
+        { metric: "Final Score", value: finalScoreValue, status: "Official" },
+        {
+          metric: "Final Grade",
+          value: finalGradeValue,
+          status: "Letter Grade",
+        },
+      ]);
+    } else {
+      // Show current scores/grades if final is not available
+      const currentScoreValue =
+        grades.current_score !== null ? `${grades.current_score}%` : "N/A";
+      const currentGradeValue = grades.current_grade || "N/A";
+
+      overallTable.addRows([
+        {
+          metric: "Current Score",
+          value: currentScoreValue,
+          status: "Official",
+        },
+        {
+          metric: "Current Grade",
+          value: currentGradeValue,
+          status: "Letter Grade",
+        },
+      ]);
+    }
   }
 
-  // Add calculated statistics rows
-  console.log(
-    chalk.gray("│ ") +
-      chalk.white(pad("Graded Assignments", colMetric)) +
-      chalk.gray("│ ") +
-      chalk.cyan.bold(
-        pad(`${gradedAssignments.length} / ${assignments.length}`, colScore),
-      ) +
-      chalk.gray("│ ") +
-      chalk.gray(pad("Completed", colStatus)) +
-      chalk.gray("│"),
-  );
-  console.log(
-    chalk.gray("│ ") +
-      chalk.white(pad("Points Earned", colMetric)) +
-      chalk.gray("│ ") +
-      chalk.cyan.bold(
-        pad(
-          `${totalPointsEarned.toFixed(2)} / ${totalPointsPossible.toFixed(2)}`,
-          colScore,
-        ),
-      ) +
-      chalk.gray("│ ") +
-      chalk.gray(pad("Total", colStatus)) +
-      chalk.gray("│"),
-  );
-  console.log(
-    chalk.gray("│ ") +
-      chalk.white(pad("Calculated Average", colMetric)) +
-      chalk.gray("│ ") +
-      chalk.cyan.bold(
-        pad(
-          typeof calculatedPercentage === "string"
-            ? calculatedPercentage
-            : `${calculatedPercentage}%`,
-          colScore,
-        ),
-      ) +
-      chalk.gray("│ ") +
-      chalk.gray(pad("From Graded", colStatus)) +
-      chalk.gray("│"),
-  );
+  overallTable.addRows([
+    {
+      metric: "Graded Assignments",
+      value: `${gradedAssignments.length} / ${assignments.length}`,
+      status: "Completed",
+    },
+    {
+      metric: "Points Earned",
+      value: `${totalPointsEarned.toFixed(2)} / ${totalPointsPossible.toFixed(2)}`,
+      status: "Total",
+    },
+  ]);
 
-  // Bottom border (rounded)
-  console.log(
-    chalk.gray("╰─") +
-      chalk.gray("─".repeat(colMetric)) +
-      chalk.gray("┴─") +
-      chalk.gray("─".repeat(colScore)) +
-      chalk.gray("┴─") +
-      chalk.gray("─".repeat(colStatus)) +
-      chalk.gray("╯"),
-  );
+  overallTable.render();
 
-  // Display assignment breakdown
+  // Display assignment breakdown using Table class
   console.log(chalk.white.bold("\nAssignment Breakdown:"));
 
   if (assignments.length === 0) {
     console.log(chalk.yellow("  No assignments found for this course."));
   } else {
-    // Calculate adaptive column widths
-    const tw = process.stdout.columns || 100;
-    const overhead = 16; // borders and padding
-    const available = Math.max(80, tw - overhead);
-
-    // Fixed minimum widths for data columns
-    const colNo = Math.max(4, Math.min(6, Math.floor(available * 0.05)));
-    const colScore = Math.max(10, Math.min(15, Math.floor(available * 0.12)));
-    const colStatus = Math.max(10, Math.min(15, Math.floor(available * 0.12)));
-    const colDate = Math.max(12, Math.min(20, Math.floor(available * 0.18)));
-    // Name gets remaining space
-    const colName = Math.max(
-      20,
-      available - colNo - colScore - colStatus - colDate,
+    const assignmentTable = new Table(
+      [
+        { key: "name", header: "Assignment Name", flex: 3, minWidth: 20 },
+        { key: "score", header: "Score", minWidth: 10, maxWidth: 15 },
+        {
+          key: "status",
+          header: "Status",
+          minWidth: 10,
+          maxWidth: 15,
+          color: (val, row) => {
+            if (row.statusRaw === "graded") {
+              const percentage = row.percentageRaw || 0;
+              if (percentage >= 80) return chalk.green(val);
+              if (percentage >= 50) return chalk.yellow(val);
+              return chalk.red(val);
+            }
+            if (row.statusRaw === "submitted") return chalk.cyan(val);
+            return chalk.gray(val);
+          },
+        },
+        { key: "dueDate", header: "Due Date", minWidth: 12, maxWidth: 20 },
+      ],
+      { showRowNumbers: true, rowNumberHeader: "#" },
     );
 
-    // Top border (rounded)
-    console.log(
-      chalk.gray("╭─") +
-        chalk.gray("─".repeat(colNo)) +
-        chalk.gray("┬─") +
-        chalk.gray("─".repeat(colName)) +
-        chalk.gray("┬─") +
-        chalk.gray("─".repeat(colScore)) +
-        chalk.gray("┬─") +
-        chalk.gray("─".repeat(colStatus)) +
-        chalk.gray("┬─") +
-        chalk.gray("─".repeat(colDate)) +
-        chalk.gray("╮"),
-    );
-
-    // Header
-    console.log(
-      chalk.gray("│ ") +
-        chalk.cyan.bold(pad("#", colNo)) +
-        chalk.gray("│ ") +
-        chalk.cyan.bold(pad("Assignment Name", colName)) +
-        chalk.gray("│ ") +
-        chalk.cyan.bold(pad("Score", colScore)) +
-        chalk.gray("│ ") +
-        chalk.cyan.bold(pad("Status", colStatus)) +
-        chalk.gray("│ ") +
-        chalk.cyan.bold(pad("Due Date", colDate)) +
-        chalk.gray("│"),
-    );
-
-    // Header separator
-    console.log(
-      chalk.gray("├─") +
-        chalk.gray("─".repeat(colNo)) +
-        chalk.gray("┼─") +
-        chalk.gray("─".repeat(colName)) +
-        chalk.gray("┼─") +
-        chalk.gray("─".repeat(colScore)) +
-        chalk.gray("┼─") +
-        chalk.gray("─".repeat(colStatus)) +
-        chalk.gray("┼─") +
-        chalk.gray("─".repeat(colDate)) +
-        chalk.gray("┤"),
-    );
-
-    assignmentGrades.forEach((assignment, index) => {
+    assignmentGrades.forEach((assignment) => {
       const scoreDisplay = assignment.graded
         ? `${(assignment.score || 0).toFixed(1)}/${assignment.pointsPossible}`
         : assignment.pointsPossible > 0
@@ -336,71 +215,39 @@ async function showDetailedGrades(
           : "N/A";
 
       let statusDisplay = "";
-      let statusColor = chalk.gray;
+      let statusRaw = "";
+      let percentageRaw = 0;
 
       if (assignment.graded) {
-        const percentage =
+        statusRaw = "graded";
+        percentageRaw =
           assignment.pointsPossible > 0
             ? ((assignment.score || 0) / assignment.pointsPossible) * 100
             : 0;
-
-        if (percentage >= 80) {
-          statusDisplay = "✓ Graded";
-          statusColor = chalk.green;
-        } else if (percentage >= 50) {
-          statusDisplay = "✓ Graded";
-          statusColor = chalk.yellow;
-        } else {
-          statusDisplay = "✓ Graded";
-          statusColor = chalk.red;
-        }
+        statusDisplay = "✓ Graded";
       } else if (assignment.submitted) {
+        statusRaw = "submitted";
         statusDisplay = "Pending";
-        statusColor = chalk.cyan;
       } else {
+        statusRaw = "not-done";
         statusDisplay = "Not Done";
-        statusColor = chalk.gray;
       }
 
       const dueDate = assignment.dueAt
         ? new Date(assignment.dueAt).toLocaleDateString()
         : "No due date";
 
-      // Truncate long assignment names
-      let displayName = assignment.name;
-      if (displayName.length > colName) {
-        displayName = displayName.substring(0, colName - 3) + "...";
-      }
-
-      console.log(
-        chalk.gray("│ ") +
-          chalk.white(pad((index + 1).toString(), colNo)) +
-          chalk.gray("│ ") +
-          chalk.white(pad(displayName, colName)) +
-          chalk.gray("│ ") +
-          chalk.white(pad(scoreDisplay, colScore)) +
-          chalk.gray("│ ") +
-          statusColor(pad(statusDisplay, colStatus)) +
-          chalk.gray("│ ") +
-          chalk.gray(pad(dueDate, colDate)) +
-          chalk.gray("│"),
-      );
+      assignmentTable.addRow({
+        name: assignment.name,
+        score: scoreDisplay,
+        status: statusDisplay,
+        statusRaw,
+        percentageRaw,
+        dueDate,
+      });
     });
 
-    // Bottom border (rounded)
-    console.log(
-      chalk.gray("╰─") +
-        chalk.gray("─".repeat(colNo)) +
-        chalk.gray("┴─") +
-        chalk.gray("─".repeat(colName)) +
-        chalk.gray("┴─") +
-        chalk.gray("─".repeat(colScore)) +
-        chalk.gray("┴─") +
-        chalk.gray("─".repeat(colStatus)) +
-        chalk.gray("┴─") +
-        chalk.gray("─".repeat(colDate)) +
-        chalk.gray("╯"),
-    );
+    assignmentTable.render();
   }
 
   console.log(chalk.cyan("=".repeat(80)));
@@ -507,100 +354,27 @@ export async function showGrades(
         ),
       );
 
-      // Calculate dynamic column widths
-      const colNo = Math.max(3, coursesWithGrades.length.toString().length + 1);
-
-      const colStatus = Math.max(
-        8,
-        ...coursesWithGrades.map(
-          (c) =>
-            (c.course.workflow_state === "available"
-              ? "Active"
-              : c.course.workflow_state || "Inactive"
-            ).length,
-        ),
+      // Create courses summary table using Table class
+      const coursesTable = new Table(
+        [
+          { key: "name", header: "Course Name", flex: 3, minWidth: 20 },
+          {
+            key: "status",
+            header: "Status",
+            minWidth: 8,
+            color: (val, row) => {
+              return row.statusRaw === "available"
+                ? chalk.green(val)
+                : chalk.gray(val);
+            },
+          },
+          { key: "current", header: "Current", minWidth: 9 },
+          { key: "final", header: "Final", minWidth: 7 },
+        ],
+        { showRowNumbers: true, rowNumberHeader: "#" },
       );
 
-      const colCurrent = Math.max(
-        9,
-        ...coursesWithGrades.map((c) => {
-          const s = c.enrollment?.grades?.current_score;
-          return s !== null && s !== undefined ? `${s}%`.length : 3;
-        }),
-      );
-
-      const colFinal = Math.max(
-        7,
-        ...coursesWithGrades.map((c) => {
-          const s = c.enrollment?.grades?.final_score;
-          return s !== null && s !== undefined ? `${s}%`.length : 3;
-        }),
-      );
-
-      // Calculate remaining width for name
-      const terminalWidth = process.stdout.columns || 80;
-      // Borders overhead: │ # │ Name │ Status │ Current │ Final │
-      // 2 + colNo + 3 + colName + 3 + colStatus + 3 + colCurrent + 3 + colFinal + 2
-      // Total overhead = 16 chars + other cols
-      const overhead = 16;
-      const availableForName = Math.max(
-        20,
-        terminalWidth - (colNo + colStatus + colCurrent + colFinal + overhead),
-      );
-
-      // Calculate max name length from data (min 11 for header "Course Name")
-      const maxNameLength = Math.max(
-        11,
-        ...coursesWithGrades.map((c) => c.course.name.length),
-      );
-      const colName = Math.min(maxNameLength, availableForName);
-
-      // Top border (rounded)
-      console.log(
-        chalk.gray("╭─") +
-          chalk.gray("─".repeat(colNo)) +
-          chalk.gray("┬─") +
-          chalk.gray("─".repeat(colName)) +
-          chalk.gray("┬─") +
-          chalk.gray("─".repeat(colStatus)) +
-          chalk.gray("┬─") +
-          chalk.gray("─".repeat(colCurrent)) +
-          chalk.gray("┬─") +
-          chalk.gray("─".repeat(colFinal)) +
-          chalk.gray("╮"),
-      );
-
-      // Header
-      console.log(
-        chalk.gray("│ ") +
-          chalk.cyan.bold(pad("#", colNo)) +
-          chalk.gray("│ ") +
-          chalk.cyan.bold(pad("Course Name", colName)) +
-          chalk.gray("│ ") +
-          chalk.cyan.bold(pad("Status", colStatus)) +
-          chalk.gray("│ ") +
-          chalk.cyan.bold(pad("Current", colCurrent)) +
-          chalk.gray("│ ") +
-          chalk.cyan.bold(pad("Final", colFinal)) +
-          chalk.gray("│"),
-      );
-
-      // Header separator
-      console.log(
-        chalk.gray("├─") +
-          chalk.gray("─".repeat(colNo)) +
-          chalk.gray("┼─") +
-          chalk.gray("─".repeat(colName)) +
-          chalk.gray("┼─") +
-          chalk.gray("─".repeat(colStatus)) +
-          chalk.gray("┼─") +
-          chalk.gray("─".repeat(colCurrent)) +
-          chalk.gray("┼─") +
-          chalk.gray("─".repeat(colFinal)) +
-          chalk.gray("┤"),
-      );
-
-      coursesWithGrades.forEach((item, index) => {
+      coursesWithGrades.forEach((item) => {
         const { course, enrollment } = item;
         const grades = enrollment?.grades;
 
@@ -613,51 +387,21 @@ export async function showGrades(
             ? `${grades.final_score}%`
             : "N/A";
 
-        // Determine course status
         const statusText =
           course.workflow_state === "available"
             ? "Active"
             : course.workflow_state || "Inactive";
-        const statusColored =
-          course.workflow_state === "available"
-            ? chalk.green(pad(statusText, colStatus))
-            : chalk.gray(pad(statusText, colStatus));
 
-        // Truncate long course names
-        let displayName = course.name;
-        if (displayName.length > colName) {
-          displayName = displayName.substring(0, colName - 3) + "...";
-        }
-
-        console.log(
-          chalk.gray("│ ") +
-            chalk.white(pad((index + 1).toString(), colNo)) +
-            chalk.gray("│ ") +
-            chalk.white(pad(displayName, colName)) +
-            chalk.gray("│ ") +
-            statusColored +
-            chalk.gray("│ ") +
-            chalk.white(pad(currentScore, colCurrent)) +
-            chalk.gray("│ ") +
-            chalk.white(pad(finalScore, colFinal)) +
-            chalk.gray("│"),
-        );
+        coursesTable.addRow({
+          name: course.name,
+          status: statusText,
+          statusRaw: course.workflow_state,
+          current: currentScore,
+          final: finalScore,
+        });
       });
 
-      // Bottom border (rounded)
-      console.log(
-        chalk.gray("╰─") +
-          chalk.gray("─".repeat(colNo)) +
-          chalk.gray("┴─") +
-          chalk.gray("─".repeat(colName)) +
-          chalk.gray("┴─") +
-          chalk.gray("─".repeat(colStatus)) +
-          chalk.gray("┴─") +
-          chalk.gray("─".repeat(colCurrent)) +
-          chalk.gray("┴─") +
-          chalk.gray("─".repeat(colFinal)) +
-          chalk.gray("╯"),
-      );
+      coursesTable.render();
 
       console.log(
         chalk.yellow(

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2025-12-17
+
+### Changed (1.7.0)
+
+- **Grades Command**: Refactored to use `Table` class for consistent rendering across all grade displays
+  - Simplified overall grades display by showing only final scores/grades when available, or current scores/grades when course is in progress
+  - Removed calculated average metric to reduce redundancy with official Canvas grades
+  - Improved table responsiveness with flex-based column widths
+  - Enhanced status color coding for assignment breakdown
+
 ## [1.6.9] - 2025-12-16
 
 ### Fixed (1.6.9)

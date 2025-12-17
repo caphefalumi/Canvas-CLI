@@ -14,6 +14,20 @@ A modern, user-friendly command-line interface for Canvas LMS. Manage courses, a
 - Modern table displays with adaptive column widths
 - Direct access to Canvas API endpoints
 
+## Preview
+
+### Interactive Files Selection
+
+![Interactive files selection](assets/interactive.png)
+
+### Assignment Submission Interface
+
+![Assignment submission interface](assets/assignment_selection.png)
+
+### Detailed Grades View
+
+![Detailed grades view](assets/grades_view.png)
+
 ## Installation
 
 ### Global (Recommended)
@@ -32,6 +46,9 @@ The setup wizard will guide you through:
    - Scroll down to "Approved Integrations"
    - Click "+ New Access Token"
    - Copy the generated token
+
+   ![Canvas Approved Integrations](assets/approved_integrations_canvas.png)
+
 2. **Configure the CLI**
 
    ```bash
@@ -100,78 +117,6 @@ canvas submit --dry-run          # Test submission without uploading
 # Profile
 canvas profile                   # Show user profile
 canvas profile -v                # Show all profile fields
-```
-
-### Assignment Submission
-
-The submit command provides an interactive file selection experience with a visual file browser:
-
-```bash
-canvas submit                        # Full interactive mode
-canvas submit "course name"          # Specify course by name
-canvas submit -f <file>              # Submit specific file
-canvas submit --dry-run              # Test submission flow without uploading
-canvas submit -a                     # Show all courses (not just starred)
-```
-
-### Course Grades
-
-```bash
-canvas grades                        # Interactive course selection (active courses)
-canvas grades "software"             # View grades for course matching "software"
-canvas grades --all                  # Include inactive/completed courses
-canvas grades --verbose              # Include enrollment details
-canvas grades -a -v                  # All courses with verbose details
-```
-
-### Calendar & Due Dates
-
-View upcoming assignments and events across all your courses:
-
-```bash
-canvas calendar                      # Next 14 days (default)
-canvas calendar -d 30                # Next 30 days
-canvas calendar -p                   # Include past due (last 7 days)
-canvas calendar -a                   # Include all courses
-```
-
-### Course Modules
-
-Browse and explore course content and modules:
-
-```bash
-canvas modules                       # Interactive course selection
-canvas modules "database"            # Browse modules for specific course
-canvas modules -a                    # Show all courses
-```
-
-### Todo List
-
-See all your pending Canvas items in one place:
-
-```bash
-canvas todo                          # View all pending items
-canvas todo -l 10                    # Limit to 10 items
-```
-
-### Course Files
-
-Browse and download files from your courses:
-
-```bash
-canvas files                         # Interactive course selection
-canvas files "course name"           # Browse files for specific course
-canvas files -a                      # Show all courses
-```
-
-### Groups
-
-View your Canvas group memberships:
-
-```bash
-canvas groups                        # View all groups
-canvas groups -m                     # Show group members
-canvas groups -v                     # Verbose mode with details
 ```
 
 ## License
