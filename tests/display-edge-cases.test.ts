@@ -407,6 +407,112 @@ describe("Display - Edge Case Tests", () => {
       restoreLog();
     }
   });
+
+  test("resize clears previous table (renderWithResize)", () => {
+    // Simulate TTY so Table will attach resize handlers
+    const originalIsTTY = (process.stdout as any).isTTY;
+    (process.stdout as any).isTTY = true;
+
+    const originalColumns = process.stdout.columns;
+    process.stdout.columns = 80;
+
+    // Intercept process.stdout.write to capture both table content and ANSI sequences
+    const originalWrite = process.stdout.write.bind(process.stdout) as any;
+
+    // Track saved cursor position as an index into the logs array
+    let savedCursorIndex = 0;
+
+    (process.stdout as any).write = (chunk: any) => {
+      const s = typeof chunk === "string" ? chunk : chunk.toString();
+
+      // Cursor save: CSI 's' or DEC legacy '7'
+      if (s.includes("\x1b[s") || s.includes("\x1b7")) {
+        savedCursorIndex = logs.length;
+        return true;
+      }
+
+      // Cursor restore: CSI 'u' or DEC legacy '8'
+      if (s.includes("\x1b[u") || s.includes("\x1b8")) {
+        // Truncate logs back to the saved cursor position
+        logs.length = savedCursorIndex;
+        return true;
+      }
+
+      // Clear to end of screen: \x1b[J or \x1b[0J
+      if (s.includes("\x1b[J") || s.includes("\x1b[0J")) {
+        // Clear from saved position to end
+        logs.splice(savedCursorIndex);
+        return true;
+      }
+
+      // Cursor movement (move up): ignore these for now
+      if (s.match(/\x1b\[\d+A/)) {
+        return true;
+      }
+
+      // Capture normal output (table content)
+      if (s.trim().length > 0) {
+        // Split on newlines and push non-empty lines
+        const lines = s.split(/\r?\n/);
+        for (const line of lines) {
+          const trimmed = line.replace(/\s+$/, "");
+          if (trimmed.length > 0) {
+            logs.push(trimmed);
+          }
+        }
+      }
+      return true;
+    };
+
+    const columns = [{ key: "name", header: "Name", flex: 1 }];
+    const table = new Table(columns, { showRowNumbers: false });
+    table.addRow({ name: "One" });
+
+    try {
+      // Initial render with resize watching enabled
+      table.renderWithResize();
+
+      // Verify first render produced a table
+      let rendered = logs.join("\n");
+      const initialTopBorders = (rendered.match(/╭/g) || []).length;
+      const initialHeaders = (rendered.match(/\bName\b/g) || []).length;
+      expect(initialTopBorders).toBeGreaterThanOrEqual(1);
+      expect(initialHeaders).toBeGreaterThanOrEqual(1);
+
+      // Debug: Log the state before resize
+      console.error("=== BEFORE RESIZE ===");
+      console.error(`logs.length: ${logs.length}`);
+      console.error(`savedCursorIndex: ${savedCursorIndex}`);
+      console.error(`First few logs: ${logs.slice(0, 3).join(" | ")}`);
+
+      // Simulate terminal width change and emit resize event
+      process.stdout.columns = 40;
+      (process.stdout as any).emit("resize");
+
+      // Debug: Log the state after resize
+      console.error("=== AFTER RESIZE ===");
+      console.error(`logs.length: ${logs.length}`);
+      console.error(`savedCursorIndex: ${savedCursorIndex}`);
+      console.error(`All logs: ${logs.join(" | ")}`);
+
+      // After resize, the clearTable() should have used cursor movement to go back
+      // and cleared, so the logs array should only contain the new table (not duplicate)
+      rendered = logs.join("\n");
+      const afterTopBorders = (rendered.match(/╭/g) || []).length;
+      const afterHeaders = (rendered.match(/\bName\b/g) || []).length;
+
+      // There should be exactly one top border and one header after clear+rerender
+      expect(afterTopBorders).toBe(1);
+      expect(afterHeaders).toBe(1);
+    } finally {
+      // Cleanup: restore originals and stop watching
+      table.stopWatching();
+      (process.stdout as any).write = originalWrite;
+      process.stdout.columns = originalColumns;
+      (process.stdout as any).isTTY = originalIsTTY;
+      restoreLog();
+    }
+  });
 });
 
 describe("Display - Truncate Function Edge Cases", () => {

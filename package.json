@@ -15,18 +15,15 @@
   "bugs": {
     "url": "https://github.com/caphefalumi/Canvas-CLI/issues"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/caphefalumi/Canvas-CLI.git"
-  },
+  "license": "MIT",
   "author": {
     "name": "caphefalumi",
     "email": "dangduytoan13l@gmail.com"
   },
-  "license": "MIT",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/caphefalumi/Canvas-CLI.git"
+  },
   "bin": {
     "canvas": "dist/src/index.js",
     "canvaslms-cli": "dist/src/index.js"
@@ -36,6 +33,14 @@
     "README.md",
     "dist/"
   ],
+  "os": [
+    "win32",
+    "darwin",
+    "linux"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -62,14 +67,9 @@
     "oxlint": "^1.33.0",
     "typescript": "^5.9.3"
   },
+  "preferGlobal": true,
   "engines": {
     "node": ">=14.0.0",
     "npm": ">=6.0.0"
-  },
-  "os": [
-    "win32",
-    "darwin",
-    "linux"
-  ],
-  "preferGlobal": true
+  }
 }

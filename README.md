@@ -16,13 +16,13 @@ A modern, user-friendly command-line interface for Canvas LMS. Manage courses, a
 
 ## Preview
 
-### Interactive Files Selection
-
-![Interactive files selection](assets/interactive.png)
-
 ### Assignment Submission Interface
 
 ![Assignment submission interface](assets/assignment_selection.png)
+
+### Interactive Files Selection
+
+![Interactive files selection](assets/interactive.png)
 
 ### Detailed Grades View
 

@@ -10,7 +10,7 @@ import type {
 } from "../types/index.js";
 import { makeCanvasRequest } from "./api-client.js";
 import { createReadlineInterface, askQuestion } from "./interactive.js";
-
+import * as readline from "readline"; // Import the native readline module
 // ============================================================================
 // Core Table Types and Classes
 // ============================================================================
@@ -169,18 +169,20 @@ function calculateColumnWidths(
 
 /**
  * Table class for rendering data in a consistent box format
- * Supports live resize - table re-renders when terminal is resized
+ * Supports live resize using "Inline Clearing" (preserves history)
  */
 export class Table {
   private columns: ColumnDefinition[];
   private data: Record<string, any>[];
   private options: TableOptions;
   private rowNumWidth: number = 0;
-  private lastLineCount: number = 0;
-  private lastTableWidth: number = 0;
   private resizeHandler: (() => void) | null = null;
   private isWatching: boolean = false;
   private promptText: string | null = null;
+
+  // State for resize handling
+  private lastOutput: string = "";
+  private resizeTimeout: NodeJS.Timeout | null = null;
 
   constructor(columns: ColumnDefinition[], options: TableOptions = {}) {
     this.columns = columns;
@@ -202,83 +204,92 @@ export class Table {
     return this;
   }
 
-  /**
-   * Set a prompt to display after the table (will be re-rendered on resize)
-   */
   setPrompt(prompt: string): this {
     this.promptText = prompt;
     return this;
   }
 
-  /**
-   * Render table once (no resize watching)
-   */
   render(): void {
     this.renderTable();
   }
 
-  /**
-   * Render table with live resize support
-   * Table will re-render when terminal is resized
-   */
   renderWithResize(): void {
     this.renderTable();
     this.startWatching();
   }
 
-  /**
-   * Start watching for terminal resize events
-   */
   private startWatching(): void {
     if (this.isWatching || !process.stdout.isTTY) return;
 
     this.resizeHandler = () => {
-      this.clearTable();
-      this.renderTable();
+      // Debounce: Cancel any pending resize action
+      if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
+
+      // Wait 100ms for the resize to "settle"
+      this.resizeTimeout = setTimeout(() => {
+        this.handleResize();
+      }, 100);
     };
 
     process.stdout.on("resize", this.resizeHandler);
     this.isWatching = true;
   }
 
-  /**
-   * Stop watching for terminal resize events
-   */
   stopWatching(): void {
     if (!this.isWatching || !this.resizeHandler) return;
-
     process.stdout.removeListener("resize", this.resizeHandler);
+    if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
     this.resizeHandler = null;
     this.isWatching = false;
   }
 
-  /**
-   * Clear the previously rendered table using ANSI escape codes
-   */
-  private clearTable(): void {
-    if (this.lastLineCount <= 0) return;
+  private handleResize(): void {
+    // 1. Calculate how tall the PREVIOUS output is in the NEW terminal width
+    // We must pass the `lastOutput` to calculate accurate line wrapping
+    const lineCount = this.countVisualLines(this.lastOutput);
 
-    // Calculate worst-case visual lines including extra lines for prompt
-    const maxPossibleWraps = Math.ceil(this.lastTableWidth / 20);
-    const worstCaseLines = this.lastLineCount * Math.max(maxPossibleWraps, 3);
-    // Add extra lines to clear prompt and any user input
-    const linesToClear = Math.max(worstCaseLines, 60) + 5;
-
-    // Clear current line first
-    process.stdout.write("\x1b[2K");
-
-    // Move up and clear each line - works better on Windows
-    for (let i = 0; i < linesToClear; i++) {
-      process.stdout.write("\x1b[1A"); // Move up one line
-      process.stdout.write("\x1b[2K"); // Clear entire line
+    // 2. Move cursor up to the start of the old table
+    if (lineCount > 0) {
+      readline.moveCursor(process.stdout, 0, -lineCount);
     }
 
-    // Move cursor to beginning of line and clear below
-    process.stdout.write("\x1b[G");
-    process.stdout.write("\x1b[0J");
+    // 3. Clear everything from cursor down
+    readline.clearScreenDown(process.stdout);
+
+    // 4. Redraw
+    this.renderTable();
+  }
+
+  /**
+   * accurately counts how many visual lines a string occupies,
+   * accounting for wrapping in the current terminal width.
+   */
+  private countVisualLines(text: string): number {
+    if (!text) return 0;
+
+    const width = process.stdout.columns || 80;
+    const lines = text.split("\n");
+    let count = 0;
+
+    for (const line of lines) {
+      const visibleLen = stripAnsi(line).length;
+      if (visibleLen === 0) {
+        count++; // Empty line is still 1 line
+      } else {
+        // We use ceil to account for wrapping.
+        // e.g. Length 85 in Width 80 = 2 lines.
+        count += Math.ceil(visibleLen / width);
+      }
+    }
+    return count;
   }
 
   private renderTable(): void {
+    // Buffer output so we can measure it later
+    let output = "";
+    const appendLn = (s: string) => (output += s + "\n");
+    const append = (s: string) => (output += s);
+
     const terminalWidth = process.stdout.columns || 100;
     const widths = calculateColumnWidths(
       this.columns,
@@ -291,50 +302,13 @@ export class Table {
       this.rowNumWidth = Math.max(3, String(this.data.length).length + 1);
     }
 
-    // Calculate the actual table width for line wrap detection
-    const numCols = this.columns.length;
-    const borderWidth = 2 * numCols + 1;
-    const rowNumExtra = this.options.showRowNumbers ? 2 + this.rowNumWidth : 0;
-    const tableWidth =
-      widths.reduce((a, b) => a + b, 0) + borderWidth + rowNumExtra;
-
-    // Store for clear calculation
-    this.lastTableWidth = tableWidth;
-
-    // Calculate how many terminal lines each table row takes (accounting for wrap)
-    const linesPerRow = Math.max(1, Math.ceil(tableWidth / terminalWidth));
-
-    // Track line count for clearing on resize
-    let lineCount = 0;
-
     if (this.options.title) {
-      console.log(chalk.cyan.bold(`\n${this.options.title}`));
-      lineCount += 2; // newline + title
+      appendLn(chalk.cyan.bold(`\n${this.options.title}`));
     }
 
-    this.renderTopBorder(widths);
-    lineCount += linesPerRow;
-    this.renderHeader(widths);
-    lineCount += linesPerRow;
-    this.renderHeaderSeparator(widths);
-    lineCount += linesPerRow;
-    this.data.forEach((row, index) => {
-      this.renderRow(row, index, widths);
-      lineCount += linesPerRow;
-    });
-    this.renderBottomBorder(widths);
-    lineCount += linesPerRow;
+    // --- Build Table ---
 
-    // Render prompt if set
-    if (this.promptText) {
-      process.stdout.write(this.promptText);
-      lineCount += 1;
-    }
-
-    this.lastLineCount = lineCount;
-  }
-
-  private renderTopBorder(widths: number[]): void {
+    // Top Border
     let border = chalk.gray("╭─");
     if (this.options.showRowNumbers) {
       border += chalk.gray("─".repeat(this.rowNumWidth)) + chalk.gray("┬─");
@@ -343,10 +317,9 @@ export class Table {
       .map((w) => chalk.gray("─".repeat(w)))
       .join(chalk.gray("┬─"));
     border += chalk.gray("╮");
-    console.log(border);
-  }
+    appendLn(border);
 
-  private renderHeader(widths: number[]): void {
+    // Header
     let header = chalk.gray("│ ");
     if (this.options.showRowNumbers) {
       header +=
@@ -366,10 +339,9 @@ export class Table {
       })
       .join(chalk.gray("│ "));
     header += chalk.gray("│");
-    console.log(header);
-  }
+    appendLn(header);
 
-  private renderHeaderSeparator(widths: number[]): void {
+    // Separator
     let separator = chalk.gray("├─");
     if (this.options.showRowNumbers) {
       separator += chalk.gray("─".repeat(this.rowNumWidth)) + chalk.gray("┼─");
@@ -378,51 +350,51 @@ export class Table {
       .map((w) => chalk.gray("─".repeat(w)))
       .join(chalk.gray("┼─"));
     separator += chalk.gray("┤");
-    console.log(separator);
-  }
+    appendLn(separator);
 
-  private renderRow(
-    row: Record<string, any>,
-    index: number,
-    widths: number[],
-  ): void {
-    let rowStr = chalk.gray("│ ");
+    // Rows
+    this.data.forEach((row, index) => {
+      let rowStr = chalk.gray("│ ");
+      if (this.options.showRowNumbers) {
+        rowStr +=
+          chalk.white(pad(`${index + 1}.`, this.rowNumWidth)) +
+          chalk.gray("│ ");
+      }
+      rowStr += this.columns
+        .map((col, i) => {
+          const colWidth = widths[i] || 10;
+          let value = String(row[col.key] ?? "");
+          value = truncate(value, colWidth);
+          value = pad(value, colWidth, col.align);
+          if (col.color) value = col.color(value, row);
+          else value = chalk.white(value);
+          return value;
+        })
+        .join(chalk.gray("│ "));
+      rowStr += chalk.gray("│");
+      appendLn(rowStr);
+    });
+
+    // Bottom Border
+    let bottom = chalk.gray("╰─");
     if (this.options.showRowNumbers) {
-      rowStr +=
-        chalk.white(pad(`${index + 1}.`, this.rowNumWidth)) + chalk.gray("│ ");
+      bottom += chalk.gray("─".repeat(this.rowNumWidth)) + chalk.gray("┴─");
     }
-    rowStr += this.columns
-      .map((col, i) => {
-        const colWidth = widths[i] || 10;
-        let value = String(row[col.key] ?? "");
-        value = truncate(value, colWidth);
-        value = pad(value, colWidth, col.align);
-
-        if (col.color) {
-          value = col.color(value, row);
-        } else {
-          value = chalk.white(value);
-        }
-        return value;
-      })
-      .join(chalk.gray("│ "));
-    rowStr += chalk.gray("│");
-    console.log(rowStr);
-  }
-
-  private renderBottomBorder(widths: number[]): void {
-    let border = chalk.gray("╰─");
-    if (this.options.showRowNumbers) {
-      border += chalk.gray("─".repeat(this.rowNumWidth)) + chalk.gray("┴─");
-    }
-    border += widths
+    bottom += widths
       .map((w) => chalk.gray("─".repeat(w)))
       .join(chalk.gray("┴─"));
-    border += chalk.gray("╯");
-    console.log(border);
+    bottom += chalk.gray("╯");
+    appendLn(bottom);
+
+    if (this.promptText) {
+      append(this.promptText);
+    }
+
+    // Save state and print
+    this.lastOutput = output;
+    process.stdout.write(output);
   }
 }
-
 // ============================================================================
 // Course Display and Selection
 // ============================================================================
