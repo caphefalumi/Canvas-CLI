@@ -33,7 +33,7 @@ const program = new Command();
 program
   .name("canvas")
   .description("Canvas LMS Command Line Interface")
-  .version("1.7.0", "-v, --version", "Output the current version");
+  .version("1.7.0", "-V, --version", "Output the current version");
 
 // List command to show enrolled courses
 program
@@ -112,6 +112,7 @@ program
   .description("View course announcements")
   .argument("[course-name]", "Course name (optional)")
   .option("-l, --limit <number>", "Number to show", "5")
+  .option("-v, --verbose", "Show detailed info")
   .action(requireConfig(showAnnouncements));
 
 // Profile command
@@ -142,6 +143,7 @@ program
   .option("-d, --days <number>", "Days to look ahead", "14")
   .option("-a, --all", "Include all courses", false)
   .option("-p, --past", "Include past due (last 7 days)", false)
+  .option("-v, --verbose", "Show detailed info")
   .action(requireConfig(showCalendar));
 
 // Modules command to browse course content
@@ -152,6 +154,7 @@ program
   .description("Browse course modules and content")
   .argument("[course-name]", "Course name (optional)")
   .option("-a, --all", "Show all courses", false)
+  .option("-v, --verbose", "Show detailed info")
   .action(requireConfig(showModules));
 
 // Todo command to view all pending items
@@ -161,6 +164,7 @@ program
   .alias("pending")
   .description("View all pending todo items across courses")
   .option("-l, --limit <number>", "Number of items to show", "20")
+  .option("-v, --verbose", "Show detailed info")
   .action(requireConfig(showTodo));
 
 // Files command to browse and download course files
@@ -171,6 +175,7 @@ program
   .description("Browse and download course files")
   .argument("[course-name]", "Course name (optional)")
   .option("-a, --all", "Show all courses", false)
+  .option("-v, --verbose", "Show detailed info")
   .action(requireConfig(showFiles));
 
 // Groups command to view group memberships

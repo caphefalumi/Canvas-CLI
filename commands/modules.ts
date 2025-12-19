@@ -17,6 +17,7 @@ import type {
   CanvasCourse,
   CanvasModule,
   CanvasModuleItem,
+  ModulesOptions,
 } from "../types/index.js";
 
 function openUrl(url: string): void {
@@ -178,10 +179,6 @@ async function displayPageContent(
   }
 }
 
-export interface ModulesOptions {
-  all?: boolean;
-}
-
 function getItemTypeIcon(type: string): string {
   switch (type) {
     case "File":
@@ -288,13 +285,19 @@ export async function showModules(
       `Found ${allItems.length} item(s) across ${modules.length} module(s).`,
     );
 
-    const table = new Table(
-      [
-        { key: "module", header: "Module", width: 14 },
-        { key: "title", header: "Title", flex: 1, minWidth: 20 },
-      ],
-      { showRowNumbers: true },
-    );
+    const columns: any[] = [
+      { key: "module", header: "Module", width: 14 },
+      { key: "title", header: "Title", flex: 1, minWidth: 20 },
+    ];
+
+    if (options.verbose) {
+      columns.push(
+        { key: "type", header: "Type", width: 12 },
+        { key: "id", header: "ID", width: 8 },
+      );
+    }
+
+    const table = new Table(columns, { showRowNumbers: true });
 
     for (const entry of allItems) {
       const { module: mod, item } = entry;
@@ -305,10 +308,17 @@ export async function showModules(
         modName = modName.substring(0, 11) + "…";
       }
 
-      table.addRow({
+      const row: any = {
         module: modName,
         title: item.title,
-      });
+      };
+
+      if (options.verbose) {
+        row.type = item.type || "N/A";
+        row.id = item.id;
+      }
+
+      table.addRow(row);
     }
 
     table.renderWithResize();

@@ -136,62 +136,70 @@ export async function showTodo(options: ShowTodoOptions = {}): Promise<void> {
     );
     console.log(chalk.gray("-".repeat(60)));
 
-    const table = new Table(
-      [
-        {
-          key: "type",
-          header: "Type",
-          minWidth: 6,
-          maxWidth: 12,
+    const columns: any[] = [
+      {
+        key: "type",
+        header: "Type",
+        minWidth: 6,
+        maxWidth: 12,
+      },
+      {
+        key: "title",
+        header: "Title",
+        flex: 2,
+        minWidth: 15,
+        maxWidth: 50,
+      },
+      {
+        key: "course",
+        header: "Course",
+        flex: 1,
+        minWidth: 10,
+        maxWidth: 30,
+      },
+      {
+        key: "due",
+        header: "Due",
+        minWidth: 12,
+        maxWidth: 18,
+        color: (value: string, row: Record<string, any>) => {
+          const { color } = formatTimeRemaining(row.dueAtRaw);
+          return color(value);
         },
-        {
-          key: "title",
-          header: "Title",
-          flex: 2,
-          minWidth: 15,
-          maxWidth: 50,
+      },
+      {
+        key: "remaining",
+        header: "Time Left",
+        minWidth: 10,
+        maxWidth: 15,
+        color: (value: string, row: Record<string, any>) => {
+          const { color } = formatTimeRemaining(row.dueAtRaw);
+          return color(value);
         },
-        {
-          key: "course",
-          header: "Course",
-          flex: 1,
-          minWidth: 10,
-          maxWidth: 30,
-        },
-        {
-          key: "due",
-          header: "Due",
-          minWidth: 12,
-          maxWidth: 18,
-          color: (value: string, row: Record<string, any>) => {
-            const { color } = formatTimeRemaining(row.dueAtRaw);
-            return color(value);
-          },
-        },
-        {
-          key: "remaining",
-          header: "Time Left",
-          minWidth: 10,
-          maxWidth: 15,
-          color: (value: string, row: Record<string, any>) => {
-            const { color } = formatTimeRemaining(row.dueAtRaw);
-            return color(value);
-          },
-        },
-        {
-          key: "points",
-          header: "Points",
-          minWidth: 6,
-          maxWidth: 10,
-          align: "right" as const,
-        },
-      ],
-      { title: "" },
-    );
+      },
+      {
+        key: "points",
+        header: "Points",
+        minWidth: 6,
+        maxWidth: 10,
+        align: "right" as const,
+      },
+    ];
 
-    limitedItems.forEach((item) => {
+    if (options.verbose) {
+      columns.splice(2, 0, {
+        key: "id",
+        header: "ID",
+        minWidth: 8,
+        maxWidth: 10,
+      });
+    }
+
+    const table = new Table(columns, { title: "" });
+
+    limitedItems.forEach((item, index) => {
       const timeInfo = formatTimeRemaining(item.dueAt);
-      table.addRow({
+      const row: any = {
         type: item.type,
         title: item.title,
         course: item.course,
@@ -199,7 +207,16 @@ export async function showTodo(options: ShowTodoOptions = {}): Promise<void> {
         remaining: timeInfo.text,
         points: item.points > 0 ? item.points.toString() : "-",
         dueAtRaw: item.dueAt,
-      });
+      };
+
+      if (options.verbose) {
+        // Get the actual item ID from the original todoItems
+        const originalItem = todoItems[index];
+        row.id =
+          originalItem?.assignment?.id || originalItem?.quiz?.id || "N/A";
+      }
+
+      table.addRow(row);
     });
 
     table.render();

@@ -44,13 +44,34 @@ export async function listCourses(options: ListCoursesOptions): Promise<void> {
       : "starred course(s)";
     printSuccess(`Found ${filteredCourses.length} ${courseLabel}.`);
 
-    const table = new Table([
+    const columns = [
       { key: "name", header: "Course Name", flex: 1, minWidth: 20 },
       { key: "id", header: "ID", minWidth: 6, maxWidth: 10 },
-    ]);
+    ];
+
+    if (options.verbose) {
+      columns.push(
+        { key: "code", header: "Code", minWidth: 10, maxWidth: 15 },
+        { key: "state", header: "State", minWidth: 8, maxWidth: 12 },
+        { key: "term", header: "Term", minWidth: 10, maxWidth: 20 },
+      );
+    }
+
+    const table = new Table(columns);
 
     filteredCourses.forEach((course) => {
-      table.addRow({ name: course.name, id: course.id });
+      const row: any = {
+        name: course.name,
+        id: course.id,
+      };
+
+      if (options.verbose) {
+        row.code = course.course_code || "N/A";
+        row.state = course.workflow_state || "N/A";
+        row.term = course.term?.name || "N/A";
+      }
+
+      table.addRow(row);
     });
 
     table.render();

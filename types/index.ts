@@ -199,6 +199,7 @@ export interface ShowGradesOptions {
 
 export interface ShowAnnouncementsOptions {
   limit?: string;
+  verbose?: boolean;
 }
 
 export interface ApiQueryOptions {
@@ -301,14 +302,28 @@ export interface CanvasGroupMembership {
 export interface ShowTodoOptions {
   all?: boolean;
   limit?: string;
+  verbose?: boolean;
 }
 
 export interface ShowFilesOptions {
   all?: boolean;
   download?: string;
+  verbose?: boolean;
 }
 
 export interface ShowGroupsOptions {
   verbose?: boolean;
   members?: boolean;
+}
+
+export interface ModulesOptions {
+  all?: boolean;
+  verbose?: boolean;
+}
+
+export interface CalendarOptions {
+  days?: string;
+  all?: boolean;
+  past?: boolean;
+  verbose?: boolean;
 }

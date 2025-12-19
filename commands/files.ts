@@ -360,45 +360,68 @@ export async function showFiles(
     console.log(chalk.gray(`   Total: ${files.length} file(s)`));
     printSeparator("─", 60);
 
-    const table = new Table(
-      [
+    const columns: any[] = [
+      {
+        key: "name",
+        header: "Name",
+        flex: 2,
+        minWidth: 15,
+        maxWidth: 45,
+      },
+      {
+        key: "size",
+        header: "Size",
+        minWidth: 8,
+        maxWidth: 12,
+        align: "right" as const,
+      },
+      {
+        key: "updated",
+        header: "Updated",
+        minWidth: 10,
+        maxWidth: 12,
+      },
+      {
+        key: "type",
+        header: "Type",
+        minWidth: 10,
+        maxWidth: 20,
+      },
+    ];
+
+    if (options.verbose) {
+      columns.push(
         {
-          key: "name",
-          header: "Name",
-          flex: 2,
-          minWidth: 15,
-          maxWidth: 45,
-        },
-        {
-          key: "size",
-          header: "Size",
+          key: "id",
+          header: "ID",
           minWidth: 8,
-          maxWidth: 12,
-          align: "right" as const,
+          maxWidth: 10,
         },
         {
-          key: "updated",
-          header: "Updated",
-          minWidth: 10,
-          maxWidth: 12,
+          key: "folderId",
+          header: "Folder",
+          minWidth: 8,
+          maxWidth: 10,
         },
-        {
-          key: "type",
-          header: "Type",
-          minWidth: 10,
-          maxWidth: 20,
-        },
-      ],
-      { title: "" },
-    );
+      );
+    }
+
+    const table = new Table(columns, { title: "" });
 
     files.forEach((file) => {
-      table.addRow({
+      const row: any = {
         name: file.display_name,
         size: formatFileSize(file.size),
         updated: formatDate(file.updated_at),
         type: file.content_type.split("/").pop() || file.content_type,
-      });
+      };
+
+      if (options.verbose) {
+        row.id = file.id;
+        row.folderId = file.folder_id || "N/A";
+      }
+
+      table.addRow(row);
     });
 
     table.render();

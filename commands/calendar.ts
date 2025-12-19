@@ -5,13 +5,11 @@
 import { makeCanvasRequest } from "../lib/api-client.js";
 import { Table, printInfo, printError, printSuccess } from "../lib/display.js";
 import chalk from "chalk";
-import type { CanvasCourse, CanvasAssignment } from "../types/index.js";
-
-export interface CalendarOptions {
-  days?: string;
-  all?: boolean;
-  past?: boolean;
-}
+import type {
+  CanvasCourse,
+  CanvasAssignment,
+  CalendarOptions,
+} from "../types/index.js";
 
 interface DueItem {
   courseName: string;
@@ -153,35 +151,43 @@ export async function showCalendar(
     );
     printSuccess(`Found ${dueItems.length} upcoming assignment(s).`);
 
-    const table = new Table(
-      [
-        { key: "course", header: "Course", flex: 1, minWidth: 10 },
-        { key: "assignment", header: "Assignment", flex: 1, minWidth: 15 },
-        { key: "due", header: "Due", width: 12 },
-        {
-          key: "remaining",
-          header: "Remaining",
-          width: 10,
-          color: (value, row) => {
-            const colorFn = row._remainingColor;
-            return colorFn ? colorFn(value) : chalk.white(value);
-          },
+    const columns: any[] = [
+      { key: "course", header: "Course", flex: 1, minWidth: 10 },
+      { key: "assignment", header: "Assignment", flex: 1, minWidth: 15 },
+      { key: "due", header: "Due", width: 12 },
+      {
+        key: "remaining",
+        header: "Remaining",
+        width: 10,
+        color: (value: string, row: any) => {
+          const colorFn = row._remainingColor;
+          return colorFn ? colorFn(value) : chalk.white(value);
         },
-        {
-          key: "status",
-          header: "Status",
-          width: 8,
-          color: (value, row) =>
-            row._submitted ? chalk.green(value) : chalk.yellow(value),
-        },
-      ],
-      { showRowNumbers: true },
-    );
+      },
+      {
+        key: "status",
+        header: "Status",
+        width: 8,
+        color: (value: string, row: any) =>
+          row._submitted ? chalk.green(value) : chalk.yellow(value),
+      },
+    ];
+
+    if (options.verbose) {
+      columns.splice(
+        2,
+        0,
+        { key: "assignmentId", header: "A-ID", width: 8 },
+        { key: "courseId", header: "C-ID", width: 8 },
+      );
+    }
+
+    const table = new Table(columns, { showRowNumbers: true });
 
     for (const item of dueItems) {
       const remaining = formatTimeRemaining(item.dueAt);
 
-      table.addRow({
+      const row: any = {
         course: item.courseName,
         assignment: item.assignmentName,
         due: formatDueDate(item.dueAt),
@@ -189,7 +195,14 @@ export async function showCalendar(
         status: item.submitted ? "Done" : "Pending",
         _submitted: item.submitted,
         _remainingColor: remaining.color,
-      });
+      };
+
+      if (options.verbose) {
+        row.assignmentId = item.assignmentId;
+        row.courseId = item.courseId;
+      }
+
+      table.addRow(row);
     }
 
     table.renderWithResize();

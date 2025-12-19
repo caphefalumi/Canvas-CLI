@@ -739,11 +739,19 @@ export function displaySubmitAssignments(
  */
 export function displayAnnouncements(
   announcements: CanvasAnnouncement[],
+  verbose: boolean = false,
 ): Table {
   const columns: ColumnDefinition[] = [
     { key: "title", header: "Title", flex: 1, minWidth: 15 },
     { key: "posted", header: "Posted", width: 10 },
   ];
+
+  if (verbose) {
+    columns.push(
+      { key: "id", header: "ID", width: 8 },
+      { key: "author", header: "Author", width: 20 },
+    );
+  }
 
   const table = new Table(columns);
 
@@ -752,10 +760,17 @@ export function displayAnnouncements(
       ? new Date(announcement.posted_at).toLocaleDateString()
       : "N/A";
 
-    table.addRow({
+    const row: any = {
       title: announcement.title || "Untitled",
       posted: date,
-    });
+    };
+
+    if (verbose) {
+      row.id = announcement.id;
+      row.author = announcement.author?.display_name || "Unknown";
+    }
+
+    table.addRow(row);
   });
 
   table.renderWithResize();

@@ -61,7 +61,10 @@ export async function showAnnouncements(
     }
 
     printSuccess(`Found ${announcements.length} announcement(s).`);
-    const announcementTable = displayAnnouncements(announcements);
+    const announcementTable = displayAnnouncements(
+      announcements,
+      options.verbose,
+    );
 
     const annChoice = await askQuestion(
       rl!,
