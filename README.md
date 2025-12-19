@@ -70,19 +70,19 @@ canvas list -a                   # List all enrolled courses
 
 # Assignments (supports course name instead of ID)
 canvas assignments               # Interactive course selection
-canvas assignments "math"        # List assignments for course matching "math"
+canvas assignments math        # List assignments for course matching math
 canvas assignments -s            # Show only submitted assignments
 canvas assignments -p            # Show only pending assignments
 
 # Grades (supports course name instead of ID)
 canvas grades                    # Interactive course selection + detailed grades
-canvas grades "database"         # Show detailed grades for course matching "database"
+canvas grades database         # Show detailed grades for course matching database
 canvas grades -a                 # Include inactive/completed courses
 canvas grades -v                 # Include verbose enrollment details
 
 # Announcements (supports course name instead of ID)
 canvas announcements             # Interactive course selection
-canvas announcements "software"  # Show announcements for course matching "software"
+canvas announcements software  # Show announcements for course matching software
 canvas announcements -l 10       # Show last 10 announcements
 
 # Calendar & Due Dates
@@ -93,7 +93,7 @@ canvas calendar -a               # Include all courses (not just starred)
 
 # Modules
 canvas modules                   # Interactive course selection
-canvas modules "algorithms"      # Browse modules for course matching "algorithms"
+canvas modules algorithms      # Browse modules for course matching algorithms
 
 # Todo List
 canvas todo                      # View all pending items across courses
@@ -101,7 +101,7 @@ canvas todo -l 10                # Show only 10 items
 
 # Files
 canvas files                     # Interactive course file browser
-canvas files "math"              # Browse files for course matching "math"
+canvas files math              # Browse files for course matching math
 
 # Groups
 canvas groups                    # View your group memberships
@@ -110,7 +110,7 @@ canvas groups -v                 # Show detailed group info
 
 # Submission
 canvas submit                    # Interactive assignment submission
-canvas submit "tools"            # Submit to course matching "tools"
+canvas submit tools            # Submit to course matching tools
 canvas submit -f file.pdf        # Submit specific file
 canvas submit --dry-run          # Test submission without uploading
 

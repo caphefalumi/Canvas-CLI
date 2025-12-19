@@ -12,9 +12,40 @@ export async function getCanvasCourse(
   courseName: string,
 ): Promise<CanvasCourse | undefined> {
   const courses = await getCanvasCourses(true);
-  const selectedCourse = courses.find((c) =>
-    c.name.toLowerCase().includes(courseName.toLowerCase()),
-  );
+
+  // Find the best matching course using a scoring algorithm
+  const searchTerm = courseName.toLowerCase();
+  const coursesWithScores = courses
+    .map((course) => {
+      const name = course.name.toLowerCase();
+      let score = 0;
+
+      // Exact match gets highest score
+      if (name === searchTerm) {
+        score = 1000;
+      }
+      // Name starts with search term
+      else if (name.startsWith(searchTerm)) {
+        score = 500;
+      }
+      // Name contains search term
+      else if (name.includes(searchTerm)) {
+        score = 100;
+        // Bonus points for how early the match appears
+        score += 100 - name.indexOf(searchTerm);
+      }
+
+      // Bonus for shorter names (more specific match)
+      if (score > 0) {
+        score += 100 - Math.min(name.length, 100);
+      }
+
+      return { course, score };
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  const selectedCourse = coursesWithScores[0]?.course;
 
   if (!selectedCourse) {
     printError(`Course "${courseName}" not found.`);

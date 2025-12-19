@@ -1,7 +1,7 @@
 {
   "name": "canvaslms-cli",
   "version": "1.7.0",
-  "description": "A command line tool for interacting with Canvas LMS API",
+  "description": "A command line tool for interacting with Canvas LMS",
   "keywords": [
     "api",
     "canvas",
