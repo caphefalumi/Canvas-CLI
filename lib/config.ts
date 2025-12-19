@@ -50,11 +50,16 @@ export function loadConfig(): InstanceConfig {
 }
 
 // Save configuration to file
-export function saveConfig(domain: string, token: string): boolean {
+export function saveConfig(
+  domain: string,
+  token: string,
+  tableTruncate?: boolean,
+): boolean {
   try {
     const config: CanvasConfig = {
       domain: domain.replace(/^https?:\/\//, "").replace(/\/$/, ""),
       token,
+      tableTruncate,
       createdAt: new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
     };

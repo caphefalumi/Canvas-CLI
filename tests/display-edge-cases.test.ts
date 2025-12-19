@@ -34,7 +34,7 @@ describe("Display - Narrow Terminal Tests", () => {
       { key: "due", header: "Due Date", width: 15 },
     ];
 
-    const table = new Table(columns, { showRowNumbers: true });
+    const table = new Table(columns, { showRowNumbers: true, truncate: true });
     table.addRow({
       name: "Very Long Assignment Name That Needs Truncation",
       due: "12/20/2025",

@@ -4,6 +4,7 @@
 
 import { makeCanvasRequest } from "../lib/api-client.js";
 import { Table, printInfo, printError, printSuccess } from "../lib/display.js";
+import { readConfig } from "../lib/config.js";
 import chalk from "chalk";
 import type { CanvasCourse, ListCoursesOptions } from "../types/index.js";
 
@@ -44,20 +45,54 @@ export async function listCourses(options: ListCoursesOptions): Promise<void> {
       : "starred course(s)";
     printSuccess(`Found ${filteredCourses.length} ${courseLabel}.`);
 
+    // Use detailed list format for narrow terminals in verbose mode
+    const terminalWidth = process.stdout.columns || 80;
+    if (options.verbose && terminalWidth < 150) {
+      filteredCourses.forEach((course, index) => {
+        console.log(chalk.bold(`\n${index + 1}. ${course.name}`));
+        console.log(`   ID: ${course.id}`);
+
+        if (terminalWidth >= 70) {
+          console.log(`   Code: ${course.course_code || "N/A"}`);
+          console.log(`   Term: ${course.term?.name || "N/A"}`);
+        } else {
+          // For very narrow terminals, show abbreviated info
+          const code = course.course_code
+            ? course.course_code.split("-").slice(0, 2).join("-")
+            : "N/A";
+          const term = course.term?.name
+            ? course.term.name.split(" ").slice(0, 3).join(" ")
+            : "N/A";
+          console.log(`   Code: ${code}...`);
+          console.log(`   Term: ${term}...`);
+        }
+      });
+      return;
+    }
+
     const columns = [
-      { key: "name", header: "Course Name", flex: 1, minWidth: 20 },
+      {
+        key: "name",
+        header: "Course Name",
+        flex: 3,
+        minWidth: 50,
+        maxWidth: 200,
+      },
       { key: "id", header: "ID", minWidth: 6, maxWidth: 10 },
     ];
 
     if (options.verbose) {
       columns.push(
-        { key: "code", header: "Code", minWidth: 10, maxWidth: 15 },
-        { key: "state", header: "State", minWidth: 8, maxWidth: 12 },
-        { key: "term", header: "Term", minWidth: 10, maxWidth: 20 },
+        { key: "code", header: "Code", flex: 2, minWidth: 30, maxWidth: 200 },
+        { key: "term", header: "Term", flex: 2, minWidth: 30, maxWidth: 200 },
       );
     }
 
-    const table = new Table(columns);
+    const config = readConfig();
+
+    const table = new Table(columns, {
+      truncate: config?.tableTruncate !== false,
+    });
 
     filteredCourses.forEach((course) => {
       const row: any = {
@@ -67,7 +102,6 @@ export async function listCourses(options: ListCoursesOptions): Promise<void> {
 
       if (options.verbose) {
         row.code = course.course_code || "N/A";
-        row.state = course.workflow_state || "N/A";
         row.term = course.term?.name || "N/A";
       }
 

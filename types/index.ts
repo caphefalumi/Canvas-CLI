@@ -8,6 +8,7 @@ export interface CanvasConfig {
   token: string;
   createdAt?: string;
   lastUpdated?: string;
+  tableTruncate?: boolean;
 }
 
 export interface InstanceConfig {

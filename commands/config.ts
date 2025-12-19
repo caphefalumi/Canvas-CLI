@@ -40,6 +40,10 @@ export async function showConfig(): Promise<void> {
           (config.token ? config.token.substring(0, 10) + "..." : "Not set"),
       );
       console.log(
+        chalk.white("  Table Truncation: ") +
+          (config.tableTruncate !== false ? "Enabled" : "Disabled"),
+      );
+      console.log(
         chalk.white("  Created: ") +
           (config.createdAt
             ? new Date(config.createdAt).toLocaleString()
@@ -153,7 +157,15 @@ export async function setupConfig(): Promise<void> {
 
     console.log("Token received\n");
 
-    const saved = saveConfig(domain, token);
+    const tableTruncateAnswer = await askQuestion(
+      rl,
+      "Enable table truncation (content that doesn't fit will be truncated with '...')? (Y/n): ",
+    );
+    const tableTruncate =
+      tableTruncateAnswer.toLowerCase() !== "n" &&
+      tableTruncateAnswer.toLowerCase() !== "no";
+
+    const saved = saveConfig(domain, token, tableTruncate);
     if (saved) {
       console.log(
         chalk.green("Success: Configuration setup completed successfully!"),
@@ -203,7 +215,11 @@ export async function editConfig(): Promise<void> {
     console.log(chalk.white("  Domain: ") + config.domain);
     console.log(
       chalk.white("  Token: ") +
-        (config.token ? config.token.substring(0, 10) + "..." : "Not set") +
+        (config.token ? config.token.substring(0, 10) + "..." : "Not set"),
+    );
+    console.log(
+      chalk.white("  Table Truncation: ") +
+        (config.tableTruncate !== false ? "Enabled" : "Disabled") +
         "\n",
     );
 
@@ -226,11 +242,34 @@ export async function editConfig(): Promise<void> {
       }
     }
 
+    const changeTruncation = await askQuestion(
+      rl,
+      "Change table truncation setting? (y/N): ",
+    );
+    let tableTruncate = config.tableTruncate;
+
+    if (
+      changeTruncation.toLowerCase() === "y" ||
+      changeTruncation.toLowerCase() === "yes"
+    ) {
+      const truncationAnswer = await askQuestion(
+        rl,
+        "Enable table truncation (content that doesn't fit will be truncated with '...')? (Y/n): ",
+      );
+      tableTruncate =
+        truncationAnswer.toLowerCase() !== "n" &&
+        truncationAnswer.toLowerCase() !== "no";
+    }
+
     console.log(chalk.cyan("New configuration:"));
     console.log(chalk.white("  Domain: ") + domain);
     console.log(
       chalk.white("  Token: ") +
         (token ? token.substring(0, 10) + "..." : "Not set"),
+    );
+    console.log(
+      chalk.white("  Table Truncation: ") +
+        (tableTruncate !== false ? "Enabled" : "Disabled"),
     );
 
     const confirm = await askQuestion(rl, "\nSave changes? (Y/n): ");
@@ -239,7 +278,7 @@ export async function editConfig(): Promise<void> {
       return;
     }
 
-    const saved = saveConfig(domain, token);
+    const saved = saveConfig(domain, token, tableTruncate);
     if (saved) {
       console.log(chalk.green("Success: Configuration updated successfully!"));
     }

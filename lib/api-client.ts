@@ -8,7 +8,7 @@ import { getInstanceConfig } from "./config.js";
 import { printError, printSuccess } from "./display.js";
 import type { CanvasCourse } from "../types/index.js";
 import dotenv from "dotenv";
-dotenv.config();
+dotenv.config({ quiet: true });
 
 export async function getCanvasCourse(
   courseName: string,

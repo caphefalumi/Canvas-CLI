@@ -30,6 +30,7 @@ export interface TableOptions {
   title?: string;
   showRowNumbers?: boolean;
   rowNumberHeader?: string;
+  truncate?: boolean;
 }
 
 /**
@@ -76,6 +77,53 @@ export function truncate(str: string, maxLen: number): string {
     visible.substring(0, Math.max(0, maxLen - 3)) + "...";
   // Return plain truncated visible string (colors should be applied after truncate)
   return truncatedVisible;
+}
+
+/**
+ * Wrap text to multiple lines based on max width
+ */
+function wrapText(str: string, maxWidth: number): string[] {
+  const visible = stripAnsi(str);
+  if (visible.length <= maxWidth) return [str];
+
+  const lines: string[] = [];
+  let currentLine = "";
+  let currentLength = 0;
+
+  const words = visible.split(" ");
+  for (const word of words) {
+    if (currentLength + word.length + (currentLength > 0 ? 1 : 0) <= maxWidth) {
+      if (currentLength > 0) {
+        currentLine += " ";
+        currentLength++;
+      }
+      currentLine += word;
+      currentLength += word.length;
+    } else {
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+      // If a single word is longer than maxWidth, split it
+      if (word.length > maxWidth) {
+        let remainingWord = word;
+        while (remainingWord.length > maxWidth) {
+          lines.push(remainingWord.substring(0, maxWidth));
+          remainingWord = remainingWord.substring(maxWidth);
+        }
+        currentLine = remainingWord;
+        currentLength = remainingWord.length;
+      } else {
+        currentLine = word;
+        currentLength = word.length;
+      }
+    }
+  }
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines.length > 0 ? lines : [""];
 }
 
 /**
@@ -191,6 +239,7 @@ export class Table {
     this.options = {
       showRowNumbers: true,
       rowNumberHeader: "#",
+      truncate: false, // Default to not truncating for backward compatibility
       ...options,
     };
   }
@@ -359,25 +408,71 @@ export class Table {
 
     // Rows
     this.data.forEach((row, index) => {
-      let rowStr = chalk.gray("│ ");
-      if (this.options.showRowNumbers) {
-        rowStr +=
-          chalk.white(pad(`${index + 1}.`, this.rowNumWidth)) +
-          chalk.gray("│ ");
-      }
-      rowStr += this.columns
-        .map((col, i) => {
+      // When truncate is disabled, we need to handle multi-line rows
+      if (this.options.truncate === false) {
+        // First, calculate wrapped lines for each column
+        const wrappedColumns: string[][] = this.columns.map((col, i) => {
           const colWidth = widths[i] || 10;
-          let value = String(row[col.key] ?? "");
-          value = truncate(value, colWidth);
-          value = pad(value, colWidth, col.align);
-          if (col.color) value = col.color(value, row);
-          else value = chalk.white(value);
-          return value;
-        })
-        .join(chalk.gray("│ "));
-      rowStr += chalk.gray("│");
-      appendLn(rowStr);
+          const value = String(row[col.key] ?? "");
+          return wrapText(value, colWidth);
+        });
+
+        // Find the maximum number of lines needed
+        const maxLines = Math.max(
+          ...wrappedColumns.map((lines) => lines.length),
+        );
+
+        // Render each line of this row
+        for (let lineIdx = 0; lineIdx < maxLines; lineIdx++) {
+          let rowStr = chalk.gray("│ ");
+
+          // Row number only on first line
+          if (this.options.showRowNumbers) {
+            if (lineIdx === 0) {
+              rowStr +=
+                chalk.white(pad(`${index + 1}.`, this.rowNumWidth)) +
+                chalk.gray("│ ");
+            } else {
+              rowStr += " ".repeat(this.rowNumWidth) + chalk.gray("│ ");
+            }
+          }
+
+          rowStr += this.columns
+            .map((col, i) => {
+              const colWidth = widths[i] || 10;
+              const lines = wrappedColumns[i] || [];
+              let value = lineIdx < lines.length ? lines[lineIdx] || "" : "";
+              value = pad(value, colWidth, col.align);
+              if (col.color && lineIdx === 0) value = col.color(value, row);
+              else value = chalk.white(value);
+              return value;
+            })
+            .join(chalk.gray("│ "));
+          rowStr += chalk.gray("│");
+          appendLn(rowStr);
+        }
+      } else {
+        // Original truncate behavior
+        let rowStr = chalk.gray("│ ");
+        if (this.options.showRowNumbers) {
+          rowStr +=
+            chalk.white(pad(`${index + 1}.`, this.rowNumWidth)) +
+            chalk.gray("│ ");
+        }
+        rowStr += this.columns
+          .map((col, i) => {
+            const colWidth = widths[i] || 10;
+            let value = String(row[col.key] ?? "");
+            value = truncate(value, colWidth);
+            value = pad(value, colWidth, col.align);
+            if (col.color) value = col.color(value, row);
+            else value = chalk.white(value);
+            return value;
+          })
+          .join(chalk.gray("│ "));
+        rowStr += chalk.gray("│");
+        appendLn(rowStr);
+      }
     });
 
     // Bottom Border
