@@ -233,7 +233,7 @@ describe("Calendar - Table Display", () => {
       { key: "assignment", header: "Assignment", flex: 1 },
     ];
 
-    const table = new Table(columns, { showRowNumbers: false });
+    const table = new Table(columns, { showRowNumbers: false, truncate: true });
     table.addRow({
       course: "Introduction to Advanced Database Systems and Cloud Computing",
       assignment: "Final Project",

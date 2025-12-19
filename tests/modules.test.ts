@@ -330,7 +330,7 @@ describe("Modules - Table Display", () => {
       { key: "title", header: "Title", flex: 1 },
     ];
 
-    const table = new Table(columns, { showRowNumbers: false });
+    const table = new Table(columns, { showRowNumbers: false, truncate: true });
     table.addRow({
       module: "Very Long Module Name That Should Be Truncated",
       title: "Content Item",

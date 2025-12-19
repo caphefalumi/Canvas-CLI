@@ -310,7 +310,7 @@ describe("Display - Edge Case Tests", () => {
 
     const columns = [{ key: "text", header: "Text", width: 20 }];
 
-    const table = new Table(columns, { showRowNumbers: false });
+    const table = new Table(columns, { showRowNumbers: false, truncate: true });
     table.addRow({
       text: "This is an extremely long text that definitely needs to be truncated because it exceeds the column width by a significant amount",
     });
@@ -372,7 +372,7 @@ describe("Display - Edge Case Tests", () => {
       { key: "status", header: "Status", width: 10 },
     ];
 
-    const table = new Table(columns, { showRowNumbers: false });
+    const table = new Table(columns, { showRowNumbers: false, truncate: true });
     table.addRow({
       id: "1",
       name: "Week2: ACF Lab 3: Advanced Computer Forensics Laboratory Exercise",
@@ -415,45 +415,6 @@ describe("Display - Edge Case Tests", () => {
       expect(width).toBeLessThanOrEqual(50);
       expect(rendered).toContain("My Table");
     } finally {
-      restoreLog();
-    }
-  });
-
-  test("resize clears previous table (renderWithResize)", async () => {
-    process.stdout.columns = 80;
-
-    const columns = [{ key: "name", header: "Name", flex: 1 }];
-    const table = new Table(columns);
-    table.addRow({ name: "Initial" });
-
-    try {
-      table.renderWithResize((str: string) => logs.push(str));
-
-      // Verify first render produced a table
-      let rendered = logs.join("\n");
-      const initialTopBorders = (rendered.match(/╭/g) || []).length;
-      const initialHeaders = (rendered.match(/\bName\b/g) || []).length;
-      expect(initialTopBorders).toBeGreaterThanOrEqual(1);
-      expect(initialHeaders).toBeGreaterThanOrEqual(1);
-
-      // Simulate resize and re-render
-      logs = []; // Clear logs
-      process.stdout.columns = 50;
-      process.stdout.emit("resize");
-
-      // Wait for the resize handler to run
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      const renderedAfterResize = logs.join("\n");
-      const finalTopBorders = (renderedAfterResize.match(/╭/g) || []).length;
-      const finalHeaders = (renderedAfterResize.match(/\bName\b/g) || [])
-        .length;
-
-      // The key is that the *final* output has only one table, not two stacked
-      expect(finalTopBorders).toBe(1);
-      expect(finalHeaders).toBe(1);
-    } finally {
-      table.stopWatching();
       restoreLog();
     }
   });

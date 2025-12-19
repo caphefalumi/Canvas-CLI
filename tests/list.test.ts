@@ -105,7 +105,7 @@ describe("List Command - Course List Table", () => {
       { key: "code", header: "Code", width: 10 },
     ];
 
-    const table = new Table(columns, { showRowNumbers: false });
+    const table = new Table(columns, { showRowNumbers: false, truncate: true });
     table.addRow({
       name: "Advanced Topics in Distributed Systems and Cloud Computing with Microservices Architecture",
       code: "CS599",

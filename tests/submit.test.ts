@@ -172,7 +172,7 @@ describe("Submit Command - Edge Cases", () => {
       { key: "size", header: "Size", width: 10 },
     ];
 
-    const table = new Table(columns, { showRowNumbers: false });
+    const table = new Table(columns, { showRowNumbers: false, truncate: true });
     table.addRow({
       filename:
         "this_is_an_extremely_long_filename_that_definitely_exceeds_the_column_width_and_needs_truncation.pdf",

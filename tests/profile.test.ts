@@ -55,7 +55,7 @@ describe("Profile Display", () => {
       { key: "value", header: "Value", width: 30 },
     ];
 
-    const table = new Table(columns, { showRowNumbers: false });
+    const table = new Table(columns, { showRowNumbers: false, truncate: true });
     table.addRow({
       field: "Bio",
       value:
