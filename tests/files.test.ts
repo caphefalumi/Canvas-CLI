@@ -59,7 +59,8 @@ describe("Files Command - File Browser Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Course Files");
@@ -100,7 +101,8 @@ describe("Files Command - File Browser Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("📁");
@@ -130,7 +132,8 @@ describe("Files Command - File Browser Display", () => {
     table.addRow({ icon: "💻", name: "script.py" });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("📄");
@@ -151,7 +154,8 @@ describe("Files Command - File Browser Display", () => {
     const table = new Table(columns, { title: "Empty Folder" });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Empty Folder");
@@ -175,7 +179,8 @@ describe("Files Command - File Browser Display", () => {
     table.addRow({ name: "tiny.json", size: "512 B" });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("1.5 KB");
@@ -203,7 +208,8 @@ describe("Files Command - File Browser Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Very_Long");
@@ -247,7 +253,8 @@ describe("Files Command - File Browser Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Folder Structure");
@@ -272,7 +279,8 @@ describe("Files Command - File Browser Display", () => {
     table.addRow({ icon: "📄", name: "File & Notes.txt" });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("File (1).pdf");
@@ -296,7 +304,8 @@ describe("Files Command - File Browser Display", () => {
     table.addRow({ name: "oldest.txt", modified: "09/05/25 2:15 PM" });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("recent.pdf");
@@ -320,7 +329,8 @@ describe("Files Command - File Browser Display", () => {
     table.addRow({ icon: "📄", name: "Makefile" });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("README");

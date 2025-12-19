@@ -311,7 +311,8 @@ describe("Modules - Table Display", () => {
     table.addRow({ module: "Week 2", title: "Advanced Topics" });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = stripAnsi(logs.join("\n"));
 
       expect(rendered).toContain("Module");
@@ -336,9 +337,11 @@ describe("Modules - Table Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = stripAnsi(logs.join("\n"));
 
+      // Should contain ellipsis
       expect(rendered).toContain("...");
       expect(rendered).toContain("Content Item");
     } finally {
@@ -362,7 +365,8 @@ describe("Modules - Table Display", () => {
     }
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = stripAnsi(logs.join("\n"));
 
       expect(rendered).toContain("Week 1");
@@ -382,7 +386,8 @@ describe("Modules - Table Display", () => {
     const table = new Table(columns, { showRowNumbers: true });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = stripAnsi(logs.join("\n"));
 
       expect(rendered).toContain("Module");

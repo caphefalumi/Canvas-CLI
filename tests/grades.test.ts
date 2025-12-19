@@ -91,9 +91,13 @@ describe("Assignments Display", () => {
     ];
 
     try {
-      displayAssignments(assignments as CanvasAssignment[], {
-        showDueDate: true,
-      });
+      displayAssignments(
+        assignments as CanvasAssignment[],
+        {
+          showDueDate: true,
+        },
+        (str: string) => logs.push(str),
+      );
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Assignment 1");
@@ -107,7 +111,7 @@ describe("Assignments Display", () => {
 
   test("displayAssignments handles empty assignment list", () => {
     try {
-      displayAssignments([], {});
+      displayAssignments([], {}, (str: string) => logs.push(str));
       const rendered = logs.join("\n");
 
       // Empty table should still render borders

@@ -49,7 +49,8 @@ describe("List Command - Course List Table", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Your Courses");
@@ -86,7 +87,8 @@ describe("List Command - Course List Table", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Web Development");
@@ -110,9 +112,11 @@ describe("List Command - Course List Table", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
+      // Value should be truncated
       expect(rendered).toContain("...");
       expect(rendered).toContain("CS599");
     } finally {
@@ -147,7 +151,8 @@ describe("List Command - Assignment List Table", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Homework 1");
@@ -172,7 +177,8 @@ describe("List Command - Assignment List Table", () => {
     table.addRow({ name: "Lab 3", status: "⏳ Pending", grade: "-" });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("✓ Submitted");

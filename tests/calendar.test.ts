@@ -184,7 +184,8 @@ describe("Calendar - Table Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = stripAnsi(logs.join("\n"));
 
       expect(rendered).toContain("Database");
@@ -214,7 +215,8 @@ describe("Calendar - Table Display", () => {
     }
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = stripAnsi(logs.join("\n"));
 
       expect(rendered).toContain("Course 1");
@@ -238,7 +240,8 @@ describe("Calendar - Table Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = stripAnsi(logs.join("\n"));
 
       expect(rendered).toContain("...");
@@ -257,7 +260,8 @@ describe("Calendar - Table Display", () => {
     const table = new Table(columns, { showRowNumbers: true });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = stripAnsi(logs.join("\n"));
 
       expect(rendered).toContain("Course");

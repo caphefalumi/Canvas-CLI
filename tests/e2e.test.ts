@@ -715,7 +715,7 @@ describe("E2E: Edge Cases", () => {
   });
 
   test("should handle -v flag for version", () => {
-    const result = spawnSync("node", [CLI_PATH, "-v"], {
+    const result = spawnSync("node", [CLI_PATH, "-V"], {
       encoding: "utf-8",
     });
 

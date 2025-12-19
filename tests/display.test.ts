@@ -80,7 +80,7 @@ describe("Display Library - Table Rendering", () => {
     console.log = (...args: any[]) => logs.push(args.join(" "));
 
     try {
-      table.render();
+      table.render((str: string) => logs.push(str));
     } finally {
       console.log = origLog;
     }
@@ -121,7 +121,7 @@ describe("Display Library - Table Rendering", () => {
     console.log = (...args: any[]) => logs.push(args.join(" "));
 
     try {
-      table.render();
+      table.render((str: string) => logs.push(str));
     } finally {
       console.log = origLog;
     }
@@ -147,7 +147,7 @@ describe("Display Library - Table Rendering", () => {
     console.log = (...args: any[]) => logs.push(args.join(" "));
 
     try {
-      table.render();
+      table.render((str: string) => logs.push(str));
     } finally {
       console.log = origLog;
     }
@@ -171,7 +171,7 @@ describe("Display Library - Table Rendering", () => {
     console.log = (...args: any[]) => logs.push(args.join(" "));
 
     try {
-      table.render();
+      table.render((str: string) => logs.push(str));
     } finally {
       console.log = origLog;
     }
@@ -189,7 +189,7 @@ describe("Display Library - Table Rendering", () => {
     console.log = (...args: any[]) => logs.push(args.join(" "));
 
     try {
-      table.render();
+      table.render((str: string) => logs.push(str));
     } finally {
       console.log = origLog;
     }
@@ -224,7 +224,7 @@ describe("Display Library - Table Rendering", () => {
     console.log = (...args: any[]) => logs.push(args.join(" "));
 
     try {
-      table.render();
+      table.render((str: string) => logs.push(str));
     } finally {
       console.log = origLog;
     }

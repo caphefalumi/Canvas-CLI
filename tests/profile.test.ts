@@ -36,7 +36,7 @@ describe("Profile Display", () => {
     table.addRow({ field: "Student ID", value: "12345678" });
 
     try {
-      table.render();
+      table.render((str: string) => logs.push(str));
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("User Profile");
@@ -63,7 +63,7 @@ describe("Profile Display", () => {
     });
 
     try {
-      table.render();
+      table.render((str: string) => logs.push(str));
       const rendered = logs.join("\n");
 
       // Value should be truncated
@@ -87,7 +87,7 @@ describe("Profile Display", () => {
     table.addRow({ field: "Time Zone", value: "America/Los_Angeles" });
 
     try {
-      table.render();
+      table.render((str: string) => logs.push(str));
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("User ID");

@@ -183,6 +183,7 @@ export class Table {
   // State for resize handling
   private lastOutput: string = "";
   private resizeTimeout: NodeJS.Timeout | null = null;
+  private logger: ((str: string) => void) | undefined;
 
   constructor(columns: ColumnDefinition[], options: TableOptions = {}) {
     this.columns = columns;
@@ -209,12 +210,14 @@ export class Table {
     return this;
   }
 
-  render(): void {
-    this.renderTable();
+  render(logger?: (str: string) => void): void {
+    this.logger = logger;
+    this.renderTable(logger);
   }
 
-  renderWithResize(): void {
-    this.renderTable();
+  renderWithResize(logger?: (str: string) => void): void {
+    this.logger = logger;
+    this.renderTable(logger);
     this.startWatching();
   }
 
@@ -249,15 +252,17 @@ export class Table {
     const lineCount = this.countVisualLines(this.lastOutput);
 
     // 2. Move cursor up to the start of the old table
-    if (lineCount > 0) {
+    if (lineCount > 0 && !this.logger) {
       readline.moveCursor(process.stdout, 0, -lineCount);
     }
 
     // 3. Clear everything from cursor down
-    readline.clearScreenDown(process.stdout);
+    if (!this.logger) {
+      readline.clearScreenDown(process.stdout);
+    }
 
     // 4. Redraw
-    this.renderTable();
+    this.renderTable(this.logger);
   }
 
   /**
@@ -284,7 +289,7 @@ export class Table {
     return count;
   }
 
-  private renderTable(): void {
+  private renderTable(logger?: (str: string) => void): void {
     // Buffer output so we can measure it later
     let output = "";
     const appendLn = (s: string) => (output += s + "\n");
@@ -392,7 +397,11 @@ export class Table {
 
     // Save state and print
     this.lastOutput = output;
-    process.stdout.write(output);
+    if (logger) {
+      logger(output);
+    } else {
+      process.stdout.write(output);
+    }
   }
 }
 // ============================================================================
@@ -416,6 +425,7 @@ export interface CoursePickerResult {
 export function displayCourses(
   courses: CanvasCourse[],
   options: { showId?: boolean } = {},
+  logger?: (str: string) => void,
 ): void {
   const columns: ColumnDefinition[] = [
     { key: "name", header: "Course Name", flex: 1, minWidth: 15 },
@@ -429,7 +439,7 @@ export function displayCourses(
   courses.forEach((course) => {
     table.addRow({ name: course.name, id: course.id });
   });
-  table.render();
+  table.render(logger);
 }
 
 /**
@@ -566,6 +576,7 @@ export function formatDueDate(dueAt: string | null): string {
 export function displayAssignments(
   assignments: CanvasAssignment[],
   options: AssignmentDisplayOptions = {},
+  logger?: (str: string) => void,
 ): void {
   const columns: ColumnDefinition[] = [
     {
@@ -632,7 +643,7 @@ export function displayAssignments(
     });
   });
 
-  table.render();
+  table.render(logger);
 }
 
 // ============================================================================

@@ -63,7 +63,8 @@ describe("Todo Command - Pending Items Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Pending Items");
@@ -99,7 +100,8 @@ describe("Todo Command - Pending Items Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Overdue Assignment");
@@ -127,7 +129,8 @@ describe("Todo Command - Pending Items Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Optional Reading");
@@ -146,7 +149,8 @@ describe("Todo Command - Pending Items Display", () => {
     const table = new Table(columns, { title: "Pending Items" });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Pending Items");
@@ -172,7 +176,8 @@ describe("Todo Command - Pending Items Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Urgent Quiz");
@@ -210,7 +215,8 @@ describe("Todo Command - Pending Items Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Assignment 1");
@@ -239,7 +245,8 @@ describe("Todo Command - Pending Items Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Assignment");
@@ -268,7 +275,8 @@ describe("Todo Command - Pending Items Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Practice Exercise");

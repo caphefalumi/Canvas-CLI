@@ -39,7 +39,8 @@ describe("Submit Command - File Summary Table", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Selected Files");
@@ -75,7 +76,8 @@ describe("Submit Command - File Summary Table", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Submission Summary");
@@ -103,7 +105,8 @@ describe("Submit Command - File Summary Table", () => {
     table.addRow({ name: "📄 code.zip", size: "8.5 MB" });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Allowed");
@@ -129,7 +132,8 @@ describe("Submit Command - File Summary Table", () => {
     table.addRow({ file: "code.zip", status: "✓ Uploaded" });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Submission Complete");
@@ -151,7 +155,8 @@ describe("Submit Command - Edge Cases", () => {
     table.addRow({ filename: "single_file.pdf", size: "1.5 MB" });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("single_file.pdf");
@@ -175,7 +180,8 @@ describe("Submit Command - Edge Cases", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       // Should contain ellipsis due to truncation

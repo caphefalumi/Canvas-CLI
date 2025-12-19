@@ -37,7 +37,9 @@ describe("Announcements and Course Display", () => {
     ];
 
     try {
-      displayCourses(courses as CanvasCourse[], {});
+      displayCourses(courses as CanvasCourse[], {}, (str: string) =>
+        logs.push(str),
+      );
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Computer Science");
@@ -59,7 +61,11 @@ describe("Announcements and Course Display", () => {
     ];
 
     try {
-      displayCourses(courses as CanvasCourse[], { showId: true });
+      displayCourses(
+        courses as CanvasCourse[],
+        { showId: true },
+        (str: string) => logs.push(str),
+      );
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("ID");
@@ -71,7 +77,7 @@ describe("Announcements and Course Display", () => {
 
   test("displayCourses handles empty course list", () => {
     try {
-      displayCourses([], {});
+      displayCourses([], {}, (str: string) => logs.push(str));
       const rendered = logs.join("\n");
 
       // Should still render table structure
@@ -91,7 +97,9 @@ describe("Announcements and Course Display", () => {
     ];
 
     try {
-      displayCourses(courses as CanvasCourse[], {});
+      displayCourses(courses as CanvasCourse[], {}, (str: string) =>
+        logs.push(str),
+      );
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Single Course");

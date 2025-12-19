@@ -59,7 +59,8 @@ describe("Groups Command - Group Memberships Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Course Groups");
@@ -100,7 +101,8 @@ describe("Groups Command - Group Memberships Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Group Members - Team Alpha");
@@ -125,7 +127,8 @@ describe("Groups Command - Group Memberships Display", () => {
     table.addRow({ name: "Large Group", members: "12 members" });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("1 member");
@@ -158,7 +161,8 @@ describe("Groups Command - Group Memberships Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Other Groups");
@@ -179,7 +183,8 @@ describe("Groups Command - Group Memberships Display", () => {
     const table = new Table(columns, { title: "Your Groups" });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Your Groups");
@@ -217,7 +222,8 @@ describe("Groups Command - Group Memberships Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Open Group");
@@ -243,7 +249,8 @@ describe("Groups Command - Group Memberships Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Advanced");
@@ -272,7 +279,8 @@ describe("Groups Command - Group Memberships Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Study Group A");
@@ -323,7 +331,8 @@ describe("Groups Command - Group Memberships Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Team 1");
@@ -358,7 +367,8 @@ describe("Groups Command - Group Memberships Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Team Alpha");
@@ -394,7 +404,8 @@ describe("Groups Command - Group Memberships Display", () => {
     });
 
     try {
-      table.render();
+      const logger = (str: string) => logs.push(str);
+      table.render(logger);
       const rendered = logs.join("\n");
 
       expect(rendered).toContain("Team A & B");
