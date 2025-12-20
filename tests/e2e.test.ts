@@ -722,7 +722,7 @@ describe("E2E: Edge Cases", () => {
     expect(result.stdout).toContain("Usage:");
   });
 
-  test("should handle -v flag for version", () => {
+  test("should handle -V flag for version", () => {
     const result = spawnSync("node", [CLI_PATH, "-V"], {
       encoding: "utf-8",
     });
