@@ -451,6 +451,17 @@ export class Table {
           rowStr += chalk.gray("│");
           appendLn(rowStr);
         }
+
+        // Add spacing between rows (empty row) when in wrap mode
+        if (index < this.data.length - 1) {
+          let spacer = chalk.gray("│ ");
+          if (this.options.showRowNumbers) {
+            spacer += " ".repeat(this.rowNumWidth) + chalk.gray("│ ");
+          }
+          spacer += widths.map((w) => " ".repeat(w)).join(chalk.gray("│ "));
+          spacer += chalk.gray("│");
+          appendLn(spacer);
+        }
       } else {
         // Original truncate behavior
         let rowStr = chalk.gray("│ ");
