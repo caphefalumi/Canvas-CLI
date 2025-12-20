@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.4] - 2025-12-20
+
+### Changed
+
+- **HTTP Client Migration**: Migrated from axios to native Node.js fetch API
+  - Removed axios dependency (v1.13.2)
+  - Removed form-data dependency (v4.0.5)
+  - Reduced total package count by ~23 packages
+  - Uses built-in Node.js 18+ fetch, FormData, and Blob APIs
+  - Zero vulnerabilities from HTTP client dependencies
+  - Improved error handling with better error messages
+
+### Improved
+
+- **File Upload Error Messages**: Enhanced error messages for assignment submission failures
+  - Clearer, more actionable error messages for common upload failures
+  - Specific guidance for 403 (permission denied), 401 (unauthorized), and 404 (not found) errors
+  - Removed redundant file path repetition in error output
+  - Better user experience when troubleshooting upload issues
+
 ## [1.7.3] - 2025-12-20
 
 ### Added

@@ -4,8 +4,6 @@
 
 import fs from "fs";
 import path from "path";
-import axios from "axios";
-import FormData from "form-data";
 import { makeCanvasRequest } from "./api-client.js";
 import type { FileUploadResponse } from "../types/index.js";
 
@@ -51,24 +49,70 @@ export async function uploadSingleFileToCanvas(
       form.append(key, uploadData.upload_params[key]);
     });
 
-    // Add the file
-    form.append("file", fileContent, fileName);
+    // Add the file as a Blob
+    const fileBlob = new Blob([fileContent], {
+      type: "application/octet-stream",
+    });
+    form.append("file", fileBlob, fileName);
 
-    const uploadResponse = await axios.post(uploadData.upload_url, form, {
-      headers: form.getHeaders(),
-      maxRedirects: 0,
-      validateStatus: (status) => status < 400,
+    const uploadResponse = await fetch(uploadData.upload_url, {
+      method: "POST",
+      body: form,
+      redirect: "manual", // Don't follow redirects
     });
 
+    if (
+      !uploadResponse.ok &&
+      uploadResponse.status !== 301 &&
+      uploadResponse.status !== 302
+    ) {
+      throw new Error(`Upload failed with status ${uploadResponse.status}`);
+    }
+
     // Return the file ID for later submission
-    const fileId = (uploadData as any).id || uploadResponse.data.id;
+    let fileId: number;
+    if ((uploadData as any).id) {
+      fileId = (uploadData as any).id;
+    } else {
+      const responseData = (await uploadResponse.json()) as any;
+      fileId = responseData.id;
+    }
+
     if (typeof fileId !== "number") {
       throw new Error("Failed to get file ID from upload response");
     }
     return fileId;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to upload file ${filePath}: ${errorMessage}`);
+
+    // Provide more helpful error messages
+    if (
+      errorMessage.includes("Access denied") ||
+      errorMessage.includes("403")
+    ) {
+      throw new Error(
+        `Upload failed - Permission denied. This assignment may not accept submissions, may be locked, or the due date has passed. Check the assignment settings in Canvas.`,
+      );
+    }
+
+    if (errorMessage.includes("Unauthorized") || errorMessage.includes("401")) {
+      throw new Error(
+        `Upload failed - Authentication error. Your API token may have expired. Run 'canvas config setup' to update it.`,
+      );
+    }
+
+    if (errorMessage.includes("404")) {
+      throw new Error(
+        `Upload failed - Assignment or course not found. The assignment may have been deleted or moved.`,
+      );
+    }
+
+    if (errorMessage.includes("File not found")) {
+      throw new Error(`File not found: ${filePath}`);
+    }
+
+    // For other errors, provide context
+    throw new Error(`Upload failed: ${errorMessage}`);
   }
 }
 

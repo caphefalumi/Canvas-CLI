@@ -2,7 +2,6 @@
  * Canvas API client
  */
 
-import axios, { AxiosRequestConfig } from "axios";
 import fs from "fs";
 import { getInstanceConfig } from "./config.js";
 import { printError, printSuccess } from "./display.js";
@@ -87,17 +86,7 @@ export async function makeCanvasRequest<T = any>(
   const instanceConfig = getInstanceConfig();
   // Construct the full URL
   const baseUrl = `https://${instanceConfig.domain}/api/v1`;
-  const url = `${baseUrl}/${endpoint.replace(/^\//, "")}`;
-
-  // Setup request configuration
-  const config: AxiosRequestConfig = {
-    method: method.toLowerCase(),
-    url: url,
-    headers: {
-      Authorization: `Bearer ${instanceConfig.token}`,
-      "Content-Type": "application/json",
-    },
-  };
+  let url = `${baseUrl}/${endpoint.replace(/^\//, "")}`;
 
   // Add query parameters
   if (queryParams.length > 0) {
@@ -110,8 +99,19 @@ export async function makeCanvasRequest<T = any>(
         params.append(key, value);
       }
     });
-    config.params = params;
+    url += `?${params.toString()}`;
   }
+
+  // Setup request configuration
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${instanceConfig.token}`,
+    "Content-Type": "application/json",
+  };
+
+  const options: RequestInit = {
+    method: method.toUpperCase(),
+    headers,
+  };
 
   // Add request body for POST/PUT requests
   if (
@@ -122,7 +122,8 @@ export async function makeCanvasRequest<T = any>(
       // Read from file
       const filename = requestBody.substring(1);
       try {
-        config.data = JSON.parse(fs.readFileSync(filename, "utf8"));
+        const fileData = JSON.parse(fs.readFileSync(filename, "utf8"));
+        options.body = JSON.stringify(fileData);
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
@@ -130,9 +131,9 @@ export async function makeCanvasRequest<T = any>(
         process.exit(1);
       }
     } else {
-      // Parse JSON string
       try {
-        config.data = JSON.parse(requestBody);
+        const data = JSON.parse(requestBody);
+        options.body = JSON.stringify(data);
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
@@ -143,28 +144,12 @@ export async function makeCanvasRequest<T = any>(
   }
 
   try {
-    const response = await axios<T>(config);
+    const response = await fetch(url, options);
 
-    // Filter ORG- courses for Swinburne
-    if (
-      instanceConfig.domain === "swinburne.instructure.com" &&
-      endpoint === "courses" &&
-      Array.isArray(response.data)
-    ) {
-      const data = response.data as any[];
-      const filteredData = data.filter(
-        (item: any) => !item.name || !item.name.startsWith("ORG-"),
-      );
-      return filteredData as unknown as T;
-    }
+    if (!response.ok) {
+      const status = response.status;
+      const statusText = response.statusText;
 
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      const status = error.response.status;
-      const statusText = error.response.statusText;
-
-      // Handle specific HTTP errors gracefully
       if (status === 403) {
         throw new Error(
           "Access denied. You don't have permission to access this resource.",
@@ -181,14 +166,35 @@ export async function makeCanvasRequest<T = any>(
         );
       }
 
-      // Generic HTTP error
-      const errorData = error.response.data;
-      const message = errorData?.errors?.[0]?.message || statusText;
-      throw new Error(`HTTP ${status}: ${message}`);
-    } else {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      throw new Error(`Request failed: ${errorMessage}`);
+      try {
+        const errorData = (await response.json()) as any;
+        const message = errorData?.errors?.[0]?.message || statusText;
+        throw new Error(`HTTP ${status}: ${message}`);
+      } catch {
+        throw new Error(`HTTP ${status}: ${statusText}`);
+      }
     }
+
+    const data = (await response.json()) as T;
+
+    // Filter ORG- courses for Swinburne
+    if (
+      instanceConfig.domain === "swinburne.instructure.com" &&
+      endpoint === "courses" &&
+      Array.isArray(data)
+    ) {
+      const filteredData = data.filter(
+        (item: any) => !item.name || !item.name.startsWith("ORG-"),
+      );
+      return filteredData as unknown as T;
+    }
+
+    return data;
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("HTTP")) {
+      throw error;
+    }
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Request failed: ${errorMessage}`);
   }
 }

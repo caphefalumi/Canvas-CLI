@@ -42,7 +42,7 @@ export async function submitAssignment(
 ): Promise<void> {
   if (options.dryRun) {
     console.log(
-      chalk.bgRedBright("Dry run mode - no actual submission will be made"),
+      chalk.redBright("Dry run mode - no actual submission will be made"),
     );
   }
   let rl = createReadlineInterface();
@@ -197,7 +197,7 @@ export async function submitAssignment(
       // Prompt is rendered by the table, just wait for input
       const assignmentChoice = await askQuestion(
         rl,
-        'Enter assignment number (or ".."/"back" to cancel):',
+        'Enter assignment number (or ".."/"back" to cancel): ',
       );
 
       // Stop watching for resize after first input
@@ -346,15 +346,13 @@ export async function submitAssignment(
         } else {
           fileIds.push(1);
         }
-        console.log(chalk.green(`✓ Uploaded ${file} successfully`));
+        console.log(
+          chalk.green(`✓ Uploaded ${path.basename(file)} successfully`),
+        );
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        console.log(
-          chalk.red(
-            `✗ Failed to upload ${path.basename(file)}: ${errorMessage}`,
-          ),
-        );
+        console.log(chalk.red(`✗ ${path.basename(file)}: ${errorMessage}`));
 
         const continueUpload = await askConfirmation(
           rlForConfirm,
