@@ -65,7 +65,7 @@ export function saveConfig(
       tableTruncate:
         tableTruncate !== undefined
           ? tableTruncate
-          : (existingConfig?.tableTruncate ?? true),
+          : (existingConfig?.tableTruncate ?? false),
       createdAt: existingConfig?.createdAt || new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
     };
@@ -113,7 +113,7 @@ export function readConfig(): CanvasConfig | null {
 
       // Backward compatibility: add tableTruncate if missing
       if (config.tableTruncate === undefined) {
-        config.tableTruncate = true; // Default to truncate mode for existing configs
+        config.tableTruncate = false; // Default to wrap mode
         // Save the updated config
         fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), "utf8");
       }

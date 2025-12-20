@@ -5,20 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.7.1] - 2025-12-20
 
 ### Added
 
 - **Configurable Table Truncation**: New `tableTruncate` configuration option to control how text is displayed in tables
-  - **Truncate mode** (default): Text is truncated with "..." when it exceeds column width for compact display
-  - **Wrap mode**: Text wraps to multiple lines within column boundaries for full visibility
+  - **Wrap mode** (default): Text wraps to multiple lines within column boundaries for full visibility
+  - **Truncate mode**: Text is truncated with "..." when it exceeds column width for compact display
   - Configuration accessible via `canvas config setup` and `canvas config edit`
   - Smart word-based wrapping that preserves readability
-  - Automatic backward compatibility for existing configurations (defaults to truncate mode)
+  - Automatic backward compatibility for existing configurations (defaults to wrap mode)
 
 ### Changed
 
 - **List Command**: Removed the "State" column from course listings for cleaner output and more space for course information
+
+### Fixed
+
+- **Version Command Tests**: Version output now properly validates against package.json version
+- **Profile Tests**: Fixed import statement to use correct Table class export
 
 ## [1.7.0] - 2025-12-17
 

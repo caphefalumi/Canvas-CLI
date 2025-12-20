@@ -73,8 +73,8 @@ canvas config show               # Display current configuration
 
 **Table Display Options:**
 
-- **Truncate mode** (default): Text is truncated with "..." when it exceeds column width
-- **Wrap mode**: Text wraps to multiple lines within the column
+- **Wrap mode** (default): Text wraps to multiple lines within the column
+- **Truncate mode**: Text is truncated with "..." when it exceeds column width
 
 You can toggle this during `canvas config setup` or `canvas config edit`.
 

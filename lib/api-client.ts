@@ -7,8 +7,6 @@ import fs from "fs";
 import { getInstanceConfig } from "./config.js";
 import { printError, printSuccess } from "./display.js";
 import type { CanvasCourse } from "../types/index.js";
-import dotenv from "dotenv";
-dotenv.config({ quiet: true });
 
 export async function getCanvasCourse(
   courseName: string,
@@ -76,17 +74,6 @@ export async function getCanvasCourses(
 
   return getAllCourse ? courses : courses.filter((c) => c.is_favorite);
 }
-// Mock function reference for testing
-let mockCanvasRequest: typeof makeCanvasRequest | null = null;
-
-/**
- * Set the mock function for testing purposes
- */
-export function setMockCanvasRequest(
-  mock: typeof makeCanvasRequest | null,
-): void {
-  mockCanvasRequest = mock;
-}
 
 /**
  * Make Canvas API request
@@ -97,11 +84,6 @@ export async function makeCanvasRequest<T = any>(
   queryParams: string[] = [],
   requestBody: string | null = null,
 ): Promise<T> {
-  // Use mock if in testing mode and mock is set
-  if (process.env.NODE_ENV === "testing" && mockCanvasRequest) {
-    return mockCanvasRequest<T>(method, endpoint, queryParams, requestBody);
-  }
-
   const instanceConfig = getInstanceConfig();
   // Construct the full URL
   const baseUrl = `https://${instanceConfig.domain}/api/v1`;

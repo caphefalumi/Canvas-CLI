@@ -6,9 +6,14 @@
 import { describe, test, expect, beforeAll } from "bun:test";
 import { spawnSync } from "child_process";
 import { join } from "path";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 
 const CLI_PATH = join(__dirname, "..", "dist", "src", "index.js");
+const PACKAGE_JSON_PATH = join(__dirname, "..", "package.json");
+
+// Read version from package.json
+const packageJson = JSON.parse(readFileSync(PACKAGE_JSON_PATH, "utf-8"));
+const EXPECTED_VERSION = packageJson.version;
 
 describe("E2E: CLI Executable", () => {
   beforeAll(() => {
@@ -44,7 +49,10 @@ describe("E2E: CLI Executable", () => {
     });
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toMatch(/\d+\.\d+\.\d+/); // Matches semver pattern
+    // Extract version from output (may contain dotenv debug info)
+    const lines = result.stdout.trim().split("\n");
+    const versionLine = lines[lines.length - 1].trim();
+    expect(versionLine).toBe(EXPECTED_VERSION);
   });
 
   test("CLI should list available commands", () => {
@@ -720,7 +728,10 @@ describe("E2E: Edge Cases", () => {
     });
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toMatch(/\d+\.\d+\.\d+/);
+    // Extract version from output (may contain dotenv debug info)
+    const lines = result.stdout.trim().split("\n");
+    const versionLine = lines[lines.length - 1].trim();
+    expect(versionLine).toBe(EXPECTED_VERSION);
   });
 
   test("should handle unknown option", () => {
