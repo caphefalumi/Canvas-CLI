@@ -3,7 +3,7 @@
  * Canvas CLI - A command line tool for interacting with Canvas API
  *
  * @author caphefalumi
- * @version 1.7.2
+ * @version 1.7.3
  */
 
 import { Command } from "commander";
@@ -14,6 +14,7 @@ import {
   editConfig,
   showConfigPath,
   deleteConfigFile,
+  setConfigValue,
 } from "../commands/config.js";
 import { listAssignments } from "../commands/assignments.js";
 import { showGrades } from "../commands/grades.js";
@@ -33,7 +34,7 @@ const program = new Command();
 program
   .name("canvas")
   .description("Canvas LMS Command Line Interface")
-  .version("1.7.2", "-V, --version", "Output the current version");
+  .version("1.7.3", "-V, --version", "Output the current version");
 
 // List command to show enrolled courses
 program
@@ -81,6 +82,17 @@ configCommand
   .alias("remove")
   .description("Delete config file")
   .action(deleteConfigFile);
+
+configCommand
+  .command("set <key> <value>")
+  .description("Set a configuration value (domain, token, truncate)")
+  .action(setConfigValue);
+
+program
+  .command("login")
+  .alias("signin")
+  .description("Interactive setup wizard")
+  .action(setupConfig);
 
 // Assignments command to show assignments for a course
 program

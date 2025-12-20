@@ -9,6 +9,7 @@ import {
   printInfo,
   printError,
   printSuccess,
+  ColumnDefinition,
 } from "../lib/display.js";
 import { createReadlineInterface, askQuestion } from "../lib/interactive.js";
 import { exec } from "child_process";
@@ -233,7 +234,6 @@ export async function showModules(
         return;
       }
       courseId = course.id;
-      printSuccess(`Using course: ${course.name}`);
     }
 
     printInfo("\n" + "-".repeat(60));
@@ -285,9 +285,9 @@ export async function showModules(
       `Found ${allItems.length} item(s) across ${modules.length} module(s).`,
     );
 
-    const columns: any[] = [
-      { key: "module", header: "Module", width: 14 },
-      { key: "title", header: "Title", flex: 1, minWidth: 20 },
+    const columns: ColumnDefinition[] = [
+      { key: "module", header: "Module", flex: 1, minWidth: 15 },
+      { key: "title", header: "Title", flex: 2, minWidth: 30 },
     ];
 
     if (options.verbose) {
@@ -297,19 +297,15 @@ export async function showModules(
       );
     }
 
-    const table = new Table(columns, { showRowNumbers: true });
+    const table = new Table(columns, {
+      showRowNumbers: true,
+    });
 
     for (const entry of allItems) {
       const { module: mod, item } = entry;
 
-      // Shorten module name
-      let modName = mod.name;
-      if (modName.length > 12) {
-        modName = modName.substring(0, 11) + "…";
-      }
-
       const row: any = {
-        module: modName,
+        module: mod.name,
         title: item.title,
       };
 

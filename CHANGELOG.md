@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.3] - 2025-12-20
+
+### Added
+
+- **Configuration Set Command**: New `canvas config set <key> <value>` command for granular configuration management
+  - Set individual configuration values without interactive prompts
+  - Supported keys: `domain`, `token`, `truncate`
+  - Automatic validation for each setting type
+  - Examples:
+    - `canvas config set truncate false` - Disable table truncation
+    - `canvas config set domain school.instructure.com` - Update Canvas domain
+    - `canvas config set token <your-token>` - Update API token
+
+### Changed
+
+- **Configuration Commands**: Refactored configuration system for better scalability
+  - Replaced individual setting commands with unified `set` command
+  - More consistent command structure across all configuration operations
+  - Easier to extend with new configuration options in the future
+
 ## [1.7.2] - 2025-12-20
 
 ### Changed

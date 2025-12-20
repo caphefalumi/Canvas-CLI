@@ -69,6 +69,7 @@ The CLI stores your Canvas domain and API token in `~/.canvaslms-cli-config.json
 canvas config setup              # Initial setup wizard
 canvas config edit               # Edit existing configuration
 canvas config show               # Display current configuration
+canvas config set <key> <value>  # Set a configuration value (domain, token, truncate)
 ```
 
 **Table Display Options:**
@@ -76,7 +77,7 @@ canvas config show               # Display current configuration
 - **Wrap mode** (default): Text wraps to multiple lines within the column
 - **Truncate mode**: Text is truncated with "..." when it exceeds column width
 
-You can toggle this during `canvas config setup` or `canvas config edit`.
+You can toggle this during `canvas config setup`, `canvas config edit`, or use `canvas config set truncate <true|false>`.
 
 ### Common Commands
 

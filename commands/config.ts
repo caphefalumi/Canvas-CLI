@@ -341,3 +341,116 @@ export function deleteConfigFile(): void {
     rl.close();
   });
 }
+
+export function setConfigValue(key: string, value: string): void {
+  if (!configExists()) {
+    console.log(
+      chalk.red(
+        'No configuration file found. Run "canvas config setup" first.',
+      ),
+    );
+    return;
+  }
+
+  const config = readConfig();
+  if (!config) {
+    console.log(chalk.red("Error reading configuration."));
+    return;
+  }
+
+  let saved = false;
+
+  switch (key.toLowerCase()) {
+    case "domain": {
+      // Clean and validate domain
+      let domain = value.replace(/^https?:\/\//, "").replace(/\/$/, "");
+      if (!domain.includes(".")) {
+        console.log(
+          chalk.red(
+            "Invalid domain format. Please enter a valid domain (e.g., school.instructure.com)",
+          ),
+        );
+        return;
+      }
+      saved = saveConfig(domain, config.token, config.tableTruncate);
+      if (saved) {
+        console.log(chalk.green(`Success: Domain updated to "${domain}".`));
+      }
+      break;
+    }
+
+    case "token": {
+      // Validate token length
+      if (value.length < 10) {
+        console.log(
+          chalk.red("API token seems too short. Please check your token."),
+        );
+        return;
+      }
+      saved = saveConfig(config.domain, value, config.tableTruncate);
+      if (saved) {
+        console.log(chalk.green("Success: API token updated."));
+        console.log(chalk.cyan("Token: " + value.substring(0, 10) + "..."));
+      }
+      break;
+    }
+
+    case "truncate": {
+      // Parse the value as boolean
+      const normalizedValue = value.toLowerCase();
+      let tableTruncate: boolean;
+
+      if (
+        normalizedValue === "true" ||
+        normalizedValue === "yes" ||
+        normalizedValue === "y" ||
+        normalizedValue === "1"
+      ) {
+        tableTruncate = true;
+      } else if (
+        normalizedValue === "false" ||
+        normalizedValue === "no" ||
+        normalizedValue === "n" ||
+        normalizedValue === "0"
+      ) {
+        tableTruncate = false;
+      } else {
+        console.log(
+          chalk.red(
+            `Invalid value: "${value}". Use true/false, yes/no, or y/n.`,
+          ),
+        );
+        return;
+      }
+
+      saved = saveConfig(config.domain, config.token, tableTruncate);
+      if (saved) {
+        console.log(
+          chalk.green(
+            `Success: Table truncation ${tableTruncate ? "enabled" : "disabled"}.`,
+          ),
+        );
+        console.log(
+          chalk.cyan(
+            tableTruncate
+              ? "Content that doesn't fit will be truncated with '...'"
+              : "Content will wrap to multiple lines",
+          ),
+        );
+      }
+      break;
+    }
+
+    default:
+      console.log(
+        chalk.red(
+          `Unknown configuration key: "${key}". Valid keys: domain, token, truncate`,
+        ),
+      );
+      return;
+  }
+
+  if (!saved) {
+    console.log(chalk.red("Error: Failed to update configuration."));
+  }
+}
