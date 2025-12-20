@@ -56,11 +56,17 @@ export function saveConfig(
   tableTruncate?: boolean,
 ): boolean {
   try {
+    // Read existing config to preserve createdAt
+    const existingConfig = readConfig();
+
     const config: CanvasConfig = {
       domain: domain.replace(/^https?:\/\//, "").replace(/\/$/, ""),
       token,
-      tableTruncate,
-      createdAt: new Date().toISOString(),
+      tableTruncate:
+        tableTruncate !== undefined
+          ? tableTruncate
+          : (existingConfig?.tableTruncate ?? true),
+      createdAt: existingConfig?.createdAt || new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
     };
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), "utf8");
@@ -101,7 +107,18 @@ export function deleteConfig(): boolean {
 export function readConfig(): CanvasConfig | null {
   try {
     if (fs.existsSync(CONFIG_FILE)) {
-      return JSON.parse(fs.readFileSync(CONFIG_FILE, "utf8")) as CanvasConfig;
+      const config = JSON.parse(
+        fs.readFileSync(CONFIG_FILE, "utf8"),
+      ) as CanvasConfig;
+
+      // Backward compatibility: add tableTruncate if missing
+      if (config.tableTruncate === undefined) {
+        config.tableTruncate = true; // Default to truncate mode for existing configs
+        // Save the updated config
+        fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), "utf8");
+      }
+
+      return config;
     }
     return null;
   } catch (error) {

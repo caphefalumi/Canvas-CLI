@@ -61,6 +61,23 @@ The setup wizard will guide you through:
 
 ## Usage
 
+### Configuration
+
+The CLI stores your Canvas domain and API token in `~/.canvaslms-cli-config.json`. You can manage configuration with:
+
+```bash
+canvas config setup              # Initial setup wizard
+canvas config edit               # Edit existing configuration
+canvas config show               # Display current configuration
+```
+
+**Table Display Options:**
+
+- **Truncate mode** (default): Text is truncated with "..." when it exceeds column width
+- **Wrap mode**: Text wraps to multiple lines within the column
+
+You can toggle this during `canvas config setup` or `canvas config edit`.
+
 ### Common Commands
 
 ```bash

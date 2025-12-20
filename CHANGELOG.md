@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Configurable Table Truncation**: New `tableTruncate` configuration option to control how text is displayed in tables
+  - **Truncate mode** (default): Text is truncated with "..." when it exceeds column width for compact display
+  - **Wrap mode**: Text wraps to multiple lines within column boundaries for full visibility
+  - Configuration accessible via `canvas config setup` and `canvas config edit`
+  - Smart word-based wrapping that preserves readability
+  - Automatic backward compatibility for existing configurations (defaults to truncate mode)
+
+### Changed
+
+- **List Command**: Removed the "State" column from course listings for cleaner output and more space for course information
+
 ## [1.7.0] - 2025-12-17
 
 ### Changed (1.7.0)
@@ -278,9 +293,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Error handling and user-friendly messages
 - Cross-platform compatibility
 
-## [Unreleased]
-
-### Planned Features (Unreleased)
+### Planned Features
 
 - Assignment creation and editing
 - Bulk operations
