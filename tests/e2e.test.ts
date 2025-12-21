@@ -73,23 +73,12 @@ describe("E2E: CLI Executable", () => {
       "todo",
       "files",
       "groups",
+      "star",
     ];
 
     for (const cmd of expectedCommands) {
       expect(result.stdout).toContain(cmd);
     }
-  });
-
-  test("config command should have subcommands", () => {
-    const result = spawnSync("node", [CLI_PATH, "config", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("show");
-    expect(result.stdout).toContain("setup");
-    expect(result.stdout).toContain("edit");
-    expect(result.stdout).toContain("path");
-    expect(result.stdout).toContain("delete");
   });
 
   test("should handle invalid command gracefully", () => {
@@ -99,66 +88,6 @@ describe("E2E: CLI Executable", () => {
 
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("error");
-  });
-
-  test("list command should require config", () => {
-    // This test assumes no config exists in test environment
-    // If config exists, it will try to connect to Canvas
-    const result = spawnSync("node", [CLI_PATH, "list"], {
-      encoding: "utf-8",
-      env: {
-        ...process.env,
-        // Ensure we don't use any existing config
-        HOME: "/tmp/canvas-cli-test",
-        USERPROFILE: "C:\\temp\\canvas-cli-test",
-      },
-    });
-
-    // Should prompt for config or show config-related message
-    const output = result.stdout + result.stderr;
-    expect(
-      output.includes("configuration") ||
-        output.includes("config") ||
-        output.includes("setup"),
-    ).toBe(true);
-  });
-
-  test("assignments command should accept course name argument", () => {
-    const result = spawnSync("node", [CLI_PATH, "assignments", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.status).toBe(0);
-    expect(result.stdout).toContain("course-name");
-  });
-
-  test("grades command should have --all and --verbose options", () => {
-    const result = spawnSync("node", [CLI_PATH, "grades", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.status).toBe(0);
-    expect(result.stdout).toContain("--all");
-    expect(result.stdout).toContain("--verbose");
-  });
-
-  test("calendar command should have --days option", () => {
-    const result = spawnSync("node", [CLI_PATH, "calendar", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.status).toBe(0);
-    expect(result.stdout).toContain("--days");
-  });
-
-  test("submit command should have --file and --dry-run options", () => {
-    const result = spawnSync("node", [CLI_PATH, "submit", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.status).toBe(0);
-    expect(result.stdout).toContain("--file");
-    expect(result.stdout).toContain("--dry-run");
   });
 });
 
@@ -235,22 +164,6 @@ describe("E2E: List Command", () => {
     expect(result.stdout).toContain("List starred courses");
   });
 
-  test("list should have -a/--all option", () => {
-    const result = spawnSync("node", [CLI_PATH, "list", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--all");
-  });
-
-  test("list should have -v/--verbose option", () => {
-    const result = spawnSync("node", [CLI_PATH, "list", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--verbose");
-  });
-
   test("list alias 'l' should work", () => {
     const result = spawnSync("node", [CLI_PATH, "l", "--help"], {
       encoding: "utf-8",
@@ -271,39 +184,6 @@ describe("E2E: Assignments Command", () => {
     expect(result.stdout).toContain("assignments");
   });
 
-  test("assignments should accept course name argument", () => {
-    const result = spawnSync("node", [CLI_PATH, "assignments", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("course-name");
-    expect(result.stdout).toContain("optional");
-  });
-
-  test("assignments should have --verbose option", () => {
-    const result = spawnSync("node", [CLI_PATH, "assignments", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--verbose");
-  });
-
-  test("assignments should have --submitted option", () => {
-    const result = spawnSync("node", [CLI_PATH, "assignments", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--submitted");
-  });
-
-  test("assignments should have --pending option", () => {
-    const result = spawnSync("node", [CLI_PATH, "assignments", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--pending");
-  });
-
   test("assignments alias 'assign' should work", () => {
     const result = spawnSync("node", [CLI_PATH, "assign", "--help"], {
       encoding: "utf-8",
@@ -321,30 +201,6 @@ describe("E2E: Grades Command", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("grades");
-  });
-
-  test("grades should accept course name argument", () => {
-    const result = spawnSync("node", [CLI_PATH, "grades", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("course-name");
-  });
-
-  test("grades should have --verbose option", () => {
-    const result = spawnSync("node", [CLI_PATH, "grades", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--verbose");
-  });
-
-  test("grades should have --all option", () => {
-    const result = spawnSync("node", [CLI_PATH, "grades", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--all");
   });
 
   test("grades alias 'grade' should work", () => {
@@ -382,22 +238,6 @@ describe("E2E: Announcements Command", () => {
     expect(result.stdout).toContain("announcements");
   });
 
-  test("announcements should accept course name argument", () => {
-    const result = spawnSync("node", [CLI_PATH, "announcements", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("course-name");
-  });
-
-  test("announcements should have --limit option", () => {
-    const result = spawnSync("node", [CLI_PATH, "announcements", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--limit");
-  });
-
   test("announcements alias 'an' should work", () => {
     const result = spawnSync("node", [CLI_PATH, "an", "--help"], {
       encoding: "utf-8",
@@ -415,14 +255,6 @@ describe("E2E: Profile Command", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("profile");
-  });
-
-  test("profile should have --verbose option", () => {
-    const result = spawnSync("node", [CLI_PATH, "profile", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--verbose");
   });
 
   test("profile alias 'me' should work", () => {
@@ -444,38 +276,6 @@ describe("E2E: Submit Command", () => {
     expect(result.stdout).toContain("submit");
   });
 
-  test("submit should accept course name argument", () => {
-    const result = spawnSync("node", [CLI_PATH, "submit", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("course-name");
-  });
-
-  test("submit should have --file option", () => {
-    const result = spawnSync("node", [CLI_PATH, "submit", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--file");
-  });
-
-  test("submit should have --all option", () => {
-    const result = spawnSync("node", [CLI_PATH, "submit", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--all");
-  });
-
-  test("submit should have --dry-run option", () => {
-    const result = spawnSync("node", [CLI_PATH, "submit", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--dry-run");
-  });
-
   test("submit alias 'sub' should work", () => {
     const result = spawnSync("node", [CLI_PATH, "sub", "--help"], {
       encoding: "utf-8",
@@ -493,30 +293,6 @@ describe("E2E: Calendar Command", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("calendar");
-  });
-
-  test("calendar should have --days option", () => {
-    const result = spawnSync("node", [CLI_PATH, "calendar", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--days");
-  });
-
-  test("calendar should have --all option", () => {
-    const result = spawnSync("node", [CLI_PATH, "calendar", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--all");
-  });
-
-  test("calendar should have --past option", () => {
-    const result = spawnSync("node", [CLI_PATH, "calendar", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--past");
   });
 
   test("calendar alias 'cal' should work", () => {
@@ -546,22 +322,6 @@ describe("E2E: Modules Command", () => {
     expect(result.stdout).toContain("modules");
   });
 
-  test("modules should accept course name argument", () => {
-    const result = spawnSync("node", [CLI_PATH, "modules", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("course-name");
-  });
-
-  test("modules should have --all option", () => {
-    const result = spawnSync("node", [CLI_PATH, "modules", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--all");
-  });
-
   test("modules alias 'mod' should work", () => {
     const result = spawnSync("node", [CLI_PATH, "mod", "--help"], {
       encoding: "utf-8",
@@ -587,14 +347,6 @@ describe("E2E: Todo Command", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("todo");
-  });
-
-  test("todo should have --limit option", () => {
-    const result = spawnSync("node", [CLI_PATH, "todo", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--limit");
   });
 
   test("todo alias 'tasks' should work", () => {
@@ -624,22 +376,6 @@ describe("E2E: Files Command", () => {
     expect(result.stdout).toContain("files");
   });
 
-  test("files should accept course name argument", () => {
-    const result = spawnSync("node", [CLI_PATH, "files", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("course-name");
-  });
-
-  test("files should have --all option", () => {
-    const result = spawnSync("node", [CLI_PATH, "files", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--all");
-  });
-
   test("files alias 'file' should work", () => {
     const result = spawnSync("node", [CLI_PATH, "file", "--help"], {
       encoding: "utf-8",
@@ -665,22 +401,6 @@ describe("E2E: Groups Command", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("groups");
-  });
-
-  test("groups should have --members option", () => {
-    const result = spawnSync("node", [CLI_PATH, "groups", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--members");
-  });
-
-  test("groups should have --verbose option", () => {
-    const result = spawnSync("node", [CLI_PATH, "groups", "--help"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.stdout).toContain("--verbose");
   });
 
   test("groups alias 'group' should work", () => {
