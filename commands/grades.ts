@@ -269,7 +269,8 @@ export async function showGrades(
   try {
     if (courseName) {
       // Show grades for specific course with detailed assignment breakdown
-      const course = await getCanvasCourse(courseName);
+      const rl = createReadlineInterface();
+      const course = await getCanvasCourse(courseName, rl);
       if (!course) {
         return;
       }
