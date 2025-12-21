@@ -335,7 +335,8 @@ export async function showFiles(
       course = result.course;
       result.rl.close();
     } else {
-      course = await getCanvasCourse(courseName);
+      const rl = createReadlineInterface();
+      course = await getCanvasCourse(courseName, rl);
       if (!course) {
         return;
       }
