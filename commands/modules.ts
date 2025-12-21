@@ -228,7 +228,9 @@ export async function showModules(
       result.rl.close();
     } else {
       const { getCanvasCourse } = await import("../lib/api-client.js");
-      course = await getCanvasCourse(courseName);
+      const { createReadlineInterface } = await import("../lib/interactive.js");
+      const rl = createReadlineInterface();
+      course = await getCanvasCourse(courseName, rl);
       if (!course) {
         printError(`Course "${courseName}" not found.`);
         return;
