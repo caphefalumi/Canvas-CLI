@@ -1,4 +1,2 @@
 bun format
 bun lint
-git add -u
-git update-index --again
