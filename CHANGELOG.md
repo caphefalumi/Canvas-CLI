@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2025-12-21
+
+### Added
+
+- **Star/Unstar Commands**: New commands to manage course favorites
+  - `canvas star [course-name]` - Add courses to favorites (alias: `s`)
+  - `canvas unstar [course-name]` - Remove courses from favorites (alias: `us`)
+  - Interactive course selection when no course name provided
+  - Unstar command only shows starred courses for safety
+  - Better user experience for managing course favorites
+
+### Changed
+
+- **Interactive Course Selection**: Unified course selection across all commands
+  - All commands now support interactive course selection when course name is omitted
+  - Consistent numbered list display for multi-match scenarios
+  - Star indicators (⭐) shown next to favorited courses
+  - Improved user experience with readline-based selection
+  - Applied to: assignments, announcements, files, grades, modules, submit, star, unstar
+
+### Improved
+
+- **Test Suite**: Cleaned up E2E tests for better maintainability
+  - Removed redundant option tests (31% reduction in test file size)
+  - Focused tests on command functionality and aliases
+  - All 55 tests passing with improved clarity
+
+### Fixed
+
+- **Git Hooks**: Fixed Husky pre-commit hook auto-staging behavior
+  - Removed automatic `git add -u` command
+  - Developers now have full control over staged files
+  - Enables proper atomic commits
+
+### Development
+
+- **Dependencies**: Updated development tooling
+  - oxfmt updated to 0.19.0
+  - oxlint updated to 1.34.0
+  - @types/node updated to 22.10.5
+  - CI workflow now uses `bun ci` for deterministic builds
+
 ## [1.7.4] - 2025-12-20
 
 ### Changed

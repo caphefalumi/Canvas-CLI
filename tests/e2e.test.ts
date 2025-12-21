@@ -43,7 +43,7 @@ describe("E2E: CLI Executable", () => {
     expect(result.stdout).toContain("Commands:");
   });
 
-  test("CLI should show version with --version", () => {
+  test("CLI version should match package.json version", () => {
     const result = spawnSync("node", [CLI_PATH, "--version"], {
       encoding: "utf-8",
     });

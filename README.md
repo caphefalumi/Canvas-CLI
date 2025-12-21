@@ -5,6 +5,8 @@ A modern, user-friendly command-line interface for Canvas LMS. Manage courses, a
 ## Features
 
 - List and filter enrolled/starred courses
+- Star/unstar courses to manage favorites
+- Interactive course selection for all commands
 - View assignments, grades, and submission status
 - Interactive file upload for assignments with visual file browser
 - View upcoming due dates and calendar events
@@ -85,6 +87,12 @@ You can toggle this during `canvas config setup`, `canvas config edit`, or use `
 canvas config                    # Configure domain and API token
 canvas list                      # List starred courses
 canvas list -a                   # List all enrolled courses
+
+# Star/Unstar Courses
+canvas star                      # Interactive course selection to star
+canvas star database           # Star course matching database
+canvas unstar                    # Interactive selection (shows only starred courses)
+canvas unstar math             # Unstar course matching math
 
 # Assignments (supports course name instead of ID)
 canvas assignments               # Interactive course selection
