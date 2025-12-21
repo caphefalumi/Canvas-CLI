@@ -37,12 +37,12 @@ export async function showAnnouncements(
       selectedCourseId = result.course.id.toString();
       rl = result.rl;
     } else {
-      const course = await getCanvasCourse(courseName);
+      rl = createReadlineInterface();
+      const course = await getCanvasCourse(courseName, rl);
       if (!course) {
         return;
       }
       selectedCourseId = course.id.toString();
-      rl = createReadlineInterface();
     }
 
     const limit = parseInt(options.limit || "5") || 5;
