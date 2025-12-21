@@ -26,6 +26,7 @@ import { showModules } from "../commands/modules.js";
 import { showTodo } from "../commands/todo.js";
 import { showFiles } from "../commands/files.js";
 import { showGroups } from "../commands/groups.js";
+import { starCourse, unstarCourse } from "../commands/star.js";
 import { requireConfig } from "../lib/config-validator.js";
 
 const program = new Command();
@@ -200,6 +201,22 @@ program
   .option("-v, --verbose", "Show detailed info")
   .option("-m, --members", "Show group members")
   .action(requireConfig(showGroups));
+
+// Star command to add course to favorites
+program
+  .command("star [course-name]")
+  .alias("favourite")
+  .alias("favorite")
+  .description("Star a course (add to favorites)")
+  .action(requireConfig(starCourse));
+
+// Unstar command to remove course from favorites
+program
+  .command("unstar [course-name]")
+  .alias("unfavourite")
+  .alias("unfavorite")
+  .description("Unstar a course (remove from favorites)")
+  .action(requireConfig(unstarCourse));
 
 // Parse command line arguments
 program.parseAsync();
