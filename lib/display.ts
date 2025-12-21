@@ -452,8 +452,8 @@ export class Table {
           appendLn(rowStr);
         }
 
-        // Add spacing between rows (empty row) when in wrap mode
-        if (index < this.data.length - 1) {
+        // Add spacing between rows (empty row) only when text actually wrapped (maxLines > 1)
+        if (index < this.data.length - 1 && maxLines > 1) {
           let spacer = chalk.gray("│ ");
           if (this.options.showRowNumbers) {
             spacer += " ".repeat(this.rowNumWidth) + chalk.gray("│ ");
@@ -775,10 +775,8 @@ function getAssignmentType(assignment: CanvasAssignment): string {
       assignment.allowed_extensions &&
       assignment.allowed_extensions.length > 0
     ) {
-      const exts = assignment.allowed_extensions.slice(0, 3);
-      const extList = exts.join(", ");
-      const suffix = assignment.allowed_extensions.length > 3 ? "..." : "";
-      return `${extList}${suffix}`;
+      const extList = assignment.allowed_extensions.join(", ");
+      return extList;
     }
     return "Any file";
   } else if (types.includes("online_text_entry")) {
@@ -804,12 +802,12 @@ export function displaySubmitAssignments(
 ): Table {
   const columns: ColumnDefinition[] = [
     { key: "name", header: "Assignment Name", flex: 1, minWidth: 15 },
-    { key: "type", header: "Type", width: 8 },
-    { key: "dueDate", header: "Due", width: 10 },
+    { key: "type", header: "Type", flex: 0.5, minWidth: 8 },
+    { key: "dueDate", header: "Due", width: 14 },
     {
       key: "status",
       header: "Status",
-      width: 10,
+      width: 14,
       color: (value, row) => {
         return row._isSubmitted ? chalk.green(value) : chalk.yellow(value);
       },
@@ -822,26 +820,22 @@ export function displaySubmitAssignments(
     const submission = (assignment as any).submission;
     const isSubmitted = !!(submission && submission.submitted_at);
 
-    // Format date compactly as "MM/DD/YYYY"
+    // Format date as "DD/MM/YYYY"
     let dueDate = "No due date";
     if (assignment.due_at) {
       const d = new Date(assignment.due_at);
-      dueDate = `${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getDate().toString().padStart(2, "0")}/${d.getFullYear()}`;
+      dueDate = `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1).toString().padStart(2, "0")}/${d.getFullYear()}`;
     }
 
     table.addRow({
       name: assignment.name,
       type: getAssignmentType(assignment),
       dueDate: dueDate,
-      status: isSubmitted ? "✓ Submi..." : "Not submit",
+      status: isSubmitted ? "✓ Submitted" : "Not submitted",
       _isSubmitted: isSubmitted,
     });
   });
 
-  // Set prompt that will be re-rendered on resize
-  table.setPrompt(
-    chalk.white('\nEnter assignment number (or ".."/"back" to cancel): '),
-  );
   table.renderWithResize();
   return table;
 }

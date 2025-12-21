@@ -56,11 +56,9 @@ export async function getCanvasCourse(
       selectedCourse = matches[index];
     } else {
       console.log(chalk.red("Invalid selection."));
-      rl.close();
       return;
     }
   }
-  rl.close();
   if (!selectedCourse) {
     printError(`No courses found matching "${courseName}".`);
     return;

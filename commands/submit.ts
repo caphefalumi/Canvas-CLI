@@ -194,10 +194,9 @@ export async function submitAssignment(
     let selectedAssignment: CanvasAssignment | undefined;
 
     while (true) {
-      // Prompt is rendered by the table, just wait for input
       const assignmentChoice = await askQuestion(
         rl,
-        'Enter assignment number (or ".."/"back" to cancel): ',
+        '\nEnter assignment number (or ".."/"back" to cancel): ',
       );
 
       // Stop watching for resize after first input
