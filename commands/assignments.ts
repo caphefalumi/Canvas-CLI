@@ -3,6 +3,7 @@
  */
 
 import { makeCanvasRequest, getCanvasCourse } from "../lib/api-client.js";
+import { createReadlineInterface } from "../lib/interactive.js";
 import {
   pickCourse,
   displayAssignments,
@@ -36,7 +37,8 @@ export async function listAssignments(
       selectedCourseId = course.id.toString();
       result.rl.close();
     } else {
-      course = await getCanvasCourse(courseName);
+      const rl = createReadlineInterface();
+      course = await getCanvasCourse(courseName, rl);
       if (!course) {
         return;
       }
