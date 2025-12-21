@@ -64,7 +64,7 @@ export async function submitAssignment(
     let courseId: number;
 
     if (courseName) {
-      const course = await getCanvasCourse(courseName);
+      const course = await getCanvasCourse(courseName, rl);
       if (!course) {
         rl.close();
         return;
