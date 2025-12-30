@@ -1,15 +1,6 @@
 /**
  * Canvas API client
  */
-void import("dotenv")
-  .then((mod) => {
-    try {
-      if (mod && typeof mod.config === "function") {
-        mod.config();
-      }
-    } catch {}
-  })
-  .catch(() => {});
 
 import fs from "fs";
 import { getInstanceConfig } from "./config.js";
@@ -18,31 +9,6 @@ import type { CanvasCourse } from "../types/index.js";
 import chalk from "chalk";
 import { askQuestion } from "../index.js";
 import readline from "readline";
-
-// Allow tests to inject a mock request implementation. Tests call `setMockCanvasRequest`
-// to replace network calls with `mockMakeCanvasRequest` from the test mocks.
-type CanvasRequestFn = <T = any>(
-  method: string,
-  endpoint: string,
-  queryParams?: string[],
-  requestBody?: string | null,
-) => Promise<T>;
-
-let _mockCanvasRequest: CanvasRequestFn | null = null;
-
-let _mockCanvasRequestCallCount = 0;
-
-export function setMockCanvasRequest(fn: CanvasRequestFn | null): void {
-  _mockCanvasRequest = fn;
-  if (fn) {
-    _mockCanvasRequestCallCount += 1;
-  }
-}
-
-// Test helper: return how many times a mock request function was set.
-export function getMockCanvasRequestCallCount(): number {
-  return _mockCanvasRequestCallCount;
-}
 
 /**
  * Get a specific course by name, prompting user if multiple matches found
@@ -134,10 +100,6 @@ export async function makeCanvasRequest<T = any>(
   queryParams: string[] = [],
   requestBody: string | null = null,
 ): Promise<T> {
-  // If a mock request function has been injected (tests), delegate to it.
-  if (_mockCanvasRequest) {
-    return _mockCanvasRequest<T>(method, endpoint, queryParams, requestBody);
-  }
   const instanceConfig = getInstanceConfig();
   // Construct the full URL
   const baseUrl = `https://${instanceConfig.domain}/api/v1`;

@@ -59,7 +59,6 @@ describe("E2E: CLI Executable", () => {
     });
 
     expect(result.status).toBe(0);
-    // Extract version from output (may contain dotenv debug info)
     const lines = result.stdout.trim().split("\n");
     const versionLine = lines[lines.length - 1].trim();
     expect(versionLine).toBe(EXPECTED_VERSION);
@@ -451,7 +450,6 @@ describe("E2E: Edge Cases", () => {
     });
 
     expect(result.status).toBe(0);
-    // Extract version from output (may contain dotenv debug info)
     const lines = result.stdout.trim().split("\n");
     const versionLine = lines[lines.length - 1].trim();
     expect(versionLine).toBe(EXPECTED_VERSION);
