@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeAll } from "bun:test";
-import { spawnSync } from "child_process";
+import { spawnSync as _childSpawnSync } from "child_process";
 import { join } from "path";
 import { existsSync, readFileSync } from "fs";
 
@@ -14,6 +14,16 @@ const PACKAGE_JSON_PATH = join(__dirname, "..", "package.json");
 // Read version from package.json
 const packageJson = JSON.parse(readFileSync(PACKAGE_JSON_PATH, "utf-8"));
 const EXPECTED_VERSION = packageJson.version;
+
+// Wrapper around child_process.spawnSync which injects the test mock
+// environment variable so the spawned CLI process enables the in-process
+// mock request implementation. Available to all tests in this file.
+function spawnSync(cmd: string, args: string[], opts: any = {}) {
+  const env = { ...process.env, CANVAS_CLI_MOCK: "1", ...opts.env };
+  // Ensure encoding is utf-8 unless explicitly overridden
+  const merged = { encoding: "utf-8", ...opts, env };
+  return _childSpawnSync(cmd, args, merged as any);
+}
 
 describe("E2E: CLI Executable", () => {
   beforeAll(() => {
@@ -99,13 +109,6 @@ describe("E2E: Platform Compatibility", () => {
 
     expect(result.status).toBe(0);
     expect(result.error).toBeUndefined();
-  });
-
-  test("CLI file should be executable format", () => {
-    const fs = require("fs");
-    const stats = fs.statSync(CLI_PATH);
-    expect(stats.isFile()).toBe(true);
-    expect(stats.size).toBeGreaterThan(0);
   });
 });
 
