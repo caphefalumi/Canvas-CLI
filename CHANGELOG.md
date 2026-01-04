@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-01-04
+
+### Added
+
+- **GPA Calculator**: New `canvas gpa` command to calculate overall GPA
+  - Calculate GPA across all active courses on 4.0 scale
+  - Option to include past/completed courses with `-p` flag
+  - Shows individual course grades, letter grades, and GPA points
+  - Summary table with total credits and quality points
+  - Letter grade to GPA conversion (A=4.0, B=3.0, etc.)
+  - Smart interpretation and feedback based on GPA
+
+- **What-If Grade Calculator**: New `canvas what-if` command
+  - Calculate what grade you need on remaining work to achieve target grade
+  - Interactive prompts for current grade, weight, and desired final grade
+  - Clear feedback on achievability and difficulty
+  - Shows maximum possible grade if goal is unachievable
+  - Helpful color-coded results
+
+- **Bulk File Download**: New `canvas download` command
+  - Download all files from a course at once
+  - Preserves Canvas folder structure locally
+  - Progress tracking for each file download
+  - Skips already downloaded files automatically
+  - Custom output directory support with `-o` flag
+  - Download summary with success/failure counts
+
+- **Advanced Assignment Filtering**: Enhanced `canvas assignments` command
+  - New `--all-courses` (`-a`) flag to view assignments from all courses
+  - New `--missing` (`-m`) flag to show only missing assignments
+  - New `--due-this-week` (`-w`) flag to show assignments due within 7 days
+  - Combine filters (e.g., `-a -m` for all missing assignments)
+  - Smart sorting by due date
+  - Cross-course assignment view with course names
+  - Color-coded status indicators (submitted, missing, pending)
+
+### Changed
+
+- **Assignment Display**: Improved multi-course assignment display
+  - Shows course code/name for each assignment
+  - Better status indicators with visual symbols (✓, ✗, ○)
+  - Color-coded due dates (red for overdue, yellow for soon, green for later)
+  - Enhanced table layout for cross-course views
+
+### Improved
+
+- **README Documentation**: Added comprehensive documentation for new features
+  - Shield badges for npm version, license, workflow status, and downloads
+  - New features section highlighting recent additions
+  - Detailed usage examples for all new commands
+  - Command combinations and filter examples
+
 ## [1.8.0] - 2025-12-21
 
 ### Added

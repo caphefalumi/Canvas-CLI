@@ -1,6 +1,41 @@
 # Canvas CLI Tool
 
+[![npm version](https://img.shields.io/npm/v/canvaslms-cli.svg)](https://www.npmjs.com/package/canvaslms-cli)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Package](https://github.com/caphefalumi/Canvas-CLI/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/caphefalumi/Canvas-CLI/actions/workflows/npm-publish.yml)
+[![Downloads](https://img.shields.io/npm/dt/canvaslms-cli.svg)](https://www.npmjs.com/package/canvaslms-cli)
+
 A modern, user-friendly command-line interface for Canvas LMS. Manage courses, assignments, submissions, grades, and more directly from your terminal.
+
+## ✨ New Features
+
+### 📊 GPA Calculator
+
+- Calculate your overall GPA across all courses on a 4.0 scale
+- Include or exclude past/completed courses
+- See letter grades and quality points for each course
+- Automatic GPA calculation with detailed breakdown
+
+### 🎯 What-If Grade Calculator
+
+- Find out what grade you need on remaining work to achieve your target
+- Interactive calculator with clear feedback
+- Shows if your goal is achievable
+
+### 📥 Bulk File Download
+
+- Download ALL files from a course at once
+- Preserves Canvas folder structure
+- Skips already downloaded files
+- Progress tracking for each file
+
+### 🔍 Advanced Assignment Filtering
+
+- View assignments from **all courses** at once
+- Filter by **missing** assignments
+- Filter by **due this week**
+- Combine filters (e.g., all missing assignments across all courses)
+- Smart sorting by due date
 
 ## Features
 
@@ -8,7 +43,11 @@ A modern, user-friendly command-line interface for Canvas LMS. Manage courses, a
 - Star/unstar courses to manage favorites
 - Interactive course selection for all commands
 - View assignments, grades, and submission status
+- **Advanced assignment filtering** (missing, due this week, all courses)
 - Interactive file upload for assignments with visual file browser
+- **Bulk download all course files** with organized folder structure
+- **GPA Calculator** - Calculate overall GPA across all courses on 4.0 scale
+- **What-if Grade Calculator** - Find out what you need on remaining work
 - View upcoming due dates and calendar events
 - Browse course modules and content
 - View course announcements
@@ -99,12 +138,28 @@ canvas assignments               # Interactive course selection
 canvas assignments math        # List assignments for course matching math
 canvas assignments -s            # Show only submitted assignments
 canvas assignments -p            # Show only pending assignments
+canvas assignments -a            # Show assignments from ALL courses
+canvas assignments -m            # Show MISSING assignments only
+canvas assignments -w            # Show assignments DUE THIS WEEK
+canvas assignments -a -m         # Show all missing assignments across all courses
+canvas assignments -a -w         # Show assignments due this week from all courses
 
 # Grades (supports course name instead of ID)
 canvas grades                    # Interactive course selection + detailed grades
 canvas grades database         # Show detailed grades for course matching database
 canvas grades -a                 # Include inactive/completed courses
 canvas grades -v                 # Include verbose enrollment details
+
+# GPA Calculator & What-If Scenarios
+canvas gpa                       # Calculate overall GPA across all active courses
+canvas gpa -p                    # Include past/completed courses in GPA calculation
+canvas what-if                   # Calculate what grade you need on remaining work
+
+# Bulk Download Files
+canvas download                  # Interactive course selection for bulk download
+canvas download math           # Download all files from course matching math
+canvas download -o ~/Downloads   # Specify output directory
+canvas download math -o ./files  # Download to specific folder
 
 # Announcements (supports course name instead of ID)
 canvas announcements             # Interactive course selection
