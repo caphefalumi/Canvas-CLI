@@ -7,36 +7,6 @@
 
 A modern, user-friendly command-line interface for Canvas LMS. Manage courses, assignments, submissions, grades, and more directly from your terminal.
 
-## ✨ New Features
-
-### 📊 GPA Calculator
-
-- Calculate your overall GPA across all courses on a 4.0 scale
-- Include or exclude past/completed courses
-- See letter grades and quality points for each course
-- Automatic GPA calculation with detailed breakdown
-
-### 🎯 What-If Grade Calculator
-
-- Find out what grade you need on remaining work to achieve your target
-- Interactive calculator with clear feedback
-- Shows if your goal is achievable
-
-### 📥 Bulk File Download
-
-- Download ALL files from a course at once
-- Preserves Canvas folder structure
-- Skips already downloaded files
-- Progress tracking for each file
-
-### 🔍 Advanced Assignment Filtering
-
-- View assignments from **all courses** at once
-- Filter by **missing** assignments
-- Filter by **due this week**
-- Combine filters (e.g., all missing assignments across all courses)
-- Smart sorting by due date
-
 ## Features
 
 - List and filter enrolled/starred courses
