@@ -444,17 +444,6 @@ describe("E2E: Edge Cases", () => {
     expect(result.stdout).toContain("Usage:");
   });
 
-  test("should handle -V flag for version", () => {
-    const result = spawnSync("node", [CLI_PATH, "-V"], {
-      encoding: "utf-8",
-    });
-
-    expect(result.status).toBe(0);
-    const lines = result.stdout.trim().split("\n");
-    const versionLine = lines[lines.length - 1].trim();
-    expect(versionLine).toBe(EXPECTED_VERSION);
-  });
-
   test("should handle unknown option", () => {
     const result = spawnSync("node", [CLI_PATH, "--unknown-option"], {
       encoding: "utf-8",

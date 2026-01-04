@@ -1,6 +1,6 @@
 {
   "name": "canvaslms-cli",
-  "version": "1.9.0",
+  "version": "1.9.2",
   "description": "A command line tool for interacting with Canvas LMS",
   "keywords": [
     "api",
@@ -50,7 +50,10 @@
     "test": "bun test",
     "test:coverage": "bun test --coverage",
     "prepublishOnly": "bun run build && bun test",
-    "prepare": "bunx husky"
+    "prepare": "bunx husky",
+    "version:patch": "bun scripts/bump-version.ts patch",
+    "version:minor": "bun scripts/bump-version.ts minor",
+    "version:major": "bun scripts/bump-version.ts major"
   },
   "dependencies": {
     "chalk": "^5.6.2",
