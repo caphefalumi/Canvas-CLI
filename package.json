@@ -1,6 +1,6 @@
 {
   "name": "canvaslms-cli",
-  "version": "1.9.3",
+  "version": "1.9.4",
   "description": "A command line tool for interacting with Canvas LMS",
   "keywords": [
     "api",
@@ -58,6 +58,7 @@
   "dependencies": {
     "chalk": "^5.6.2",
     "commander": "^14.0.2",
+    "domutils": "^3.2.2",
     "htmlparser2": "^10.0.0"
   },
   "devDependencies": {

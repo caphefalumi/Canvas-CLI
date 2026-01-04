@@ -169,6 +169,7 @@ export async function bulkDownload(
 
     if (folders.length === 0) {
       printError("No folders found in this course.");
+      printInfo("\nThis course may have file access restricted or disabled.");
       return;
     }
 
@@ -228,7 +229,15 @@ export async function bulkDownload(
 
     // Summary
     printSeparator("=");
-    console.log(chalk.white.bold("\n📊 Download Summary:\n"));
+
+    if (totalFiles === 0) {
+      printError("No files found in any folder!");
+      printInfo("\nThis course may have file access restricted or disabled.");
+      printInfo("Please check the course settings or contact your instructor.");
+      return;
+    }
+
+    console.log(chalk.white.bold("\nDownload Summary:\n"));
     console.log(chalk.cyan(`Total files found: ${totalFiles}`));
     console.log(chalk.green(`Successfully downloaded: ${downloadedFiles}`));
     if (failedFiles > 0) {

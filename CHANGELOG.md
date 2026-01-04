@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.4] - 2026-01-04
+
+### Changed
+
+- **Improved Download Error Handling**: Better user feedback for restricted file access
+  - Clear error messages when course has file access disabled
+  - Helpful suggestions to check course settings or contact instructor
+  - No longer shows confusing "0 files downloaded" without context
+
+### Fixed
+
+- Added missing `domutils` dependency to package.json
+- Download command now properly detects and reports restricted file access
+
 ## [1.9.3] - 2026-01-04
 
 ### Added

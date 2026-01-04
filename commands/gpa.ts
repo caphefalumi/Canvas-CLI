@@ -150,7 +150,7 @@ export async function calculateWhatIfGrade(): Promise<void> {
       (desiredGrade * 100 - currentGrade * currentWeight) / remainingWeight;
 
     printSeparator("-");
-    console.log(chalk.white.bold("\n📊 Grade Calculation Results:\n"));
+    console.log(chalk.white.bold("\nGrade Calculation Results:\n"));
 
     console.log(
       chalk.cyan(
@@ -164,9 +164,7 @@ export async function calculateWhatIfGrade(): Promise<void> {
 
     if (neededGrade > 100) {
       console.log(
-        chalk.red.bold(
-          `❌ You need ${neededGrade.toFixed(2)}% on remaining work`,
-        ),
+        chalk.red.bold(`You need ${neededGrade.toFixed(2)}% on remaining work`),
       );
       console.log(chalk.red("Unfortunately, this is not achievable (>100%)"));
       console.log(
@@ -176,7 +174,7 @@ export async function calculateWhatIfGrade(): Promise<void> {
       );
     } else if (neededGrade < 0) {
       console.log(
-        chalk.green.bold(`✅ You already have ${desiredGrade}% or better!`),
+        chalk.green.bold(`You already have ${desiredGrade}% or better!`),
       );
       console.log(
         chalk.green(
@@ -192,20 +190,18 @@ export async function calculateWhatIfGrade(): Promise<void> {
             : chalk.red;
       console.log(
         color.bold(
-          `📈 You need ${neededGrade.toFixed(2)}% on the remaining ${remainingWeight}% of work`,
+          `You need ${neededGrade.toFixed(2)}% on the remaining ${remainingWeight}% of work`,
         ),
       );
 
       if (neededGrade <= 90) {
-        console.log(
-          chalk.green("✅ This is achievable! Keep up the good work!"),
-        );
+        console.log(chalk.green("This is achievable! Keep up the good work!"));
       } else if (neededGrade <= 95) {
-        console.log(chalk.yellow("⚠️  This will be challenging but possible!"));
+        console.log(chalk.yellow("This will be challenging but possible!"));
       } else {
         console.log(
           chalk.yellow(
-            "⚠️  This will require excellent performance on all remaining work!",
+            "This will require excellent performance on all remaining work!",
           ),
         );
       }
@@ -442,7 +438,7 @@ export async function calculateOverallGPA(
       console.log();
       console.log(
         chalk.yellow.bold(
-          `⚠️  ${coursesWithoutGrades.length} course(s) excluded (no grades available):`,
+          `${coursesWithoutGrades.length} course(s) excluded (no grades available):`,
         ),
       );
       coursesWithoutGrades.forEach((courseName) => {
