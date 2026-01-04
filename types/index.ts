@@ -191,6 +191,9 @@ export interface ListAssignmentsOptions {
   verbose?: boolean;
   submitted?: boolean;
   pending?: boolean;
+  allCourses?: boolean;
+  missing?: boolean;
+  dueThisWeek?: boolean;
 }
 
 export interface ShowGradesOptions {
