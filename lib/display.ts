@@ -954,19 +954,25 @@ export function printWarning(message: string): void {
 function cleanHtmlContent(html: string): string {
   return (
     html
-      // Replace common HTML entities (use case-insensitive and handle numeric entities)
+      // Decode HTML entities in safe order to prevent double-unescaping
+      // Decode numeric entities first
+      .replace(/&#(\d+);/g, (_, num) => {
+        const code = parseInt(num, 10);
+        return code >= 0 && code <= 0x10ffff ? String.fromCharCode(code) : `&#${num};`;
+      })
+      .replace(/&#x([0-9a-f]+);/gi, (_, hex) => {
+        const code = parseInt(hex, 16);
+        return code >= 0 && code <= 0x10ffff ? String.fromCharCode(code) : `&#x${hex};`;
+      })
+      // Then decode named entities (not &amp; yet)
       .replace(/&nbsp;/gi, " ")
-      .replace(/&amp;/gi, "&")
-      .replace(/&lt;/gi, "<")
-      .replace(/&gt;/gi, ">")
       .replace(/&quot;/gi, '"')
       .replace(/&#0*39;/gi, "'")
       .replace(/&apos;/gi, "'")
-      // Decode numeric HTML entities
-      .replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)))
-      .replace(/&#x([0-9a-f]+);/gi, (_, hex) =>
-        String.fromCharCode(parseInt(hex, 16)),
-      )
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      // Decode &amp; LAST to prevent double-unescaping
+      .replace(/&amp;/gi, "&")
       // Convert <br>, <br/>, <br /> to newlines
       .replace(/<br\s*\/?>/gi, "\n")
       // Convert </p>, </div>, </li> to newlines

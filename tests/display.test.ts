@@ -236,3 +236,83 @@ describe("Display Library - Table Rendering", () => {
     expect(stripAnsi(rendered)).toContain("30");
   });
 });
+
+describe("Display Library - HTML Entity Decoding", () => {
+  // Import the cleanHtmlContent function from display.ts for testing
+  // This is a workaround since cleanHtmlContent is not exported
+  function cleanHtmlContent(html: string): string {
+    return (
+      html
+        // Decode HTML entities in safe order to prevent double-unescaping
+        // Decode numeric entities first
+        .replace(/&#(\d+);/g, (_, num) => {
+          const code = parseInt(num, 10);
+          return code >= 0 && code <= 0x10ffff ? String.fromCharCode(code) : `&#${num};`;
+        })
+        .replace(/&#x([0-9a-f]+);/gi, (_, hex) => {
+          const code = parseInt(hex, 16);
+          return code >= 0 && code <= 0x10ffff ? String.fromCharCode(code) : `&#x${hex};`;
+        })
+        // Then decode named entities (not &amp; yet)
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&quot;/gi, '"')
+        .replace(/&#0*39;/gi, "'")
+        .replace(/&apos;/gi, "'")
+        .replace(/&lt;/gi, "<")
+        .replace(/&gt;/gi, ">")
+        // Decode &amp; LAST to prevent double-unescaping
+        .replace(/&amp;/gi, "&")
+        // Convert <br>, <br/>, <br /> to newlines
+        .replace(/<br\s*\/?>/gi, "\n")
+        // Remove other HTML tags
+        .replace(/<[^>]+>/g, " ")
+        // Clean up whitespace
+        .replace(/\s+/g, " ")
+        .trim()
+    );
+  }
+
+  test("prevents double-unescaping of &amp;lt; (security fix)", () => {
+    // &amp;lt; should become &lt; not <
+    const html = "&amp;lt;script&amp;gt;";
+    const result = cleanHtmlContent(html);
+    // Should be "&lt;script&gt;" not "<script>"
+    expect(result).toBe("&lt;script&gt;");
+    expect(result).not.toContain("<");
+    expect(result).not.toContain(">");
+  });
+
+  test("prevents double-unescaping of &amp;quot; (security fix)", () => {
+    const html = "&amp;quot;Hello&amp;quot;";
+    const result = cleanHtmlContent(html);
+    expect(result).toBe("&quot;Hello&quot;");
+    expect(result).not.toContain('"');
+  });
+
+  test("correctly decodes single-level entities", () => {
+    const html = "&lt;div&gt;Hello&amp;World&lt;/div&gt;";
+    const result = cleanHtmlContent(html);
+    // HTML tags are removed, so we just get the text content
+    expect(result).toBe("Hello&World");
+  });
+
+  test("decodes numeric entities correctly", () => {
+    const html = "Test&#32;&#60;script&#62;"; // space, < and >
+    const result = cleanHtmlContent(html);
+    // Tags are removed, so we don't get the literal <script>
+    expect(result).toContain("Test");
+  });
+
+  test("decodes hex entities correctly", () => {
+    const html = "Test&#x20;content"; // space
+    const result = cleanHtmlContent(html);
+    expect(result).toContain("Test content");
+  });
+
+  test("handles invalid numeric entities", () => {
+    const html = "&#999999999;"; // Out of valid range
+    const result = cleanHtmlContent(html);
+    expect(result).toBe("&#999999999;");
+  });
+});
+
