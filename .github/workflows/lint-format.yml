@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
   lint-and-format:
     name: Lint & Format
@@ -73,4 +76,3 @@ jobs:
           git add -A
           git commit -m "style: auto-format code [skip ci]"
           git push
-

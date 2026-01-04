@@ -60,11 +60,13 @@ export function pad(
  */
 function stripAnsi(str: string): string {
   // eslint-disable-next-line no-control-regex
-  return str
-    // Remove CSI sequences: ESC [ ... (letter)
-    .replace(/\x1B\[[0-9;]*[a-zA-Z]/g, "")
-    // Remove OSC sequences: ESC ] ... BEL or ESC ] ... ESC \
-    .replace(/\x1B\].*?(?:\x07|\x1B\\)/g, "");
+  return (
+    str
+      // Remove CSI sequences: ESC [ ... (letter)
+      .replace(/\x1B\[[0-9;]*[a-zA-Z]/g, "")
+      // Remove OSC sequences: ESC ] ... BEL or ESC ] ... ESC \
+      .replace(/\x1B\].*?(?:\x07|\x1B\\)/g, "")
+  );
 }
 
 /**
@@ -962,7 +964,9 @@ function cleanHtmlContent(html: string): string {
       .replace(/&apos;/gi, "'")
       // Decode numeric HTML entities
       .replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)))
-      .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+      .replace(/&#x([0-9a-f]+);/gi, (_, hex) =>
+        String.fromCharCode(parseInt(hex, 16)),
+      )
       // Convert <br>, <br/>, <br /> to newlines
       .replace(/<br\s*\/?>/gi, "\n")
       // Convert </p>, </div>, </li> to newlines
