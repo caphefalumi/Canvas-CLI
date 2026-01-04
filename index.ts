@@ -23,4 +23,6 @@ export * from "./commands/todo.js";
 export * from "./commands/files.js";
 export * from "./commands/groups.js";
 export * from "./commands/star.js";
+export * from "./commands/gpa.js";
+export * from "./commands/download.js";
 export * from "./types/index.js";

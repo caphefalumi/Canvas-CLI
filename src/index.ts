@@ -3,7 +3,7 @@
  * Canvas CLI - A command line tool for interacting with Canvas API
  *
  * @author caphefalumi
- * @version 1.8.0
+ * @version 1.9.0
  */
 
 import { Command } from "commander";
@@ -27,6 +27,8 @@ import { showTodo } from "../commands/todo.js";
 import { showFiles } from "../commands/files.js";
 import { showGroups } from "../commands/groups.js";
 import { starCourse, unstarCourse } from "../commands/star.js";
+import { calculateOverallGPA, calculateWhatIfGrade } from "../commands/gpa.js";
+import { bulkDownload } from "../commands/download.js";
 import { requireConfig } from "../lib/config-validator.js";
 
 const program = new Command();
@@ -35,7 +37,7 @@ const program = new Command();
 program
   .name("canvas")
   .description("Canvas LMS Command Line Interface")
-  .version("1.8.0", "-V, --version", "Output the current version");
+  .version("1.9.0", "-V, --version", "Output the current version");
 
 // List command to show enrolled courses
 program
@@ -104,6 +106,9 @@ program
   .option("-v, --verbose", "Show detailed info")
   .option("-s, --submitted", "Show submitted only")
   .option("-p, --pending", "Show pending only")
+  .option("-a, --all-courses", "Show assignments from all courses")
+  .option("-m, --missing", "Show missing assignments only")
+  .option("-w, --due-this-week", "Show assignments due this week")
   .action(requireConfig(listAssignments));
 
 // Grades command to show grades
@@ -217,6 +222,32 @@ program
   .alias("unfavorite")
   .description("Unstar a course (remove from favorites)")
   .action(requireConfig(unstarCourse));
+
+// GPA Calculator command
+program
+  .command("gpa")
+  .alias("grade-calculator")
+  .description("Calculate overall GPA across all courses (4.0 scale)")
+  .option("-p, --include-past", "Include completed courses")
+  .action(requireConfig(calculateOverallGPA));
+
+// What-if grade calculator
+program
+  .command("what-if")
+  .alias("grade-calc")
+  .alias("need")
+  .description("Calculate what grade you need on remaining work")
+  .action(requireConfig(calculateWhatIfGrade));
+
+// Bulk download command
+program
+  .command("download [course-name]")
+  .alias("dl")
+  .alias("bulk-download")
+  .description("Download all files from a course")
+  .option("-a, --all", "Show all courses", false)
+  .option("-o, --output <path>", "Output directory")
+  .action(requireConfig(bulkDownload));
 
 // Parse command line arguments
 program.parseAsync();
