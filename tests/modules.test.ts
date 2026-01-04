@@ -30,13 +30,24 @@ describe("Modules - parseHtmlContent", () => {
   function parseHtmlContent(html: string): string {
     if (!html) return "";
 
-    let text = html
+    let text = html;
+    
+    // Remove style and script tags with content - repeat until no more matches
+    // This prevents attacks like <scr<script>ipt> which would leave <script> after one pass
+    let prevText = "";
+    while (prevText !== text) {
+      prevText = text;
+      text = text
+        .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*[^>]*>/gi, "")
+        .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*[^>]*>/gi, "");
+    }
+
+    // Now do standard HTML to text conversion
+    text = text
       .replace(/<br\s*\/?>/gi, "\n")
       .replace(/<\/(p|div|li|h[1-6])\s*[^>]*>/gi, "\n")
       .replace(/<li[^>]*>/gi, "• ")
       .replace(/<h[1-6][^>]*>/gi, "\n")
-      .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*[^>]*>/gi, "")
-      .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*[^>]*>/gi, "")
       .replace(/<\/?[a-z][^>]*>/gi, "");
 
     // Decode HTML entities in a safe order
@@ -134,6 +145,33 @@ describe("Modules - parseHtmlContent", () => {
   test("handles malformed style tags (security fix)", () => {
     const html = "<style>.evil { }</style ><p>Safe Content</p>";
     expect(parseHtmlContent(html)).toBe("Safe Content");
+  });
+
+  test("handles overlapping script tags (incomplete sanitization fix)", () => {
+    // Attack pattern: <scr<script>ipt> would leave <script> after one pass
+    const html = "<scr<script>alert('XSS')</script>ipt><p>Safe Content</p>";
+    const result = parseHtmlContent(html);
+    expect(result).not.toContain("<script");
+    expect(result).not.toContain("alert");
+    expect(result).toContain("Safe Content");
+  });
+
+  test("handles overlapping style tags (incomplete sanitization fix)", () => {
+    // Attack pattern: <sty<style>le> would leave <style> after one pass
+    const html = "<sty<style>.evil{}</style>le><p>Safe Content</p>";
+    const result = parseHtmlContent(html);
+    expect(result).not.toContain("<style");
+    expect(result).not.toContain("evil");
+    expect(result).toContain("Safe Content");
+  });
+
+  test("handles deeply nested malicious tags (incomplete sanitization fix)", () => {
+    // Multiple levels of obfuscation
+    const html = "<scr<scr<script>ipt>ipt>alert('XSS')</script></script></script><p>Safe</p>";
+    const result = parseHtmlContent(html);
+    expect(result).not.toContain("<script");
+    expect(result).not.toContain("alert");
+    expect(result).toContain("Safe");
   });
 
   test("handles malformed closing tags (security fix)", () => {

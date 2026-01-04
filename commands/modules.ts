@@ -51,7 +51,20 @@ interface CanvasPage {
 function parseHtmlContent(html: string): string {
   if (!html) return "";
 
-  let text = html
+  let text = html;
+  
+  // Remove style and script tags with content - repeat until no more matches
+  // This prevents attacks like <scr<script>ipt> which would leave <script> after one pass
+  let prevText = "";
+  while (prevText !== text) {
+    prevText = text;
+    text = text
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*[^>]*>/gi, "")
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*[^>]*>/gi, "");
+  }
+
+  // Now do standard HTML to text conversion
+  text = text
     // Replace <br> with newlines
     .replace(/<br\s*\/?>/gi, "\n")
     // Replace </p>, </div>, </li>, </h*> with newlines
@@ -60,9 +73,6 @@ function parseHtmlContent(html: string): string {
     .replace(/<li[^>]*>/gi, "• ")
     // Handle headers
     .replace(/<h[1-6][^>]*>/gi, "\n")
-    // Remove style and script tags with content (handle malformed closing tags)
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*[^>]*>/gi, "")
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*[^>]*>/gi, "")
     // Remove remaining tags (handles malformed tags with spaces/attributes)
     .replace(/<\/?[a-z][^>]*>/gi, "");
 
