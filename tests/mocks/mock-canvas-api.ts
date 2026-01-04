@@ -354,10 +354,10 @@ function matchEndpoint(method: string, endpoint: string): MockHandler | null {
  */
 function matchPattern(actual: string, pattern: string): boolean {
   // Convert pattern to regex
-  // Only replace :param when preceded by / (URL parameters, not the method:endpoint colon)
-  const regexStr = pattern
-    .replace(/\/:([^/]+)/g, "/[^/]+")
-    .replace(/\//g, "\\/");
+  // Escape special regex characters first
+  let regexStr = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+  // Then replace :param patterns (when preceded by /)
+  regexStr = regexStr.replace(/\/:([^/]+)/g, "/[^/]+");
   const regex = new RegExp(`^${regexStr}$`);
   return regex.test(actual);
 }

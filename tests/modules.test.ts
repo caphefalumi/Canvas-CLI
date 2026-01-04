@@ -21,7 +21,9 @@ function restoreLog() {
 }
 
 function stripAnsi(str: string): string {
-  return str.replace(/\u001B\[[0-9;]*[a-zA-Z]/g, "");
+  return str
+    .replace(/\u001B\[[0-9;]*[a-zA-Z]/g, "")
+    .replace(/\u001B\].*?(?:\u0007|\u001B\\)/g, "");
 }
 
 describe("Modules - parseHtmlContent", () => {
@@ -35,16 +37,29 @@ describe("Modules - parseHtmlContent", () => {
       .replace(/<h[1-6][^>]*>/gi, "\n")
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-      .replace(/<[^>]+>/g, "")
+      .replace(/<[^>]+>/g, "");
+
+    // Decode HTML entities in a safe order
+    text = text
+      .replace(/&#(\d+);/g, (_, num) => {
+        const code = parseInt(num, 10);
+        return code >= 0 && code <= 0x10ffff ? String.fromCharCode(code) : _;
+      })
+      .replace(/&#x([0-9a-f]+);/gi, (_, hex) => {
+        const code = parseInt(hex, 16);
+        return code >= 0 && code <= 0x10ffff ? String.fromCharCode(code) : _;
+      });
+
+    text = text
       .replace(/&nbsp;/g, " ")
-      .replace(/&amp;/g, "&")
+      .replace(/&quot;/g, '"')
+      .replace(/&#0*39;/g, "'")
+      .replace(/&apos;/g, "'")
       .replace(/&lt;/g, "<")
       .replace(/&gt;/g, ">")
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&apos;/g, "'")
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
+      .replace(/&amp;/g, "&");
+
+    text = text.replace(/\n{3,}/g, "\n\n").trim();
 
     return text;
   }
