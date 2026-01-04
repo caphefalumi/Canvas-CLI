@@ -55,16 +55,16 @@ function parseHtmlContent(html: string): string {
     // Replace <br> with newlines
     .replace(/<br\s*\/?>/gi, "\n")
     // Replace </p>, </div>, </li>, </h*> with newlines
-    .replace(/<\/(p|div|li|h[1-6])>/gi, "\n")
+    .replace(/<\/(p|div|li|h[1-6])\s*[^>]*>/gi, "\n")
     // Replace <li> with bullet
     .replace(/<li[^>]*>/gi, "• ")
     // Handle headers
     .replace(/<h[1-6][^>]*>/gi, "\n")
-    // Remove style and script tags with content
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-    // Remove remaining tags
-    .replace(/<[^>]+>/g, "");
+    // Remove style and script tags with content (handle malformed closing tags)
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*[^>]*>/gi, "")
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*[^>]*>/gi, "")
+    // Remove remaining tags (handles malformed tags with spaces/attributes)
+    .replace(/<\/?[a-z][^>]*>/gi, "");
 
   // Decode HTML entities in a safe order
   // First decode numeric entities

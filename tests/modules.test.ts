@@ -32,12 +32,12 @@ describe("Modules - parseHtmlContent", () => {
 
     let text = html
       .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<\/(p|div|li|h[1-6])>/gi, "\n")
+      .replace(/<\/(p|div|li|h[1-6])\s*[^>]*>/gi, "\n")
       .replace(/<li[^>]*>/gi, "• ")
       .replace(/<h[1-6][^>]*>/gi, "\n")
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-      .replace(/<[^>]+>/g, "");
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*[^>]*>/gi, "")
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*[^>]*>/gi, "")
+      .replace(/<\/?[a-z][^>]*>/gi, "");
 
     // Decode HTML entities in a safe order
     text = text
@@ -119,6 +119,28 @@ describe("Modules - parseHtmlContent", () => {
   test("handles empty input", () => {
     expect(parseHtmlContent("")).toBe("");
     expect(parseHtmlContent(null as any)).toBe("");
+  });
+
+  test("handles malformed script tags (security fix)", () => {
+    // Browsers accept </script > with spaces before closing bracket
+    const html = "<script>alert('XSS')</script ><p>Safe Content</p>";
+    expect(parseHtmlContent(html)).toBe("Safe Content");
+    
+    // Also test with attributes in closing tag
+    const html2 = "<script>alert('XSS')</script foo='bar'><p>Safe Content</p>";
+    expect(parseHtmlContent(html2)).toBe("Safe Content");
+  });
+
+  test("handles malformed style tags (security fix)", () => {
+    const html = "<style>.evil { }</style ><p>Safe Content</p>";
+    expect(parseHtmlContent(html)).toBe("Safe Content");
+  });
+
+  test("handles malformed closing tags (security fix)", () => {
+    const html = "<p>Line 1</p ><div>Line 2</div foo='bar'>";
+    const result = parseHtmlContent(html);
+    expect(result).toContain("Line 1");
+    expect(result).toContain("Line 2");
   });
 
   test("handles complex real-world HTML", () => {
