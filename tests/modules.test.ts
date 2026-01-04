@@ -125,7 +125,7 @@ describe("Modules - parseHtmlContent", () => {
     // Browsers accept </script > with spaces before closing bracket
     const html = "<script>alert('XSS')</script ><p>Safe Content</p>";
     expect(parseHtmlContent(html)).toBe("Safe Content");
-    
+
     // Also test with attributes in closing tag
     const html2 = "<script>alert('XSS')</script foo='bar'><p>Safe Content</p>";
     expect(parseHtmlContent(html2)).toBe("Safe Content");
