@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.3] - 2026-01-04
+
+### Added
+
+- **All Courses Announcements**: New `--all` (`-a`) flag for announcements command
+  - View announcements from all active courses in one place
+  - Course ID column automatically added when displaying multi-course announcements
+  - Limit announcements with `-l` flag (default: 5)
+  - Combined with verbose mode (`-v`) for detailed information
+
+### Changed
+
+- **Improved HTML Parsing**: Enhanced announcement message display
+  - Replaced regex-based HTML cleaning with proper `htmlparser2` library
+  - Better handling of HTML entities and nested tags
+  - Cleaner text extraction using `domutils` textContent
+  - More reliable formatting of announcement messages
+
+### Fixed
+
+- Improved whitespace normalization in announcement messages
+- Better handling of malformed HTML content
+
 ## [1.9.1] - 2026-01-04
 
 - Remove AI generated text from readme

@@ -11,6 +11,8 @@ import type {
 import { makeCanvasRequest } from "./api-client.js";
 import { createReadlineInterface, askQuestion } from "./interactive.js";
 import * as readline from "readline"; // Import the native readline module
+import { parseDocument } from "htmlparser2";
+import { textContent } from "domutils";
 // ============================================================================
 // Core Table Types and Classes
 // ============================================================================
@@ -859,10 +861,22 @@ export function displayAnnouncements(
   announcements: CanvasAnnouncement[],
   verbose: boolean = false,
 ): Table {
+  // Check if we need to show course column (when context_code is present)
+  const showCourse = announcements.some((a) => a.context_code);
+
   const columns: ColumnDefinition[] = [
     { key: "title", header: "Title", flex: 1, minWidth: 15 },
     { key: "posted", header: "Posted", width: 10 },
   ];
+
+  if (showCourse) {
+    columns.splice(1, 0, {
+      key: "course",
+      header: "Course",
+      flex: 0.5,
+      minWidth: 12,
+    });
+  }
 
   if (verbose) {
     columns.push(
@@ -882,6 +896,11 @@ export function displayAnnouncements(
       title: announcement.title || "Untitled",
       posted: date,
     };
+
+    if (showCourse && announcement.context_code) {
+      // Extract course name from context_code (format: "course_12345")
+      row.course = announcement.context_code.replace(/^course_/, "ID: ");
+    }
 
     if (verbose) {
       row.id = announcement.id;
@@ -952,46 +971,19 @@ export function printWarning(message: string): void {
  * Clean HTML content and convert to readable text
  */
 function cleanHtmlContent(html: string): string {
+  // Parse HTML into DOM and extract text content
+  const document = parseDocument(html);
+  const text = textContent(document);
+
   return (
-    html
-      // Decode HTML entities in safe order to prevent double-unescaping
-      // Decode numeric entities first
-      .replace(/&#(\d+);/g, (_, num) => {
-        const code = parseInt(num, 10);
-        return code >= 0 && code <= 0x10ffff
-          ? String.fromCharCode(code)
-          : `&#${num};`;
-      })
-      .replace(/&#x([0-9a-f]+);/gi, (_, hex) => {
-        const code = parseInt(hex, 16);
-        return code >= 0 && code <= 0x10ffff
-          ? String.fromCharCode(code)
-          : `&#x${hex};`;
-      })
-      // Then decode named entities (not &amp; yet)
-      .replace(/&nbsp;/gi, " ")
-      .replace(/&quot;/gi, '"')
-      .replace(/&#0*39;/gi, "'")
-      .replace(/&apos;/gi, "'")
-      .replace(/&lt;/gi, "<")
-      .replace(/&gt;/gi, ">")
-      // Decode &amp; LAST to prevent double-unescaping
-      .replace(/&amp;/gi, "&")
-      // Convert <br>, <br/>, <br /> to newlines
-      .replace(/<br\s*\/?>/gi, "\n")
-      // Convert </p>, </div>, </li> to newlines
-      .replace(/<\/(p|div|li|h[1-6])>/gi, "\n")
-      // Convert <li> to bullet points
-      .replace(/<li[^>]*>/gi, "• ")
-      // Remove remaining HTML tags
-      .replace(/<[^>]+>/g, "")
+    text
       // Normalize multiple newlines to double newlines (paragraph breaks)
       .replace(/\n{3,}/g, "\n\n")
       // Normalize multiple spaces
       .replace(/[ \t]+/g, " ")
       // Trim each line
       .split("\n")
-      .map((line) => line.trim())
+      .map((line: string) => line.trim())
       .join("\n")
       .trim()
   );

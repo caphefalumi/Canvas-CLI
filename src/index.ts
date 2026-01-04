@@ -131,6 +131,7 @@ program
   .argument("[course-name]", "Course name (optional)")
   .option("-l, --limit <number>", "Number to show", "5")
   .option("-v, --verbose", "Show detailed info")
+  .option("-a, --all", "Show announcements from all courses")
   .action(requireConfig(showAnnouncements));
 
 // Profile command

@@ -17,6 +17,7 @@ import chalk from "chalk";
 import type {
   CanvasAnnouncement,
   ShowAnnouncementsOptions,
+  CanvasCourse,
 } from "../types/index.js";
 
 export async function showAnnouncements(
@@ -26,41 +27,104 @@ export async function showAnnouncements(
   let rl: ReturnType<typeof createReadlineInterface> | null = null;
 
   try {
-    let selectedCourseId: string;
+    const limit = parseInt(options.limit || "5") || 5;
+    let announcements: CanvasAnnouncement[] = [];
 
-    if (!courseName) {
-      const result = await pickCourse({
-        title: "\nLoading your courses, please wait...",
-      });
-      if (!result) return;
-
-      selectedCourseId = result.course.id.toString();
-      rl = result.rl;
-    } else {
+    // Handle --all flag: fetch announcements from all courses
+    if (options.all) {
       rl = createReadlineInterface();
-      const course = await getCanvasCourse(courseName, rl);
-      if (!course) {
+      printInfo("Loading announcements from all courses...");
+
+      // Fetch all active courses
+      const courses = await makeCanvasRequest<CanvasCourse[]>(
+        "get",
+        "courses",
+        ["enrollment_state=active"],
+      );
+
+      if (!courses || courses.length === 0) {
+        printWarning("No courses found.");
+        rl?.close();
         return;
       }
-      selectedCourseId = course.id.toString();
+
+      // Build context_codes for API request
+      const contextCodes = courses.map((c) => `course_${c.id}`);
+
+      // Fetch announcements using the announcements endpoint with context_codes
+      announcements = await makeCanvasRequest<CanvasAnnouncement[]>(
+        "get",
+        "announcements",
+        [
+          ...contextCodes.map((code) => `context_codes[]=${code}`),
+          `per_page=${limit}`,
+        ],
+      );
+
+      if (!announcements || announcements.length === 0) {
+        printWarning("No announcements found across all courses.");
+        rl?.close();
+        return;
+      }
+
+      printSuccess(
+        `Found ${announcements.length} announcement(s) from all courses.`,
+      );
+    } else {
+      // Original single-course logic
+      let selectedCourseId: string;
+
+      if (!courseName) {
+        const result = await pickCourse({
+          title: "\nLoading your courses, please wait...",
+        });
+        if (!result) return;
+
+        selectedCourseId = result.course.id.toString();
+        rl = result.rl;
+      } else {
+        rl = createReadlineInterface();
+        const course = await getCanvasCourse(courseName, rl);
+        if (!course) {
+          return;
+        }
+        selectedCourseId = course.id.toString();
+      }
+
+      printInfo("Loading announcements...");
+
+      announcements = await makeCanvasRequest<CanvasAnnouncement[]>(
+        "get",
+        `courses/${selectedCourseId}/discussion_topics`,
+        [`only_announcements=true`, `per_page=${limit}`],
+      );
+
+      if (!announcements || announcements.length === 0) {
+        printWarning("No announcements found for this course.");
+        rl?.close();
+        return;
+      }
+
+      printSuccess(`Found ${announcements.length} announcement(s).`);
     }
 
-    const limit = parseInt(options.limit || "5") || 5;
-    printInfo("Loading announcements...");
-
-    const announcements = await makeCanvasRequest<CanvasAnnouncement[]>(
-      "get",
-      `courses/${selectedCourseId}/discussion_topics`,
-      [`only_announcements=true`, `per_page=${limit}`],
+    // DEBUG: Log raw HTML from Canvas API
+    console.log(
+      chalk.yellow(
+        "\n========== RAW CANVAS API RESPONSE (First Announcement) ==========",
+      ),
     );
-
-    if (!announcements || announcements.length === 0) {
-      printWarning("No announcements found for this course.");
-      rl?.close();
-      return;
+    if (announcements[0]) {
+      console.log(chalk.cyan("Title:"), announcements[0].title);
+      console.log(chalk.cyan("\nRaw Message (HTML):"));
+      console.log(chalk.gray(announcements[0].message));
+      console.log(
+        chalk.yellow(
+          "\n==================================================================\n",
+        ),
+      );
     }
 
-    printSuccess(`Found ${announcements.length} announcement(s).`);
     const announcementTable = displayAnnouncements(
       announcements,
       options.verbose,

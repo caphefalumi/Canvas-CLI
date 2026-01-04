@@ -87,6 +87,7 @@ export interface CanvasAnnouncement {
     display_name: string;
     [key: string]: any;
   };
+  context_code?: string; // Added for all-courses view
   [key: string]: any;
 }
 
@@ -204,6 +205,7 @@ export interface ShowGradesOptions {
 export interface ShowAnnouncementsOptions {
   limit?: string;
   verbose?: boolean;
+  all?: boolean; // Show announcements from all courses
 }
 
 export interface ApiQueryOptions {
