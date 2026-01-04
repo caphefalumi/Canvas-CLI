@@ -52,7 +52,7 @@ function parseHtmlContent(html: string): string {
   if (!html) return "";
 
   let text = html;
-  
+
   // Remove style and script tags with content - repeat until no more matches
   // This prevents attacks like <scr<script>ipt> which would leave <script> after one pass
   let prevText = "";

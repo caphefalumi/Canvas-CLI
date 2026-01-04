@@ -31,7 +31,7 @@ describe("Modules - parseHtmlContent", () => {
     if (!html) return "";
 
     let text = html;
-    
+
     // Remove style and script tags with content - repeat until no more matches
     // This prevents attacks like <scr<script>ipt> which would leave <script> after one pass
     let prevText = "";
@@ -167,7 +167,8 @@ describe("Modules - parseHtmlContent", () => {
 
   test("handles deeply nested malicious tags (incomplete sanitization fix)", () => {
     // Multiple levels of obfuscation
-    const html = "<scr<scr<script>ipt>ipt>alert('XSS')</script></script></script><p>Safe</p>";
+    const html =
+      "<scr<scr<script>ipt>ipt>alert('XSS')</script></script></script><p>Safe</p>";
     const result = parseHtmlContent(html);
     expect(result).not.toContain("<script");
     expect(result).not.toContain("alert");

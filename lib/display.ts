@@ -958,11 +958,15 @@ function cleanHtmlContent(html: string): string {
       // Decode numeric entities first
       .replace(/&#(\d+);/g, (_, num) => {
         const code = parseInt(num, 10);
-        return code >= 0 && code <= 0x10ffff ? String.fromCharCode(code) : `&#${num};`;
+        return code >= 0 && code <= 0x10ffff
+          ? String.fromCharCode(code)
+          : `&#${num};`;
       })
       .replace(/&#x([0-9a-f]+);/gi, (_, hex) => {
         const code = parseInt(hex, 16);
-        return code >= 0 && code <= 0x10ffff ? String.fromCharCode(code) : `&#x${hex};`;
+        return code >= 0 && code <= 0x10ffff
+          ? String.fromCharCode(code)
+          : `&#x${hex};`;
       })
       // Then decode named entities (not &amp; yet)
       .replace(/&nbsp;/gi, " ")
