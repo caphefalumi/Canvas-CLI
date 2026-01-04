@@ -456,8 +456,8 @@ export class Table {
           appendLn(rowStr);
         }
 
-        // Add spacing between rows (empty row) only when text actually wrapped (maxLines > 1)
-        if (index < this.data.length - 1 && maxLines > 1) {
+        // Always add spacing between rows (empty row) in wrap mode
+        if (index < this.data.length - 1) {
           let spacer = chalk.gray("│ ");
           if (this.options.showRowNumbers) {
             spacer += " ".repeat(this.rowNumWidth) + chalk.gray("│ ");
