@@ -62,10 +62,7 @@ function updateIndexTs(newVersion: string): void {
   }
 
   const oldVersion = match[1];
-  const newContent = content.replace(
-    versionRegex,
-    `.version("${newVersion}"`,
-  );
+  const newContent = content.replace(versionRegex, `.version("${newVersion}"`);
 
   writeFileSync(indexPath, newContent);
   console.log(`✓ Updated src/index.ts: ${oldVersion} → ${newVersion}`);
@@ -75,7 +72,9 @@ function main(): void {
   const args = process.argv.slice(2);
 
   if (args.length === 0) {
-    console.error("Usage: bun scripts/bump-version.ts [major|minor|patch|<version>]");
+    console.error(
+      "Usage: bun scripts/bump-version.ts [major|minor|patch|<version>]",
+    );
     console.error("");
     console.error("Examples:");
     console.error("  bun scripts/bump-version.ts patch    # 1.9.0 → 1.9.1");
