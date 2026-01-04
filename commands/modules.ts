@@ -64,18 +64,32 @@ function parseHtmlContent(html: string): string {
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
     // Remove remaining tags
-    .replace(/<[^>]+>/g, "")
-    // Decode HTML entities
+    .replace(/<[^>]+>/g, "");
+
+  // Decode HTML entities in a safe order
+  // First decode numeric entities
+  text = text
+    .replace(/&#(\d+);/g, (_, num) => {
+      const code = parseInt(num, 10);
+      return code >= 0 && code <= 0x10ffff ? String.fromCharCode(code) : _;
+    })
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => {
+      const code = parseInt(hex, 16);
+      return code >= 0 && code <= 0x10ffff ? String.fromCharCode(code) : _;
+    });
+
+  // Then decode named entities (only most common ones to avoid issues)
+  text = text
     .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0*39;/g, "'")
+    .replace(/&apos;/g, "'")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'")
-    // Normalize whitespace
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+    .replace(/&amp;/g, "&"); // Ampersand MUST be last
+
+  // Normalize whitespace
+  text = text.replace(/\n{3,}/g, "\n\n").trim();
 
   return text;
 }
