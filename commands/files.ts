@@ -194,7 +194,7 @@ export async function browseFolder(
     // Display current location
     console.log(chalk.cyan.bold(`\n${courseName}`));
     console.log(chalk.gray(`   Path: ${folderPath}`));
-    printSeparator("─", 60);
+    printSeparator();
 
     // Build menu items
     const menuItems: Array<{
@@ -342,7 +342,7 @@ export async function showFiles(
       }
     }
 
-    printSeparator("─", 60);
+    printSeparator();
     printInfo("Loading course files...");
 
     // Get all files for the course (flat list)
@@ -359,7 +359,7 @@ export async function showFiles(
 
     console.log(chalk.cyan.bold(`\nFiles in: ${course.name}`));
     console.log(chalk.gray(`   Total: ${files.length} file(s)`));
-    printSeparator("─", 60);
+    printSeparator();
 
     const columns: any[] = [
       {

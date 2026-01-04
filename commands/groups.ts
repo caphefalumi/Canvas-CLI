@@ -36,7 +36,7 @@ export async function showGroups(
     }
 
     console.log(chalk.cyan.bold(`\nYour Groups (${groups.length})`));
-    printSeparator("─", 60);
+    printSeparator();
 
     // Group by context type (course vs account)
     const courseGroups = groups.filter((g) => g.context_type === "Course");
@@ -132,7 +132,7 @@ export async function showGroups(
     // Show detailed member information if verbose
     if (options.members || options.verbose) {
       console.log(chalk.cyan.bold("\nGroup Members"));
-      printSeparator("─", 60);
+      printSeparator();
 
       for (const group of groups) {
         if (group.users && group.users.length > 0) {
