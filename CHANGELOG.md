@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2026-01-05
+
+### Changed
+
+- **Refactored Course Selection**: Unified course selection logic across commands
+  - Both `announcements`, `download`, and `modules` commands now use `pickCourse` for consistent UX
+  - Improved search functionality for named course selection
+  - Cleaner code with reduced duplication
+
+- **Improved HTML Content Cleaning**: Replaced htmlparser2 with regex-based approach
+  - Removed external dependencies (htmlparser2, domutils) for simpler text processing
+  - Better link formatting with inline URLs
+  - Improved formatting handling
+
+- **Table Display Enhancement**: Always add spacing between rows in wrap mode
+  - Consistent readability for multi-line row content
+  - Spacer rows now appear between every data row when wrap mode is enabled
+
+### Fixed
+
+- Simplified announcements command by removing unused functions
+- Removed unused openUrl and extractLinks functions from modules command
+- Fixed readline interface management in announcements and modules commands
+
 ## [1.9.4] - 2026-01-04
 
 ### Changed
