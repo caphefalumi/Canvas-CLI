@@ -2,8 +2,8 @@
  * Announcements command
  */
 
-import { makeCanvasRequest } from "../lib/api-client.js";
-import { askQuestion } from "../lib/interactive.js";
+import { makeCanvasRequest, getCanvasCourse } from "../lib/api-client.js";
+import { createReadlineInterface, askQuestion } from "../lib/interactive.js";
 import {
   pickCourse,
   displayAnnouncements,
@@ -24,13 +24,15 @@ export async function showAnnouncements(
   courseName?: string,
   options: ShowAnnouncementsOptions = {},
 ): Promise<void> {
+  let rl: ReturnType<typeof createReadlineInterface> | null = null;
+
   try {
     const limit = parseInt(options.limit || "5") || 5;
     let announcements: CanvasAnnouncement[] = [];
-    let rl: any = null;
 
     // Handle --all flag: fetch announcements from all courses
     if (options.all) {
+      rl = createReadlineInterface();
       printInfo("Loading announcements from all courses...");
 
       // Fetch all active courses
@@ -42,6 +44,7 @@ export async function showAnnouncements(
 
       if (!courses || courses.length === 0) {
         printWarning("No courses found.");
+        rl?.close();
         return;
       }
 
@@ -60,6 +63,7 @@ export async function showAnnouncements(
 
       if (!announcements || announcements.length === 0) {
         printWarning("No announcements found across all courses.");
+        rl?.close();
         return;
       }
 
@@ -67,17 +71,25 @@ export async function showAnnouncements(
         `Found ${announcements.length} announcement(s) from all courses.`,
       );
     } else {
-      // Use pickCourse for single-course selection
-      const result = await pickCourse({
-        title: courseName
-          ? `\nSearching for course: ${courseName}...`
-          : "\nLoading your courses, please wait...",
-      });
+      // Original single-course logic
+      let selectedCourseId: string;
 
-      if (!result) return;
+      if (!courseName) {
+        const result = await pickCourse({
+          title: "\nLoading your courses, please wait...",
+        });
+        if (!result) return;
 
-      const selectedCourseId = result.course.id.toString();
-      rl = result.rl;
+        selectedCourseId = result.course.id.toString();
+        rl = result.rl;
+      } else {
+        rl = createReadlineInterface();
+        const course = await getCanvasCourse(courseName, rl);
+        if (!course) {
+          return;
+        }
+        selectedCourseId = course.id.toString();
+      }
 
       printInfo("Loading announcements...");
 
@@ -94,6 +106,23 @@ export async function showAnnouncements(
       }
 
       printSuccess(`Found ${announcements.length} announcement(s).`);
+    }
+
+    // DEBUG: Log raw HTML from Canvas API
+    console.log(
+      chalk.yellow(
+        "\n========== RAW CANVAS API RESPONSE (First Announcement) ==========",
+      ),
+    );
+    if (announcements[0]) {
+      console.log(chalk.cyan("Title:"), announcements[0].title);
+      console.log(chalk.cyan("\nRaw Message (HTML):"));
+      console.log(chalk.gray(announcements[0].message));
+      console.log(
+        chalk.yellow(
+          "\n==================================================================\n",
+        ),
+      );
     }
 
     const announcementTable = displayAnnouncements(
@@ -131,12 +160,12 @@ export async function showAnnouncements(
       author: ann?.author?.display_name || "Unknown",
       message: ann?.message || "No content",
     });
-
-    rl?.close();
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(
       chalk.red("Error: Failed to fetch announcements: ") + errorMessage,
     );
+  } finally {
+    rl?.close();
   }
 }

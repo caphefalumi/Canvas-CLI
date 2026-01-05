@@ -2,7 +2,7 @@
  * Bulk Download command - Download all course files
  */
 
-import { makeCanvasRequest } from "../lib/api-client.js";
+import { makeCanvasRequest, getCanvasCourse } from "../lib/api-client.js";
 import {
   pickCourse,
   printInfo,
@@ -10,12 +10,13 @@ import {
   printSuccess,
   printSeparator,
 } from "../lib/display.js";
+import { createReadlineInterface } from "../lib/interactive.js";
 import chalk from "chalk";
 import fs from "fs";
 import path from "path";
 import https from "https";
 import http from "http";
-import type { CanvasFile, CanvasFolder } from "../types/index.js";
+import type { CanvasCourse, CanvasFile, CanvasFolder } from "../types/index.js";
 
 interface DownloadOptions {
   all?: boolean;
@@ -121,18 +122,28 @@ export async function bulkDownload(
   options: DownloadOptions = {},
 ): Promise<void> {
   try {
-    const result = await pickCourse({
-      title: courseName
-        ? `\nSearching for course: ${courseName}...`
-        : "\nSelect course to download files from...",
-      showAll: options.all,
-    });
+    let course: CanvasCourse | undefined;
+    let selectedCourseId: string;
 
-    if (!result) return;
+    if (!courseName) {
+      const result = await pickCourse({
+        title: "\nSelect course to download files from...",
+        showAll: options.all,
+      });
+      if (!result) return;
 
-    const course = result.course;
-    const selectedCourseId = course.id.toString();
-    result.rl.close();
+      course = result.course;
+      selectedCourseId = course.id.toString();
+      result.rl.close();
+    } else {
+      const rl = createReadlineInterface();
+      course = await getCanvasCourse(courseName, rl);
+      if (!course) {
+        return;
+      }
+      selectedCourseId = course.id.toString();
+      rl.close();
+    }
 
     printSeparator("=");
     printInfo(`Downloading files from: ${course?.name || selectedCourseId}`);
