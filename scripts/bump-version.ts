@@ -111,11 +111,6 @@ function main(): void {
     updatePackageJson(newVersion);
     updateIndexTs(newVersion);
     console.log(`\n✓ Version bumped successfully!\n`);
-    console.log("Next steps:");
-    console.log("  1. bun run build");
-    console.log("  2. git add package.json src/index.ts");
-    console.log(`  3. git commit -m "chore: bump version to ${newVersion}"`);
-    console.log("  4. git push");
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(`\n✗ Error: ${errorMessage}\n`);

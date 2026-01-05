@@ -206,6 +206,7 @@ export interface ShowAnnouncementsOptions {
   limit?: string;
   verbose?: boolean;
   all?: boolean; // Show announcements from all courses
+  debug?: boolean; // Show raw API response
 }
 
 export interface ApiQueryOptions {

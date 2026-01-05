@@ -98,21 +98,23 @@ export async function showAnnouncements(
       printSuccess(`Found ${announcements.length} announcement(s).`);
     }
 
-    // DEBUG: Log raw HTML from Canvas API
-    console.log(
-      chalk.yellow(
-        "\n========== RAW CANVAS API RESPONSE (First Announcement) ==========",
-      ),
-    );
-    if (announcements[0]) {
-      console.log(chalk.cyan("Title:"), announcements[0].title);
-      console.log(chalk.cyan("\nRaw Message (HTML):"));
-      console.log(chalk.gray(announcements[0].message));
+    // DEBUG: Log raw HTML from Canvas API (only if --debug flag is set)
+    if (options.debug) {
       console.log(
         chalk.yellow(
-          "\n==================================================================\n",
+          "\n========== RAW CANVAS API RESPONSE (First Announcement) ==========",
         ),
       );
+      if (announcements[0]) {
+        console.log(chalk.cyan("Title:"), announcements[0].title);
+        console.log(chalk.cyan("\nRaw Message (HTML):"));
+        console.log(chalk.gray(announcements[0].message));
+        console.log(
+          chalk.yellow(
+            "\n==================================================================\n",
+          ),
+        );
+      }
     }
 
     const announcementTable = displayAnnouncements(

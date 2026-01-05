@@ -8,6 +8,7 @@ import {
   pickCourse,
   printInfo,
   printSuccess,
+  parseHtmlContent,
   ColumnDefinition,
 } from "../lib/display.js";
 import { createReadlineInterface, askQuestion } from "../lib/interactive.js";
@@ -30,69 +31,6 @@ interface CanvasPage {
   url: string;
   html_url: string;
   [key: string]: any;
-}
-
-function parseHtmlContent(html: string): string {
-  if (!html) return "";
-
-  let text = html;
-
-  // Remove style and script tags with content - repeat until no more matches
-  // This prevents attacks like <scr<script>ipt> which would leave <script> after one pass
-  let prevText = "";
-  while (prevText !== text) {
-    prevText = text;
-    text = text
-      .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*[^>]*>/gi, "")
-      .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*[^>]*>/gi, "");
-  }
-
-  // Now do standard HTML to text conversion
-  text = text
-    // Convert links to inline blue text with URL
-    .replace(
-      /<a.*?href="(.*?)[?"].*?>(.*?)<\/a.*?>/gi,
-      (_match, url, linkText) => {
-        return chalk.blue(`${linkText} (${url})`);
-      },
-    )
-    // Replace <br> with newlines
-    .replace(/<br\s*\/?>/gi, "\n")
-    // Replace </p>, </div>, </li>, </h*> with newlines
-    .replace(/<\/(p|div|li|h[1-6])\s*[^>]*>/gi, "\n")
-    // Replace <li> with bullet
-    .replace(/<li[^>]*>/gi, "• ")
-    // Handle headers
-    .replace(/<h[1-6][^>]*>/gi, "\n")
-    // Remove remaining tags (handles malformed tags with spaces/attributes)
-    .replace(/<\/?[a-z][^>]*>/gi, "");
-
-  // Decode HTML entities in a safe order
-  // First decode numeric entities
-  text = text
-    .replace(/&#(\d+);/g, (_, num) => {
-      const code = parseInt(num, 10);
-      return code >= 0 && code <= 0x10ffff ? String.fromCharCode(code) : _;
-    })
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => {
-      const code = parseInt(hex, 16);
-      return code >= 0 && code <= 0x10ffff ? String.fromCharCode(code) : _;
-    });
-
-  // Then decode named entities (only most common ones to avoid issues)
-  text = text
-    .replace(/&nbsp;/g, " ")
-    .replace(/&quot;/g, '"')
-    .replace(/&#0*39;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&amp;/g, "&"); // Ampersand MUST be last
-
-  // Normalize whitespace
-  text = text.replace(/\n{3,}/g, "\n\n").trim();
-
-  return text;
 }
 
 async function displayPageContent(
@@ -293,6 +231,7 @@ export async function showModules(
     } else {
       console.log(chalk.yellow("No content available."));
     }
+    rl.close();
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(chalk.red("Error fetching modules:"), errorMessage);

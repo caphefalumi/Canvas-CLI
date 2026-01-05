@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.3] - 2026-01-05
+
+### Fixed
+
+- Fixed announcement display to match module formatting
+  - Properly removes `&nbsp;` HTML entities from content
+  - Consistent HTML parsing between modules and announcements
+
+### Changed
+
+- **Debug Flag for Announcements**: Added `--debug` flag to announcements command
+  - Raw Canvas API response now only shown when `--debug` flag is set
+  - Cleaner default output without debug information
+
+- **Unified HTML Parsing**: Moved `parseHtmlContent` function to `lib/display.ts`
+  - Shared implementation across modules and announcements
+  - Better maintainability and consistency
+  - Improved HTML entity decoding (numeric and named entities)
+
 ## [1.10.2] - 2026-01-05
 
 ### Fixed

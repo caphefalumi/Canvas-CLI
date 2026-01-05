@@ -37,7 +37,7 @@ const program = new Command();
 program
   .name("canvas")
   .description("Canvas LMS Command Line Interface")
-  .version("1.10.2", "-V, --version", "Output the current version");
+  .version("1.10.3", "-V, --version", "Output the current version");
 
 // List command to show enrolled courses
 program
@@ -132,6 +132,7 @@ program
   .option("-l, --limit <number>", "Number to show", "5")
   .option("-v, --verbose", "Show detailed info")
   .option("-a, --all", "Show announcements from all courses")
+  .option("-d, --debug", "Show raw API response for debugging")
   .action(requireConfig(showAnnouncements));
 
 // Profile command

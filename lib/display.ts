@@ -996,33 +996,78 @@ export function printWarning(message: string): void {
 // ============================================================================
 
 /**
- * Clean HTML content and convert to readable text
+ * Parse and clean HTML content and convert to readable text with proper formatting
+ * This is the main function used for parsing HTML content from Canvas
  */
-function cleanHtmlContent(html: string): string {
+export function parseHtmlContent(html: string): string {
+  if (!html) return "";
+
   let text = html;
-  text = text.replace(/\n/gi, "");
-  text = text.replace(/<style([\s\S]*?)<\/style>/gi, "");
-  text = text.replace(/<script([\s\S]*?)<\/script>/gi, "");
-  // Convert links to inline blue text with URL
-  text = text.replace(
-    /<a.*?href="(.*?)[?"].*?>(.*?)<\/a.*?>/gi,
-    (_match, url, linkText) => {
-      return chalk.blue(`${linkText} (${url})`);
-    },
-  );
-  text = text.replace(/<\/div>/gi, "\n\n");
-  text = text.replace(/<\/li>/gi, "\n");
-  text = text.replace(/<li.*?>/gi, "  *  ");
-  text = text.replace(/<\/ul>/gi, "\n\n");
-  text = text.replace(/<\/p>/gi, "\n\n");
-  text = text.replace(/<br\s*[/]?>/gi, "\n");
-  text = text.replace(/<[^>]+>/gi, "");
-  text = text.replace(/^\s*/gim, "");
-  text = text.replace(/ ,/gi, ",");
-  text = text.replace(/ +/gi, " ");
-  text = text.replace(/\n+/gi, "\n\n");
+
+  // Remove style and script tags with content - repeat until no more matches
+  // This prevents attacks like <scr<script>ipt> which would leave <script> after one pass
+  let prevText = "";
+  while (prevText !== text) {
+    prevText = text;
+    text = text
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*[^>]*>/gi, "")
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*[^>]*>/gi, "");
+  }
+
+  // Now do standard HTML to text conversion
+  text = text
+    // Convert links to inline blue text with URL
+    .replace(
+      /<a.*?href="(.*?)[?"].*?>(.*?)<\/a.*?>/gi,
+      (_match, url, linkText) => {
+        return chalk.blue(`${linkText} (${url})`);
+      },
+    )
+    // Replace <br> with newlines
+    .replace(/<br\s*\/?>/gi, "\n")
+    // Replace </p>, </div>, </li>, </h*> with newlines
+    .replace(/<\/(p|div|li|h[1-6])\s*[^>]*>/gi, "\n")
+    // Replace <li> with bullet
+    .replace(/<li[^>]*>/gi, "• ")
+    // Handle headers
+    .replace(/<h[1-6][^>]*>/gi, "\n")
+    // Remove remaining tags (handles malformed tags with spaces/attributes)
+    .replace(/<\/?[a-z][^>]*>/gi, "");
+
+  // Decode HTML entities in a safe order
+  // First decode numeric entities
+  text = text
+    .replace(/&#(\d+);/g, (_, num) => {
+      const code = parseInt(num, 10);
+      return code >= 0 && code <= 0x10ffff ? String.fromCharCode(code) : _;
+    })
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => {
+      const code = parseInt(hex, 16);
+      return code >= 0 && code <= 0x10ffff ? String.fromCharCode(code) : _;
+    });
+
+  // Then decode named entities (only most common ones to avoid issues)
+  text = text
+    .replace(/&nbsp;/g, " ")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0*39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&"); // Ampersand MUST be last
+
+  // Normalize whitespace
+  text = text.replace(/\n{3,}/g, "\n\n").trim();
 
   return text;
+}
+
+/**
+ * Clean HTML content and convert to readable text
+ * This is an alias for parseHtmlContent for backward compatibility
+ */
+function cleanHtmlContent(html: string): string {
+  return parseHtmlContent(html);
 }
 
 export interface AnnouncementDetail {
