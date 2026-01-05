@@ -522,6 +522,7 @@ export interface CoursePickerOptions {
   showAll?: boolean;
   title?: string;
   prompt?: string;
+  courseName?: string; // Optional course name to search for
 }
 
 export interface CoursePickerResult {
@@ -554,6 +555,7 @@ export function displayCourses(
 
 /**
  * Interactive course picker - loads courses and lets user select one
+ * If courseName is provided, searches for matching courses
  * Returns the selected course and the readline interface (caller should close it)
  */
 export async function pickCourse(
@@ -561,9 +563,12 @@ export async function pickCourse(
 ): Promise<CoursePickerResult | null> {
   const rl = createReadlineInterface();
 
-  console.log(
-    chalk.cyan.bold(options.title || "\nLoading your courses, please wait..."),
-  );
+  // Set default title based on whether courseName is provided
+  const defaultTitle = options.courseName
+    ? `\nSearching for course: ${options.courseName}...`
+    : "\nLoading your courses...";
+
+  console.log(chalk.cyan.bold(options.title || defaultTitle));
 
   const queryParams = ["enrollment_state=active", "include[]=favorites"];
 
@@ -580,7 +585,35 @@ export async function pickCourse(
   }
 
   let displayCourses = courses;
-  if (!options.showAll) {
+
+  // If courseName is provided, filter by name match
+  if (options.courseName) {
+    const searchTerm = options.courseName.toLowerCase();
+    let matches = courses.filter((course) =>
+      course.name.toLowerCase().includes(searchTerm),
+    );
+
+    if (matches.length === 0) {
+      console.log(
+        chalk.red(`Error: No courses found matching "${options.courseName}".`),
+      );
+      rl.close();
+      return null;
+    } else if (matches.length === 1) {
+      const selectedCourse = matches[0]!;
+      console.log(chalk.green(`✓ Using course: ${selectedCourse.name}\n`));
+      return { course: selectedCourse, rl };
+    } else {
+      // Multiple matches - let user choose
+      console.log(
+        chalk.yellow(
+          `\nFound ${matches.length} courses matching "${options.courseName}":\n`,
+        ),
+      );
+      displayCourses = matches;
+    }
+  } else if (!options.showAll) {
+    // No courseName - show starred courses if available
     const starred = courses.filter((c) => c.is_favorite);
     if (starred.length > 0) {
       displayCourses = starred;
@@ -992,55 +1025,6 @@ function cleanHtmlContent(html: string): string {
   return text;
 }
 
-/**
- * Word-wrap text to fit within a given width
- */
-function wordWrap(text: string, maxWidth: number): string[] {
-  const lines: string[] = [];
-  const paragraphs = text.split("\n");
-
-  for (const paragraph of paragraphs) {
-    if (paragraph.trim() === "") {
-      lines.push(""); // Preserve empty lines for paragraph breaks
-      continue;
-    }
-
-    const words = paragraph.split(" ").filter((w) => w.length > 0);
-    let currentLine = "";
-
-    for (const word of words) {
-      // Handle very long words by breaking them
-      if (word.length > maxWidth) {
-        if (currentLine) {
-          lines.push(currentLine);
-          currentLine = "";
-        }
-        // Break long word into chunks
-        for (let i = 0; i < word.length; i += maxWidth) {
-          lines.push(word.substring(i, i + maxWidth));
-        }
-        continue;
-      }
-
-      const testLine = currentLine ? `${currentLine} ${word}` : word;
-      if (testLine.length <= maxWidth) {
-        currentLine = testLine;
-      } else {
-        if (currentLine) {
-          lines.push(currentLine);
-        }
-        currentLine = word;
-      }
-    }
-
-    if (currentLine) {
-      lines.push(currentLine);
-    }
-  }
-
-  return lines;
-}
-
 export interface AnnouncementDetail {
   title: string;
   postedAt: string | null;
@@ -1054,11 +1038,6 @@ export interface AnnouncementDetail {
 export function displayAnnouncementDetail(
   announcement: AnnouncementDetail,
 ): void {
-  const terminalWidth = process.stdout.columns || 80;
-  // Use most of terminal width, with some padding
-  const boxWidth = Math.max(50, terminalWidth - 4);
-  const contentWidth = boxWidth - 4; // 2 chars for border + 2 chars for padding
-
   const title = announcement.title || "Untitled";
   const date = announcement.postedAt
     ? new Date(announcement.postedAt).toLocaleString()
@@ -1066,44 +1045,9 @@ export function displayAnnouncementDetail(
   const author = announcement.author || "Unknown";
   const cleanedMessage = cleanHtmlContent(announcement.message || "No content");
 
-  // Wrap title if needed
-  const titleLines = wordWrap(title, contentWidth);
-
-  // Wrap message content
-  const messageLines = wordWrap(cleanedMessage, contentWidth);
-
-  // Helper to print a padded line
-  const printLine = (
-    content: string,
-    style: (s: string) => string = chalk.white,
-  ) => {
-    const paddedContent = content.padEnd(contentWidth);
-    console.log(chalk.gray("│ ") + style(paddedContent) + chalk.gray(" │"));
-  };
-
-  // Top border
-  console.log("\n" + chalk.gray("╭" + "─".repeat(boxWidth - 2) + "╮"));
-
   // Title
-  for (const line of titleLines) {
-    printLine(line, chalk.bold.white);
-  }
-
-  // Separator
-  console.log(chalk.gray("├" + "─".repeat(boxWidth - 2) + "┤"));
-
-  // Metadata
-  printLine(`Posted: ${date}`, chalk.gray);
-  printLine(`Author: ${author}`, chalk.gray);
-
-  // Separator
-  console.log(chalk.gray("├" + "─".repeat(boxWidth - 2) + "┤"));
-
-  // Message content
-  for (const line of messageLines) {
-    printLine(line, chalk.white);
-  }
-
-  // Bottom border
-  console.log(chalk.gray("╰" + "─".repeat(boxWidth - 2) + "╯") + "\n");
+  console.log(chalk.cyan.bold(`\n${title}`));
+  console.log(chalk.gray(`Posted: ${date}`));
+  console.log(chalk.gray(`Author: ${author}`));
+  console.log(`\n${cleanedMessage}\n`);
 }

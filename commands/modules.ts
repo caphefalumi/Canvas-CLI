@@ -7,32 +7,16 @@ import {
   Table,
   pickCourse,
   printInfo,
-  printError,
   printSuccess,
   ColumnDefinition,
 } from "../lib/display.js";
 import { createReadlineInterface, askQuestion } from "../lib/interactive.js";
-import { exec } from "child_process";
 import chalk from "chalk";
 import type {
-  CanvasCourse,
   CanvasModule,
   CanvasModuleItem,
   ModulesOptions,
 } from "../types/index.js";
-
-function openUrl(url: string): void {
-  const platform = process.platform;
-  let cmd: string;
-  if (platform === "win32") {
-    cmd = `start "" "${url}"`;
-  } else if (platform === "darwin") {
-    cmd = `open "${url}"`;
-  } else {
-    cmd = `xdg-open "${url}"`;
-  }
-  exec(cmd);
-}
 
 function makeClickableLink(url: string, text?: string): string {
   const displayText = text || url;
@@ -65,6 +49,13 @@ function parseHtmlContent(html: string): string {
 
   // Now do standard HTML to text conversion
   text = text
+    // Convert links to inline blue text with URL
+    .replace(
+      /<a.*?href="(.*?)[?"].*?>(.*?)<\/a.*?>/gi,
+      (_match, url, linkText) => {
+        return chalk.blue(`${linkText} (${url})`);
+      },
+    )
     // Replace <br> with newlines
     .replace(/<br\s*\/?>/gi, "\n")
     // Replace </p>, </div>, </li>, </h*> with newlines
@@ -104,23 +95,6 @@ function parseHtmlContent(html: string): string {
   return text;
 }
 
-function extractLinks(html: string): { text: string; url: string }[] {
-  const links: { text: string; url: string }[] = [];
-  // Match <a href="url">text</a>
-  const regex = /<a[^>]+href=["']([^"']+)["'][^>]*>([^<]*)<\/a>/gi;
-  let match;
-  while ((match = regex.exec(html)) !== null) {
-    const url = match[1];
-    let text = match[2]?.trim() || url || "";
-    // Clean up the text
-    text = text.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&");
-    if (url && text) {
-      links.push({ text, url });
-    }
-  }
-  return links;
-}
-
 async function displayPageContent(
   courseId: number,
   pageUrl: string,
@@ -136,69 +110,11 @@ async function displayPageContent(
       return;
     }
 
-    const termWidth = process.stdout.columns || 80;
-    const boxWidth = Math.min(termWidth - 4, 100);
-
     // Title
-    console.log(chalk.gray("\n╭" + "─".repeat(boxWidth - 2) + "╮"));
-    console.log(
-      chalk.gray("│ ") +
-        chalk.cyan.bold(page.title.padEnd(boxWidth - 4)) +
-        chalk.gray(" │"),
-    );
-    console.log(chalk.gray("├" + "─".repeat(boxWidth - 2) + "┤"));
-
+    console.log(chalk.cyan.bold(`\n${page.title}`));
     // Content
     const content = parseHtmlContent(page.body);
-    const lines = content.split("\n");
-
-    for (const line of lines) {
-      // Word wrap long lines
-      if (line.length > boxWidth - 4) {
-        const words = line.split(" ");
-        let currentLine = "";
-        for (const word of words) {
-          if ((currentLine + " " + word).length > boxWidth - 4) {
-            console.log(
-              chalk.gray("│ ") +
-                chalk.white(currentLine.padEnd(boxWidth - 4)) +
-                chalk.gray(" │"),
-            );
-            currentLine = word;
-          } else {
-            currentLine = currentLine ? currentLine + " " + word : word;
-          }
-        }
-        if (currentLine) {
-          console.log(
-            chalk.gray("│ ") +
-              chalk.white(currentLine.padEnd(boxWidth - 4)) +
-              chalk.gray(" │"),
-          );
-        }
-      } else {
-        console.log(
-          chalk.gray("│ ") +
-            chalk.white(line.padEnd(boxWidth - 4)) +
-            chalk.gray(" │"),
-        );
-      }
-    }
-
-    console.log(chalk.gray("╰" + "─".repeat(boxWidth - 2) + "╯"));
-
-    // Extract and show links
-    const links = extractLinks(page.body);
-    if (links.length > 0) {
-      console.log(chalk.cyan.bold("\n📎 Links in this page:"));
-      links.forEach((link, idx) => {
-        console.log(
-          chalk.gray(`  ${idx + 1}.`) +
-            " " +
-            makeClickableLink(link.url, link.text),
-        );
-      });
-    }
+    console.log(`\n${content}\n`);
   } catch {
     console.log(chalk.yellow("Could not load page content."));
   }
@@ -238,29 +154,16 @@ export async function showModules(
   options: ModulesOptions = {},
 ): Promise<void> {
   try {
-    let course: CanvasCourse | undefined;
-    let courseId: number;
+    const result = await pickCourse({
+      showAll: options.all,
+      courseName: courseName,
+    });
 
-    if (!courseName) {
-      const result = await pickCourse({
-        title: "\nLoading your courses...",
-        showAll: options.all,
-      });
-      if (!result) return;
-      course = result.course;
-      courseId = course.id;
-      result.rl.close();
-    } else {
-      const { getCanvasCourse } = await import("../lib/api-client.js");
-      const { createReadlineInterface } = await import("../lib/interactive.js");
-      const rl = createReadlineInterface();
-      course = await getCanvasCourse(courseName, rl);
-      if (!course) {
-        printError(`Course "${courseName}" not found.`);
-        return;
-      }
-      courseId = course.id;
-    }
+    if (!result) return;
+
+    const course = result.course;
+    const courseId = course.id;
+    result.rl.close();
 
     printInfo("\n" + "-".repeat(60));
     printInfo("Loading course content...");
@@ -311,6 +214,9 @@ export async function showModules(
       `Found ${allItems.length} item(s) across ${modules.length} module(s).`,
     );
 
+    // Create readline interface for user input
+    const rl = createReadlineInterface();
+
     const columns: ColumnDefinition[] = [
       { key: "module", header: "Module", flex: 1, minWidth: 15 },
       { key: "title", header: "Title", flex: 2, minWidth: 30 },
@@ -345,23 +251,24 @@ export async function showModules(
 
     table.renderWithResize();
 
-    // Interactive item selection
-    const rl = createReadlineInterface();
-    console.log(
-      chalk.gray(
-        '\nEnter # to view, "o #" to open in browser, or Enter to quit:',
+    // Interactive item selection - same style as announcements
+    const choice = await askQuestion(
+      rl,
+      chalk.bold.cyan(
+        "\nEnter module item number to view details (0 to exit): ",
       ),
     );
-    const choice = await askQuestion(rl, chalk.cyan("Item #: "));
-    rl.close();
 
-    if (!choice || choice.trim() === "") {
+    // Stop watching for resize after user input
+    table.stopWatching();
+
+    if (!choice.trim() || choice === "0") {
+      rl.close();
       return;
     }
 
-    const openInBrowser = choice.toLowerCase().startsWith("o ");
-    const numStr = openInBrowser ? choice.slice(2).trim() : choice.trim();
-    const itemIndex = parseInt(numStr) - 1;
+    const itemIndex = parseInt(choice) - 1;
+    rl.close();
 
     if (isNaN(itemIndex) || itemIndex < 0 || itemIndex >= allItems.length) {
       console.log(chalk.red("Invalid selection."));
@@ -371,31 +278,20 @@ export async function showModules(
     const selected = allItems[itemIndex]!;
     const { item, url } = selected;
 
-    if (openInBrowser) {
-      if (url) {
-        console.log(chalk.green(`Opening: ${item.title}`));
-        openUrl(url);
-      } else {
-        console.log(chalk.yellow("No URL available."));
-      }
+    // Display content based on type
+    if (item.type === "Page" && item.page_url) {
+      await displayPageContent(courseId, item.page_url);
+    } else if (item.type === "File" && url) {
+      console.log(chalk.cyan(`\n📄 File: ${item.title}`));
+      console.log("   " + makeClickableLink(url, "Click to download"));
+    } else if (item.type === "ExternalUrl" && item.external_url) {
+      console.log(chalk.cyan(`\n🔗 External Link: ${item.title}`));
+      console.log("   " + makeClickableLink(item.external_url));
+    } else if (url) {
+      console.log(chalk.cyan(`\n${getItemTypeIcon(item.type)} ${item.title}`));
+      console.log("   " + makeClickableLink(url, "Open in Canvas"));
     } else {
-      // Display content based on type
-      if (item.type === "Page" && item.page_url) {
-        await displayPageContent(courseId, item.page_url);
-      } else if (item.type === "File" && url) {
-        console.log(chalk.cyan(`\n📄 File: ${item.title}`));
-        console.log("   " + makeClickableLink(url, "Click to download"));
-      } else if (item.type === "ExternalUrl" && item.external_url) {
-        console.log(chalk.cyan(`\n🔗 External Link: ${item.title}`));
-        console.log("   " + makeClickableLink(item.external_url));
-      } else if (url) {
-        console.log(
-          chalk.cyan(`\n${getItemTypeIcon(item.type)} ${item.title}`),
-        );
-        console.log("   " + makeClickableLink(url, "Open in Canvas"));
-      } else {
-        console.log(chalk.yellow("No content available."));
-      }
+      console.log(chalk.yellow("No content available."));
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

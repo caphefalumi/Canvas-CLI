@@ -2,7 +2,7 @@
  * Announcements command
  */
 
-import { makeCanvasRequest, getCanvasCourse } from "../lib/api-client.js";
+import { makeCanvasRequest } from "../lib/api-client.js";
 import { createReadlineInterface, askQuestion } from "../lib/interactive.js";
 import {
   pickCourse,
@@ -71,25 +71,15 @@ export async function showAnnouncements(
         `Found ${announcements.length} announcement(s) from all courses.`,
       );
     } else {
-      // Original single-course logic
-      let selectedCourseId: string;
+      // Single-course logic using pickCourse
+      const result = await pickCourse({
+        courseName: courseName,
+      });
 
-      if (!courseName) {
-        const result = await pickCourse({
-          title: "\nLoading your courses, please wait...",
-        });
-        if (!result) return;
+      if (!result) return;
 
-        selectedCourseId = result.course.id.toString();
-        rl = result.rl;
-      } else {
-        rl = createReadlineInterface();
-        const course = await getCanvasCourse(courseName, rl);
-        if (!course) {
-          return;
-        }
-        selectedCourseId = course.id.toString();
-      }
+      const selectedCourseId = result.course.id.toString();
+      rl = result.rl;
 
       printInfo("Loading announcements...");
 
