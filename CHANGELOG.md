@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.1] - 2026-01-05
+
+### Changed
+
+- **Reverted Course Selection Changes**: Restored original course selection logic
+  - Commands now properly support course name arguments (e.g., `canvas mod cloud`)
+  - Removed forced `pickCourse` usage to allow direct course name matching
+
+### Removed
+
+- Removed `htmlparser2` and `domutils` dependencies
+  - Replaced with lightweight regex-based HTML cleaning
+  - Reduced package size and external dependencies
+
 ## [1.10.0] - 2026-01-05
 
 ### Changed

@@ -11,11 +11,6 @@ import type {
 import { makeCanvasRequest } from "./api-client.js";
 import { createReadlineInterface, askQuestion } from "./interactive.js";
 import * as readline from "readline"; // Import the native readline module
-import { parseDocument } from "htmlparser2";
-import { textContent } from "domutils";
-// ============================================================================
-// Core Table Types and Classes
-// ============================================================================
 
 export interface ColumnDefinition {
   key: string;
@@ -971,22 +966,30 @@ export function printWarning(message: string): void {
  * Clean HTML content and convert to readable text
  */
 function cleanHtmlContent(html: string): string {
-  // Parse HTML into DOM and extract text content
-  const document = parseDocument(html);
-  const text = textContent(document);
-
-  return (
-    text
-      // Normalize multiple newlines to double newlines (paragraph breaks)
-      .replace(/\n{3,}/g, "\n\n")
-      // Normalize multiple spaces
-      .replace(/[ \t]+/g, " ")
-      // Trim each line
-      .split("\n")
-      .map((line: string) => line.trim())
-      .join("\n")
-      .trim()
+  let text = html;
+  text = text.replace(/\n/gi, "");
+  text = text.replace(/<style([\s\S]*?)<\/style>/gi, "");
+  text = text.replace(/<script([\s\S]*?)<\/script>/gi, "");
+  // Convert links to inline blue text with URL
+  text = text.replace(
+    /<a.*?href="(.*?)[?"].*?>(.*?)<\/a.*?>/gi,
+    (_match, url, linkText) => {
+      return chalk.blue(`${linkText} (${url})`);
+    },
   );
+  text = text.replace(/<\/div>/gi, "\n\n");
+  text = text.replace(/<\/li>/gi, "\n");
+  text = text.replace(/<li.*?>/gi, "  *  ");
+  text = text.replace(/<\/ul>/gi, "\n\n");
+  text = text.replace(/<\/p>/gi, "\n\n");
+  text = text.replace(/<br\s*[/]?>/gi, "\n");
+  text = text.replace(/<[^>]+>/gi, "");
+  text = text.replace(/^\s*/gim, "");
+  text = text.replace(/ ,/gi, ",");
+  text = text.replace(/ +/gi, " ");
+  text = text.replace(/\n+/gi, "\n\n");
+
+  return text;
 }
 
 /**
