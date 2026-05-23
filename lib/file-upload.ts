@@ -58,7 +58,7 @@ export async function uploadSingleFileToCanvas(
     const uploadResponse = await fetch(uploadData.upload_url, {
       method: "POST",
       body: form,
-      redirect: "manual", // Don't follow redirects
+      redirect: "manual",
     });
 
     if (
@@ -66,7 +66,21 @@ export async function uploadSingleFileToCanvas(
       uploadResponse.status !== 301 &&
       uploadResponse.status !== 302
     ) {
-      throw new Error(`Upload failed with status ${uploadResponse.status}`);
+      let responseText = "";
+      try {
+        responseText = await uploadResponse.text();
+      } catch {
+        responseText = "(unable to read response body)";
+      }
+      throw Object.assign(
+        new Error(
+          `Upload failed with status ${uploadResponse.status}: ${responseText}`,
+        ),
+        {
+          status: uploadResponse.status,
+          responseBody: responseText,
+        },
+      );
     }
 
     // Return the file ID for later submission
@@ -83,36 +97,49 @@ export async function uploadSingleFileToCanvas(
     }
     return fileId;
   } catch (error) {
+    const err = error as any;
     const errorMessage = error instanceof Error ? error.message : String(error);
+    const status = err.status;
+    const responseBody = err.responseBody;
 
-    // Provide more helpful error messages
     if (
       errorMessage.includes("Access denied") ||
       errorMessage.includes("403")
     ) {
-      throw new Error(
+      const e = new Error(
         `Upload failed - Permission denied. This assignment may not accept submissions, may be locked, or the due date has passed. Check the assignment settings in Canvas.`,
       );
+      if (status) (e as any).status = status;
+      if (responseBody) (e as any).responseBody = responseBody;
+      throw e;
     }
 
     if (errorMessage.includes("Unauthorized") || errorMessage.includes("401")) {
-      throw new Error(
+      const e = new Error(
         `Upload failed - Authentication error. Your API token may have expired. Run 'canvas config setup' to update it.`,
       );
+      if (status) (e as any).status = status;
+      if (responseBody) (e as any).responseBody = responseBody;
+      throw e;
     }
 
     if (errorMessage.includes("404")) {
-      throw new Error(
+      const e = new Error(
         `Upload failed - Assignment or course not found. The assignment may have been deleted or moved.`,
       );
+      if (status) (e as any).status = status;
+      if (responseBody) (e as any).responseBody = responseBody;
+      throw e;
     }
 
     if (errorMessage.includes("File not found")) {
       throw new Error(`File not found: ${filePath}`);
     }
 
-    // For other errors, provide context
-    throw new Error(`Upload failed: ${errorMessage}`);
+    const e = new Error(`Upload failed: ${errorMessage}`);
+    if (status) (e as any).status = status;
+    if (responseBody) (e as any).responseBody = responseBody;
+    throw e;
   }
 }
 

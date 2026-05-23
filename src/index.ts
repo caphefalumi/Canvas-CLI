@@ -28,7 +28,7 @@ import { showFiles } from "../commands/files.js";
 import { showGroups } from "../commands/groups.js";
 import { starCourse, unstarCourse } from "../commands/star.js";
 import { calculateOverallGPA, calculateWhatIfGrade } from "../commands/gpa.js";
-import { bulkDownload } from "../commands/download.js";
+import { downloadContent } from "../commands/download.js";
 import { requireConfig } from "../lib/config-validator.js";
 
 const program = new Command();
@@ -37,7 +37,7 @@ const program = new Command();
 program
   .name("canvas")
   .description("Canvas LMS Command Line Interface")
-  .version("1.10.3", "-V, --version", "Output the current version");
+  .version("1.11.0", "-V, --version", "Output the current version");
 
 // List command to show enrolled courses
 program
@@ -152,6 +152,7 @@ program
   .option("-f, --file <file-path>", "Specify file path")
   .option("-a, --all", "Show all courses", false)
   .option("--dry-run", "Test submission", false)
+  .option("-d, --debug", "Show full error details on failure", false)
   .action(requireConfig(submitAssignment));
 
 // Calendar command to show upcoming due dates
@@ -241,15 +242,22 @@ program
   .description("Calculate what grade you need on remaining work")
   .action(requireConfig(calculateWhatIfGrade));
 
-// Bulk download command
+// Download command
 program
   .command("download [course-name]")
   .alias("dl")
-  .alias("bulk-download")
-  .description("Download all files from a course")
+  .description("Download course content (files or modules)")
   .option("-a, --all", "Show all courses", false)
+  .option("--modules", "Download module items")
+  .option("--files", "Download course files", false)
+  .option("--to-md", "Convert module content to markdown", false)
+  .option(
+    "--no-package",
+    "Skip package export history; use module API directly",
+    false,
+  )
   .option("-o, --output <path>", "Output directory")
-  .action(requireConfig(bulkDownload));
+  .action(requireConfig(downloadContent));
 
 // Parse command line arguments
 program.parseAsync();

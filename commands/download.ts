@@ -15,11 +15,19 @@ import fs from "fs";
 import path from "path";
 import https from "https";
 import http from "http";
+import { downloadModules } from "./modules-download.js";
 import type { CanvasFile, CanvasFolder } from "../types/index.js";
 
 interface DownloadOptions {
   all?: boolean;
   output?: string;
+}
+
+interface DownloadCommandOptions extends DownloadOptions {
+  modules?: boolean;
+  files?: boolean;
+  toMd?: boolean;
+  noPackage?: boolean;
 }
 
 function sanitizeFileName(name: string): string {
@@ -238,4 +246,29 @@ export async function bulkDownload(
     const errorMessage = error instanceof Error ? error.message : String(error);
     printError(`Error during bulk download: ${errorMessage}`);
   }
+}
+
+export async function downloadContent(
+  courseName?: string,
+  options: DownloadCommandOptions = {},
+): Promise<void> {
+  if (options.modules && options.files) {
+    printError("Please choose only one of --modules or --files.");
+    return;
+  }
+
+  if (options.modules) {
+    await downloadModules(courseName, {
+      all: options.all,
+      toMd: options.toMd,
+      output: options.output,
+      noPackage: options.noPackage,
+    });
+    return;
+  }
+
+  await bulkDownload(courseName, {
+    all: options.all,
+    output: options.output,
+  });
 }

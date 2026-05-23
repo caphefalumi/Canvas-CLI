@@ -1,0 +1,5 @@
+{
+  "permissions": {
+    "allow": ["mcp__codegraph__codegraph_files", "Bash(bun run *)"]
+  }
+}

@@ -35,3 +35,39 @@ git add package.json src/index.ts
 git commit -m "chore: bump version to X.Y.Z"
 git push
 ```
+
+## update-changelog.ts
+
+Generates a new CHANGELOG.md entry from git commits between tags.
+
+### Usage
+
+```bash
+# Uses GITHUB_REF_NAME if present
+bun scripts/update-changelog.ts
+
+# Or pass a tag explicitly
+bun scripts/update-changelog.ts v1.11.0
+```
+
+### What it does
+
+1. Finds the previous tag (if any)
+2. Collects commit messages between previous tag and current tag
+3. Inserts a new version section into `CHANGELOG.md`
+
+## tag-release.ts
+
+Creates and pushes a git tag for the current `package.json` version.
+
+### Usage
+
+```bash
+bun scripts/tag-release.ts
+```
+
+### What it does
+
+1. Reads version from `package.json`
+2. Creates a `vX.Y.Z` git tag if missing
+3. Pushes the tag to `origin`

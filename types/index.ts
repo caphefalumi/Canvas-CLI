@@ -326,6 +326,14 @@ export interface ShowGroupsOptions {
 export interface ModulesOptions {
   all?: boolean;
   verbose?: boolean;
+  toMd?: boolean;
+}
+
+export interface ModulesDownloadOptions {
+  all?: boolean;
+  toMd?: boolean;
+  output?: string;
+  noPackage?: boolean;
 }
 
 export interface CalendarOptions {

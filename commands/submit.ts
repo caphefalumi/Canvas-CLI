@@ -23,6 +23,7 @@ interface SubmitOptions {
   file?: string;
   all?: boolean;
   dryRun?: boolean;
+  debug?: boolean;
 }
 
 /**
@@ -351,7 +352,27 @@ export async function submitAssignment(
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        console.log(chalk.red(`✗ ${path.basename(file)}: ${errorMessage}`));
+        const fileName = path.basename(file);
+
+        if (options.debug) {
+          const err = error as any;
+          console.log(
+            chalk.red(`✗ ${fileName}: Upload failed: ${errorMessage}`),
+          );
+          console.log(chalk.red("\n--- Debug Error Details ---"));
+          if (err.status) {
+            console.log(chalk.red(`HTTP Status: ${err.status}`));
+          }
+          if (err.responseBody) {
+            console.log(chalk.red(`Response: ${err.responseBody}`));
+          }
+          if (error instanceof Error && error.stack) {
+            console.log(chalk.red(`Stack: ${error.stack}`));
+          }
+          console.log(chalk.red("---------------------------\n"));
+        } else {
+          console.log(chalk.red(`✗ ${fileName}: ${errorMessage}`));
+        }
 
         const continueUpload = await askConfirmation(
           rlForConfirm,
@@ -403,7 +424,28 @@ export async function submitAssignment(
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      console.log(chalk.red("\nError submitting assignment: " + errorMessage));
+
+      if (options.debug) {
+        const err = error as any;
+        console.log(
+          chalk.red("\nError submitting assignment: " + errorMessage),
+        );
+        console.log(chalk.red("\n--- Debug Error Details ---"));
+        if (err.status) {
+          console.log(chalk.red(`HTTP Status: ${err.status}`));
+        }
+        if (err.responseBody) {
+          console.log(chalk.red(`Response: ${err.responseBody}`));
+        }
+        if (error instanceof Error && error.stack) {
+          console.log(chalk.red(`Stack: ${error.stack}`));
+        }
+        console.log(chalk.red("---------------------------\n"));
+      } else {
+        console.log(
+          chalk.red("\nError submitting assignment: " + errorMessage),
+        );
+      }
       console.log(
         chalk.yellow(
           "Files were uploaded but submission failed. You may need to complete the submission manually in Canvas.",
@@ -412,10 +454,29 @@ export async function submitAssignment(
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(
-      chalk.red("\nError during submission process:"),
-      errorMessage,
-    );
+
+    if (options.debug) {
+      const err = error as any;
+      console.error(
+        chalk.red("\nError during submission process: " + errorMessage),
+      );
+      console.error(chalk.red("\n--- Debug Error Details ---"));
+      if (err.status) {
+        console.error(chalk.red(`HTTP Status: ${err.status}`));
+      }
+      if (err.responseBody) {
+        console.error(chalk.red(`Response: ${err.responseBody}`));
+      }
+      if (error instanceof Error && error.stack) {
+        console.error(chalk.red(`Stack: ${error.stack}`));
+      }
+      console.error(chalk.red("---------------------------\n"));
+    } else {
+      console.error(
+        chalk.red("\nError during submission process:"),
+        errorMessage,
+      );
+    }
     process.exit(1);
   } finally {
     try {
