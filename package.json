@@ -49,13 +49,11 @@
     "format": "oxfmt --config .oxfmtrc.jsonc",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
-    "prepublishOnly": "bun run build && bun test",
     "prepare": "bunx husky",
     "bump": "bun scripts/bump-version.ts",
     "bump:patch": "bun scripts/bump-version.ts patch",
     "bump:minor": "bun scripts/bump-version.ts minor",
-    "bump:major": "bun scripts/bump-version.ts major",
-    "postpublish": "bun scripts/tag-release.ts"
+    "bump:major": "bun scripts/bump-version.ts major"
   },
   "dependencies": {
     "chalk": "^5.6.2",
