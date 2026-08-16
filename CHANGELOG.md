@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [.12.0] - 2026-08-16
+
+### Changed
+
+- feat: update version
+- feat: update npm publish
+- fix: install type libs
+- chore: use LF line endings
+- chore: remove maintainer-specific course
+- feat: add modules download
+- chore(ci): switch to npm OIDC trusted publishing
+- fix(security): consolidate HTML sanitization into a single loop to prevent bypasses
+- fix(ci): add auth token to npm publish step
+- fix(ci): add checkout step to npm-publish workflow
+- Update npm-publish.yml
+- Update npm-publish.yml
+- docs: update changelog for v1.10.3
+- chore: bump version to 1.10.2 and update changelog
+- fix: reduce spacing in module and announcement display
+- chore: bump version to 1.10.1 and update changelog
+- Revert "refactor(announcements): simplify course selection and cleanup"
+- chore: bump version to 1.10.0 and update changelog
+- fix(table): always add space between rows in wrap mode
+- refactor(download): unify course selection logic
+- refactor(announcements): simplify course selection and cleanup
+- chore: bump version to 1.9.4
+- v1.9.4: Improve download error handling and add domutils dependency
+- fix: bump version
+- chore: bump version to 1.9.3
+- ci: simplify the workflow
+- style: auto-format code [skip ci]
+- security: Fix incomplete multi-character sanitization in HTML parsing
+- security: Fix double-escaping vulnerability in HTML entity decoding
+- style: auto-format code [skip ci]
+- security: Fix bad HTML filtering regex to handle malformed tags
+- fix: lint
+- security: Fix test file sanitization to match production code
+- security: Improve ANSI escape sequence sanitization
+- security: Fix HTML entity decoding order to prevent double escaping
+- ci: Add auto-format workflow and reorganize CI jobs
+- chore: format
+- chore: Update version to 1.9.2 and remove duplicate test
+- feat: Add version bump script and update to v1.9.2
+- chore: remove redundant part in readme
+
 ## [1.10.3] - 2026-01-05
 
 ### Fixed
