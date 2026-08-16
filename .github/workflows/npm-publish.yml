@@ -10,19 +10,20 @@ on:
 permissions:
   id-token: write
   contents: read
+
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    permissions:
-      id-token: write
-      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
       - uses: oven-sh/setup-bun@v2
-
       - run: bun ci
+      - run: bun run build --if-present
+      - run: bun test
       - run: npm publish --provenance
