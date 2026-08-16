@@ -37,7 +37,7 @@ const program = new Command();
 program
   .name("canvas")
   .description("Canvas LMS Command Line Interface")
-  .version("1.11.0", "-V, --version", "Output the current version");
+  .version("1.13.0", "-V, --version", "Output the current version");
 
 // List command to show enrolled courses
 program
