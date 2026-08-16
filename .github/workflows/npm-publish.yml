@@ -24,6 +24,6 @@ jobs:
           package-manager-cache: false
       - uses: oven-sh/setup-bun@v2
       - run: bun ci
-      - run: bun run build --if-present
+      - run: bun run build
       - run: bun test
-      - run: npm publish --provenance
+      - run: bun publish --provenance
