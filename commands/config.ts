@@ -44,6 +44,12 @@ export async function showConfig(): Promise<void> {
           (config.tableTruncate !== false ? "Enabled" : "Disabled"),
       );
       console.log(
+        chalk.white("  Automatic Token Rotation: ") +
+          (config.autoRotateToken === true
+            ? "Enabled (consented)"
+            : "Disabled"),
+      );
+      console.log(
         chalk.white("  Created: ") +
           (config.createdAt
             ? new Date(config.createdAt).toLocaleString()
@@ -165,7 +171,8 @@ export async function setupConfig(): Promise<void> {
       tableTruncateAnswer.toLowerCase() !== "n" &&
       tableTruncateAnswer.toLowerCase() !== "no";
 
-    const saved = saveConfig(domain, token, tableTruncate);
+    const autoRotateToken = await askRotationConsent(rl);
+    const saved = saveConfig(domain, token, tableTruncate, autoRotateToken);
     if (saved) {
       console.log(
         chalk.green("Success: Configuration setup completed successfully!"),
@@ -261,6 +268,8 @@ export async function editConfig(): Promise<void> {
         truncationAnswer.toLowerCase() !== "no";
     }
 
+    const autoRotateToken = await askRotationConsent(rl);
+
     console.log(chalk.cyan("New configuration:"));
     console.log(chalk.white("  Domain: ") + domain);
     console.log(
@@ -278,7 +287,7 @@ export async function editConfig(): Promise<void> {
       return;
     }
 
-    const saved = saveConfig(domain, token, tableTruncate);
+    const saved = saveConfig(domain, token, tableTruncate, autoRotateToken);
     if (saved) {
       console.log(chalk.green("Success: Configuration updated successfully!"));
     }
@@ -360,6 +369,28 @@ export function setConfigValue(key: string, value: string): void {
 
   let saved = false;
 
+  if (key.toLowerCase() === "auto-rotate") {
+    if (value !== "true" && value !== "false") {
+      console.log(chalk.red("Use true or false for auto-rotate."));
+      return;
+    }
+    if (value === "true") console.log(rotationExplanation);
+    if (
+      !saveConfig(
+        config.domain,
+        config.token,
+        config.tableTruncate,
+        value === "true",
+      )
+    ) {
+      console.log(chalk.red("Error: Failed to update configuration."));
+      return;
+    }
+    console.log(
+      `Automatic token rotation ${value === "true" ? "enabled (consented)" : "disabled"}.`,
+    );
+    return;
+  }
   switch (key.toLowerCase()) {
     case "domain": {
       // Clean and validate domain
@@ -444,7 +475,7 @@ export function setConfigValue(key: string, value: string): void {
     default:
       console.log(
         chalk.red(
-          `Unknown configuration key: "${key}". Valid keys: domain, token, truncate`,
+          `Unknown configuration key: "${key}". Valid keys: domain, token, truncate, auto-rotate`,
         ),
       );
       return;
@@ -453,4 +484,19 @@ export function setConfigValue(key: string, value: string): void {
   if (!saved) {
     console.log(chalk.red("Error: Failed to update configuration."));
   }
+}
+
+const rotationExplanation =
+  "Automatic token rotation lets Canvas CLI create and locally store a replacement personal access token " +
+  "when you use the CLI within 3 days of expiry. It requests a 30-day lifetime and preserves scopes; " +
+  "Canvas permissions and institution limits still apply. The previous token is not revoked and expires naturally. " +
+  "This does not run in the background or recover expired tokens. Disable with: canvas config set auto-rotate false";
+
+async function askRotationConsent(rl: readline.Interface): Promise<boolean> {
+  console.log(rotationExplanation);
+  const answer = await askQuestion(
+    rl,
+    "Consent to automatic token rotation? (y/N): ",
+  );
+  return ["y", "yes"].includes(answer.trim().toLowerCase());
 }

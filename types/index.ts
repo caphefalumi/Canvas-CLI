@@ -9,6 +9,7 @@ export interface CanvasConfig {
   createdAt?: string;
   lastUpdated?: string;
   tableTruncate?: boolean;
+  autoRotateToken?: boolean;
 }
 
 export interface InstanceConfig {

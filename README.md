@@ -90,6 +90,38 @@ canvas config set <key> <value>  # Set a configuration value (domain, token, tru
 
 You can toggle this during `canvas config setup`, `canvas config edit`, or use `canvas config set truncate <true|false>`.
 
+### Automatic token rotation (opt-in)
+
+Rotation is disabled until you explicitly consent during `canvas config setup` or
+`canvas config edit`, or enable it with:
+
+```bash
+canvas config set auto-rotate true   # Explicit consent to create/store replacement tokens
+canvas config set auto-rotate false  # Withdraw consent
+canvas config show                  # Show consent status
+```
+
+While enabled, the first API request in each CLI process checks the current token's
+actual Canvas expiration. Within three days of expiry, the CLI creates a replacement
+personal access token, requests a 30-day lifetime with the same scopes, and saves it
+locally before using it. The previous token is **not revoked**; it expires naturally,
+so other applications sharing it are not immediately disconnected. Credentials remain
+in `~/.canvaslms-cli-config.json`; protect this file like a password. Changing the
+domain or token through `config set` resets consent; setup/edit asks again.
+
+There is no background scheduler: use the CLI during that three-day window.
+Non-expiring tokens are left unchanged. Expired/revoked tokens cannot renew themselves;
+run `canvas config setup` with a new token. Institutions may restrict token creation,
+token-management scopes, or lifetime. Rotation failures warn without replacing the
+original credential or blocking ordinary API requests. A replacement rejected locally
+(for example, because Canvas changed its scopes) remains in Canvas until expiry and
+can be removed in Account → Settings → Approved Integrations.
+
+See the [Canvas Access Tokens API](https://developerdocs.instructure.com/services/canvas/resources/access_tokens)
+for the show/create endpoints and permission scopes. Canvas does not document a
+universal 30-day lifetime; rotation uses the server-reported expiration rather than
+assuming when your existing token was created.
+
 ### Common Commands
 
 ```bash

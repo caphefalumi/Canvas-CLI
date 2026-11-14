@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] - 2026-11-14
+
+### Added
+
+- Opt-in automatic personal access token replacement within three days of expiry,
+  preserving scopes and requesting a 30-day lifetime subject to Canvas policy.
+- Explicit rotation consent in setup/edit and `config set auto-rotate true|false`;
+  consent resets when credentials change. Replacement credentials are saved atomically
+  before use; old tokens expire naturally without being revoked.
+
 ## [.12.0] - 2026-08-16
 
 ### Changed

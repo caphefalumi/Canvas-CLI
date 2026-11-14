@@ -4,6 +4,7 @@
 
 import fs from "fs";
 import { getInstanceConfig } from "./config.js";
+import { rotateTokenIfNeeded } from "./token-rotation.js";
 import { printError, printSuccess, printWarning } from "./display.js";
 import type { CanvasCourse } from "../types/index.js";
 import chalk from "chalk";
@@ -100,6 +101,7 @@ export async function makeCanvasRequest<T = any>(
   queryParams: string[] = [],
   requestBody: string | null = null,
 ): Promise<T> {
+  await rotateTokenIfNeeded();
   const instanceConfig = getInstanceConfig();
   // Construct the full URL
   const baseUrl = `https://${instanceConfig.domain}/api/v1`;

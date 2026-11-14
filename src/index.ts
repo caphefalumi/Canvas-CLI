@@ -3,7 +3,7 @@
  * Canvas CLI - A command line tool for interacting with Canvas API
  *
  * @author caphefalumi
- * @version 1.9.1
+ * @version 1.13.0
  */
 
 import { Command } from "commander";
@@ -37,7 +37,7 @@ const program = new Command();
 program
   .name("canvas")
   .description("Canvas LMS Command Line Interface")
-  .version("1.12.0", "-V, --version", "Output the current version");
+  .version("1.13.0", "-V, --version", "Output the current version");
 
 // List command to show enrolled courses
 program
@@ -88,7 +88,9 @@ configCommand
 
 configCommand
   .command("set <key> <value>")
-  .description("Set a configuration value (domain, token, truncate)")
+  .description(
+    "Set a configuration value (domain, token, truncate, auto-rotate; true explicitly consents to rotation)",
+  )
   .action(setConfigValue);
 
 program

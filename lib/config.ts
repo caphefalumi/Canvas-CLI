@@ -54,6 +54,7 @@ export function saveConfig(
   domain: string,
   token: string,
   tableTruncate?: boolean,
+  autoRotateToken?: boolean,
 ): boolean {
   try {
     // Read existing config to preserve createdAt
@@ -62,6 +63,13 @@ export function saveConfig(
     const config: CanvasConfig = {
       domain: domain.replace(/^https?:\/\//, "").replace(/\/$/, ""),
       token,
+      autoRotateToken:
+        autoRotateToken ??
+        (existingConfig?.domain ===
+          domain.replace(/^https?:\/\//, "").replace(/\/$/, "") &&
+        existingConfig?.token === token
+          ? existingConfig?.autoRotateToken === true
+          : false),
       tableTruncate:
         tableTruncate !== undefined
           ? tableTruncate
@@ -69,7 +77,15 @@ export function saveConfig(
       createdAt: existingConfig?.createdAt || new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
     };
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), "utf8");
+    const temporaryFile = `${CONFIG_FILE}.${process.pid}.tmp`;
+    try {
+      fs.writeFileSync(temporaryFile, JSON.stringify(config, null, 2), {
+        mode: 0o600,
+      });
+      fs.renameSync(temporaryFile, CONFIG_FILE);
+    } finally {
+      if (fs.existsSync(temporaryFile)) fs.unlinkSync(temporaryFile);
+    }
     return true;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
