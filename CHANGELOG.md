@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.13.0] - 2026-11-14
 
+### Changed
+
+- feat: release v1.13.0 with token rotation
+- fix: npm publish
+- fix: npm publish
+- fix: npm publish
+- docs: update changelog for v.12.0
+- feat: update version
+- feat: update npm publish
+- fix: install type libs
+- chore: use LF line endings
+- chore: remove maintainer-specific course
+- feat: add modules download
+- chore(ci): switch to npm OIDC trusted publishing
+- fix(security): consolidate HTML sanitization into a single loop to prevent bypasses
+- fix(ci): add auth token to npm publish step
+- fix(ci): add checkout step to npm-publish workflow
+- Update npm-publish.yml
+- Update npm-publish.yml
+
+## [1.13.0] - 2026-11-14
+
 ### Added
 
 - Opt-in automatic personal access token replacement within three days of expiry,
