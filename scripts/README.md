@@ -71,3 +71,10 @@ bun scripts/tag-release.ts
 1. Reads version from `package.json`
 2. Creates a `vX.Y.Z` git tag if missing
 3. Pushes the tag to `origin`
+
+The Publish workflow runs on `v*` tag pushes, release creation, or manual dispatch.
+On a tag push, it builds and publishes the package to npm, then creates a GitHub
+Release for that tag with generated release notes (unless one already exists).
+It uses `GITHUB_TOKEN`, so creating the release does not trigger a second publish run.
+The workflow must be included in the tagged commit; existing tags do not run
+retroactively when the workflow changes.
